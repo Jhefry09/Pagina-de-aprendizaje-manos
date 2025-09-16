@@ -13,6 +13,14 @@
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script>
+      // Hacer que Framer Motion esté disponible globalmente
+      window.framerMotion = {
+        motion: window.motion,
+        AnimatePresence: window.motion.AnimatePresence
+      };
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

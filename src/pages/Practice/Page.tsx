@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { useVocalContext } from '../../hooks/useVocalContext';
 import { type VocalModel, type NormalizedLandmark, type Results, type MediaPipeHandsInstance } from '../../types';
@@ -36,8 +37,17 @@ const PracticePage = () => {
   const { vocalModels } = useVocalContext();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [score, setScore] = useState('0.0');
-  const [selectedVocal, setSelectedVocal] = useState('a');
+  const [scores, setScores] = useState<Record<string, string>>({
+    a: '0.0',
+    e: '0.0',
+    i: '0.0',
+    o: '0.0',
+    u: '0.0'
+  });
+  const { vocal: selectedVocalParam } = useParams();
+  const selectedVocal = selectedVocalParam || 'a';
+  const [detectedVocal, setDetectedVocal] = useState('');
+  const [highestScore, setHighestScore] = useState(0);
 
   useEffect(() => {
     let hands: MediaPipeHandsInstance | null = null;
@@ -63,24 +73,49 @@ const PracticePage = () => {
             const handLandmarks = results.multiHandLandmarks[0];
             const handedness = results.multiHandedness[0]?.label || 'Right';
 
-            window.drawConnectors(canvasCtx, handLandmarks, window.HAND_CONNECTIONS, { color: '#00FF00', lineWidth: 2 });
-            window.drawLandmarks(canvasCtx, handLandmarks, { color: '#FF0000', lineWidth: 1 });
+            window.drawConnectors(canvasCtx, handLandmarks, window.HAND_CONNECTIONS, { color: '#f2994a', lineWidth: 2 });
+            window.drawLandmarks(canvasCtx, handLandmarks, { color: '#215c5c', lineWidth: 1 });
 
             let normalizedHand = normalizeLandmarks(handLandmarks);
             if (handedness === 'Left') {
               normalizedHand = normalizedHand.map(p => ({ ...p, x: -p.x }));
             }
 
-            const vocalBase = vocalModels.find((v: VocalModel) => v.vocal === selectedVocal);
-            if (vocalBase) {
-              const baseLandmarks = normalizeLandmarks(vocalBase.landmarks);
-              const newScore = compareHands(normalizedHand, baseLandmarks);
-              setScore(newScore);
-            } else {
-              setScore('0.0');
+            const newScores: Record<string, string> = {};
+            let maxScore = 0;
+            let detected = '';
+
+            // Calculate similarity scores for all vowels
+            for (const vowel of ['a', 'e', 'i', 'o', 'u']) {
+              const vocalBase = vocalModels.find((v: VocalModel) => v.vocal === vowel);
+              if (vocalBase) {
+                const baseLandmarks = normalizeLandmarks(vocalBase.landmarks);
+                const score = parseFloat(compareHands(normalizedHand, baseLandmarks));
+                newScores[vowel] = score.toFixed(1);
+                
+                if (score > maxScore) {
+                  maxScore = score;
+                  detected = vowel;
+                }
+              } else {
+                newScores[vowel] = '0.0';
+              }
             }
+
+            setScores(newScores);
+            setDetectedVocal(detected);
+            setHighestScore(maxScore);
           } else {
-            setScore('0.0');
+            // Reset scores when no hand is detected
+            setScores({
+              a: '0.0',
+              e: '0.0',
+              i: '0.0',
+              o: '0.0',
+              u: '0.0'
+            });
+            setDetectedVocal('');
+            setHighestScore(0);
           }
         }
       });
@@ -116,10 +151,13 @@ const PracticePage = () => {
 
   return (
     <section className="p-6 bg-gray-50 min-h-screen">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold text-gray-700 font-montserrat">
-          Reconocimiento de Vocales por Mano
-        </h1>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-700 font-montserrat">
+            Entrenando vocal <span className="text-[#f2994a]">{selectedVocal.toUpperCase()}</span>
+          </h1>
+          <p className="text-gray-600">Coloca tu mano frente a la cámara</p>
+        </div>
         <Link
           to="/"
           className="px-4 py-2 text-sm font-semibold text-[#f2994a] hover:text-white hover:bg-[#f2994a] rounded-lg transition-all duration-300 border border-[#f2994a]"
@@ -128,29 +166,48 @@ const PracticePage = () => {
         </Link>
       </div>
 
-      <div>
-        <label htmlFor="vocalSelect" className="mr-2 font-semibold">Selecciona una vocal:</label>
-        <select id="vocalSelect" value={selectedVocal} onChange={(e) => setSelectedVocal(e.target.value)} className="p-2 rounded-lg border">
-          <option value="a">A</option>
-          <option value="e">E</option>
-          <option value="i">I</option>
-          <option value="o">O</option>
-          <option value="u">U</option>
-        </select>
-      </div>
-
-      <div className="my-4 bg-gray-200 rounded-full h-8 overflow-hidden">
-        <div
-          className="bg-green-500 h-full flex items-center justify-center text-white font-bold transition-all duration-100"
-          style={{ width: `${score}%` }}
-        >
-          {score}%
+      <div className="my-6 bg-white p-4 rounded-lg shadow-md">
+        <div className="flex justify-between items-center mb-2">
+          <span className="font-medium text-gray-700">Precisión:</span>
+          <span className="font-bold">{scores[detectedVocal] || '0.0'}%</span>
+        </div>
+        <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+          <div
+            className={`h-full transition-all duration-300 ${detectedVocal === selectedVocal ? 'bg-green-500' : 'bg-red-500'}`}
+            style={{ width: `${highestScore}%` }}
+          />
         </div>
       </div>
 
-      <div className="relative w-full aspect-video bg-gray-900 rounded-lg overflow-hidden mx-auto" style={{ maxWidth: '640px' }}>
+      <div className="relative w-full aspect-video bg-gray-900 rounded-lg overflow-hidden mx-auto mb-6 shadow-lg" style={{ maxWidth: '640px' }}>
         <video ref={videoRef} className="w-full h-full object-cover transform scale-x-[-1]" autoPlay playsInline muted />
         <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full transform scale-x-[-1]" width="640" height="480" />
+      </div>
+
+      <div className="text-center">
+        <div className="grid grid-cols-5 gap-2 mb-4">
+          {['a', 'e', 'i', 'o', 'u'].map((vowel) => (
+            <div key={vowel} className="text-center">
+              <div className={`text-lg font-medium ${vowel === detectedVocal ? (vowel === selectedVocal ? 'text-green-600' : 'text-black') : 'text-gray-400'}`}>
+                {vowel.toUpperCase()}
+              </div>
+              <div className={`text-sm font-bold ${vowel === detectedVocal ? (vowel === selectedVocal ? 'text-green-600' : 'text-black') : 'text-gray-400'}`}>
+                {scores[vowel] || '0.0'}%
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="mt-4">
+          <p className="text-lg font-medium text-gray-700 mb-1">Vocal detectada:</p>
+          <div className={`text-4xl font-bold ${detectedVocal === selectedVocal ? 'text-green-600' : 'text-black'}`}>
+            {detectedVocal ? detectedVocal.toUpperCase() : '—'}
+          </div>
+          {detectedVocal && (
+            <p className={`mt-2 font-medium ${detectedVocal === selectedVocal ? 'text-green-600' : 'text-red-600'}`}>
+              {detectedVocal === selectedVocal ? '¡Correcto! Sigue practicando.' : 'Intenta hacer la vocal seleccionada'}
+            </p>
+          )}
+        </div>
       </div>
     </section>
   );

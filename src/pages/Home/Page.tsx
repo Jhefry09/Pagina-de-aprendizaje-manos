@@ -34,7 +34,7 @@ const HomePage = () => {
         {vocals.map((vocal) => (
           <Link
             key={vocal.vocal}
-            to={`/practice/${vocal.vocal}`}
+            to={`/practice/${vocal.vocal.toLowerCase()}`}
             className="block p-4 bg-white rounded-lg shadow-md transition-transform transform hover:scale-105"
           >
             {/* Aquí irán las imágenes de `src/assets`. */}
