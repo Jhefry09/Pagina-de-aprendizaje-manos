@@ -1,0 +1,35 @@
+.transition-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.curtain {
+  position: fixed;
+  top: 0;
+  width: 50%;
+  height: 100vh;
+  background-color: #215C5C;
+  z-index: 1000;
+  transition: transform 0.5s ease-in-out;
+  will-change: transform;
+}
+
+.left-curtain {
+  left: 0;
+  transform: translateX(-100%);
+}
+
+.right-curtain {
+  right: 0;
+  transform: translateX(100%);
+}
+
+.transition-container.transitioning .left-curtain {
+  transform: translateX(0);
+}
+
+.transition-container.transitioning .right-curtain {
+  transform: translateX(0);
+}

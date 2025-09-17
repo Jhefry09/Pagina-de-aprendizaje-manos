@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from 'react';
-import HandSkeleton from '../../components/HandSkeleton';
 import { useVocalContext } from '../../hooks/useVocalContext';
 import { type NormalizedLandmark, type Results, type MediaPipeHandsInstance } from '../../types';
 
@@ -55,23 +54,48 @@ const TrainingPage = () => {
     title: '',
     message: ''
   });
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const countdownRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Function to load scripts
+  const loadScript = (src: string) => {
+    return new Promise((resolve, reject) => {
+      if (document.querySelector(`script[src="${src}"]`)) {
+        return resolve(true);
+      }
+      
+      const script = document.createElement('script');
+      script.src = src;
+      script.onload = () => resolve(true);
+      script.onerror = (error) => {
+        console.error(`Error loading script: ${src}`, error);
+        reject(error);
+      };
+      document.head.appendChild(script);
+    });
+  };
 
   useEffect(() => {
     let hands: MediaPipeHandsInstance | null = null;
     type CameraType = {
       start: () => Promise<void>;
-      // Note: The actual Camera implementation might not have a stop method
-      // We'll handle cleanup differently
+      stop?: () => void;
     } | null;
     let camera: CameraType = null;
     let isMounted = true;
 
     const initializeMediaPipe = async () => {
       try {
-        // Wait for the MediaPipe hands library to be available
+        // Load required scripts if not already loaded
         if (!window.Hands || !window.Camera) {
-          console.log('Waiting for MediaPipe libraries to load...');
-          return;
+          try {
+            await loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js');
+            await loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js');
+            await loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js');
+          } catch (error) {
+            console.error('Failed to load MediaPipe scripts:', error);
+            return;
+          }
         }
 
         // Initialize MediaPipe Hands
@@ -82,17 +106,38 @@ const TrainingPage = () => {
         hands.setOptions({
           maxNumHands: 1,
           modelComplexity: 1,
-          minDetectionConfidence: 0.5,
-          minTrackingConfidence: 0.5,
+          minDetectionConfidence: 0.7,  // Increased from 0.5 to 0.7 for more confident detections
+          minTrackingConfidence: 0.7,   // Increased from 0.5 to 0.7 for more stable tracking
+          selfieMode: false,             // Optimize for selfie mode (front camera)
+          staticImageMode: false,       // Set to false for video stream
+          smoothLandmarks: true,        // Enable smoothing for less jitter
+          refineLandmarks: true,        // Enable refined hand landmarks (more accurate but more resource intensive)
         });
 
         hands.onResults((results: Results) => {
           if (!isMounted) return;
           
-          if (results.multiHandLandmarks?.length > 0) {
-            setLandmarks(results.multiHandLandmarks[0]);
-          } else {
-            setLandmarks([]);
+          const canvasCtx = canvasRef.current?.getContext('2d');
+          if (canvasCtx && canvasRef.current) {
+            canvasCtx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+            
+            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+              const handLandmarks = results.multiHandLandmarks[0];
+              
+              // Draw hand connections and landmarks with the same style as Practice page
+              window.drawConnectors(canvasCtx, handLandmarks, window.HAND_CONNECTIONS, { 
+                color: '#f2994a', 
+                lineWidth: 2 
+              });
+              window.drawLandmarks(canvasCtx, handLandmarks, { 
+                color: '#215c5c', 
+                lineWidth: 1 
+              });
+              
+              setLandmarks(handLandmarks);
+            } else {
+              setLandmarks([]);
+            }
           }
         });
 
@@ -127,43 +172,8 @@ const TrainingPage = () => {
       }
     };
 
-    // Initial check if libraries are already loaded
-    if (window.Hands && window.Camera) {
-      initializeMediaPipe();
-    } else {
-      // Fallback: Try to load the scripts if they're not available
-      const loadScript = (src: string) => {
-        return new Promise((resolve, reject) => {
-          // Check if script is already loaded
-          if (document.querySelector(`script[src="${src}"]`)) {
-            return resolve(true);
-          }
-          
-          const script = document.createElement('script');
-          script.src = src;
-          script.crossOrigin = 'anonymous';
-          script.onload = () => resolve(true);
-          script.onerror = (err) => {
-            console.error(`Failed to load script: ${src}`, err);
-            reject(err);
-          };
-          document.head.appendChild(script);
-        });
-      };
-
-      // Create an async IIFE to handle the script loading
-      (async () => {
-        try {
-          // Load scripts in order to ensure dependencies are available
-          await loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js');
-          await loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js');
-          await loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js');
-          initializeMediaPipe();
-        } catch (error) {
-          console.error('Failed to load MediaPipe scripts:', error);
-        }
-      })();
-    }
+    // Initialize MediaPipe
+    initializeMediaPipe();
 
     // Store the current video ref in a variable to avoid potential null reference in cleanup
     const videoElement = videoRef.current;
@@ -171,27 +181,68 @@ const TrainingPage = () => {
     // Cleanup function
     return () => {
       isMounted = false;
+      
+      // Clear any pending countdown
+      if (countdownRef.current) {
+        clearInterval(countdownRef.current);
+        countdownRef.current = null;
+      }
+      
       // Stop all tracks on the video stream if it exists
       if (videoElement && videoElement.srcObject) {
         const stream = videoElement.srcObject as MediaStream;
         const tracks = stream.getTracks();
-        tracks.forEach(track => track.stop());
+        tracks.forEach(track => {
+          track.stop();
+          stream.removeTrack(track);
+        });
       }
+      
+      // Clean up MediaPipe
       if (hands) {
-        hands.close();
+        try {
+          hands.close();
+        } catch (error) {
+          console.error('Error closing MediaPipe hands:', error);
+        }
       }
     };
   }, []);
 
-    const handleSaveModel = async () => {
-    if (!selectedVocal) {
-      setModal({
-        isOpen: true,
-        title: 'Error',
-        message: 'Por favor, selecciona una vocal.'
+    const startCountdown = (vocal: string) => {
+    setSelectedVocal(vocal);
+    setCountdown(3);
+    
+    countdownRef.current = setInterval(() => {
+      setCountdown(prev => {
+        if (prev === 1) {
+          clearInterval(countdownRef.current as NodeJS.Timeout);
+          captureAndSaveModel(vocal);
+          return null;
+        }
+        return prev ? prev - 1 : null;
       });
-      return;
+    }, 1000);
+  };
+
+  const cancelCountdown = () => {
+    if (countdownRef.current) {
+      clearInterval(countdownRef.current);
+      countdownRef.current = null;
     }
+    setCountdown(null);
+    setSelectedVocal('');
+  };
+
+  useEffect(() => {
+    return () => {
+      if (countdownRef.current) {
+        clearInterval(countdownRef.current);
+      }
+    };
+  }, []);
+
+  const captureAndSaveModel = async (vocal: string) => {
     if (landmarks.length === 0) {
       setModal({
         isOpen: true,
@@ -201,12 +252,16 @@ const TrainingPage = () => {
       return;
     }
 
-        updateVocalModel(selectedVocal, landmarks);
+    updateVocalModel(vocal, landmarks);
     setModal({
       isOpen: true,
       title: 'Éxito',
-      message: `Modelo para la vocal '${selectedVocal.toUpperCase()}' ha sido actualizado correctamente.`
+      message: `Modelo para la vocal '${vocal.toUpperCase()}' ha sido actualizado correctamente.`
     });
+    
+    // Reset selected vocal and countdown after successful capture
+    setSelectedVocal('');
+    setCountdown(null);
 
     // Capturar y enviar la foto al backend
     if (videoRef.current && canvasRef.current) {
@@ -261,46 +316,66 @@ const TrainingPage = () => {
 
   return (
     <section className="p-6 bg-gray-50 min-h-screen">
-      <h1 className="text-3xl font-bold text-gray-700 font-montserrat mb-6">
-        Entrenamiento de Modelos de Gestos
-      </h1>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-white rounded-lg shadow-md p-4 flex flex-col items-center">
-          <h2 className="text-xl font-semibold mb-4 text-gray-800">Cámara en Vivo</h2>
-          <div className="relative w-full aspect-video bg-gray-900 rounded-lg overflow-hidden">
-            <video ref={videoRef} className="w-full h-full object-cover transform scale-x-[-1]" autoPlay playsInline />
-                        <div className="absolute top-0 left-0 w-full h-full transform scale-x-[-1]">
-              <HandSkeleton landmarks={landmarks} />
-            </div>
-            <canvas ref={canvasRef} width="320" height="240" className="hidden"></canvas>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-700 font-montserrat">
+            Entrenamiento de Gestos
+          </h1>
+          <p className="text-gray-600">Crea un nuevo modelo de gesto para una vocal</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Webcam Preview */}
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h2 className="text-xl font-semibold mb-4 text-gray-800">Vista Previa</h2>
+          <div className="relative w-full aspect-video bg-gray-900 rounded-lg overflow-hidden mx-auto mb-6 shadow-lg">
+            <video ref={videoRef} className="w-full h-full object-cover transform scale-x-[-1]" autoPlay playsInline muted />
+            <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full transform scale-x-[-1]" width="640" height="480" />
           </div>
         </div>
-        <div className="bg-white rounded-lg shadow-md p-6 flex flex-col items-center">
+
+        {/* Controls */}
+        <div className="bg-white rounded-lg shadow-md p-6">
           <h2 className="text-xl font-semibold mb-4 text-gray-800">Panel de Control</h2>
           <div className="w-full">
-            <label htmlFor="vocal-select" className="block text-sm font-medium text-gray-700 mb-2">
-              Selecciona la vocal para entrenar:
-            </label>
-            <select
-              id="vocal-select"
-              value={selectedVocal}
-              onChange={(e) => setSelectedVocal(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-lg"
-            >
-              <option value="">--Selecciona--</option>
-              <option value="a">A</option>
-              <option value="e">E</option>
-              <option value="i">I</option>
-              <option value="o">O</option>
-              <option value="u">U</option>
-            </select>
+            <h3 className="text-lg font-medium text-gray-700 mb-4">Selecciona una vocal:</h3>
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              {[
+                { letter: 'a', color: 'bg-red-400 hover:bg-red-500' },
+                { letter: 'e', color: 'bg-yellow-400 hover:bg-yellow-500' },
+                { letter: 'i', color: 'bg-blue-400 hover:bg-blue-500' },
+                { letter: 'o', color: 'bg-green-400 hover:bg-green-500' },
+                { letter: 'u', color: 'bg-purple-400 hover:bg-purple-500' },
+              ].map(({ letter, color }) => (
+                <button
+                  key={letter}
+                  onClick={() => startCountdown(letter)}
+                  disabled={!!countdown}
+                  className={`relative flex items-center justify-center p-6 rounded-xl shadow-md transition-all duration-300 ${
+                    selectedVocal === letter
+                      ? `${color.replace('hover:', '')} text-white scale-105`
+                      : `${color} text-white hover:shadow-lg`
+                  } ${countdown ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  <span className="text-2xl font-bold">{letter.toUpperCase()}</span>
+                  {selectedVocal === letter && countdown && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-xl">
+                      <span className="text-4xl font-bold text-white">{countdown}</span>
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+            {countdown && (
+              <button
+                onClick={cancelCountdown}
+                className="w-full py-2 px-4 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition-all duration-300"
+              >
+                Cancelar
+              </button>
+            )}
           </div>
-          <button
-            onClick={handleSaveModel}
-            className="mt-6 w-full py-3 px-4 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition-all duration-300"
-          >
-            Guardar Modelo de Gesto
-          </button>
           {apiResponse && (
             <div className={`mt-4 w-full p-4 rounded-lg transform transition-all duration-300 ease-out animate-fadeInUp ${
               apiResponse.type === 'success' 
