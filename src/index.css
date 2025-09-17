@@ -1,8 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Roboto:wght@300;400;500;700&display=swap');
+@import './styles/transitions.css';
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Custom transitions */
-@import './styles/transitions.css';
