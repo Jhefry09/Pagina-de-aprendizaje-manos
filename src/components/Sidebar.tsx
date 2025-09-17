@@ -1,14 +1,23 @@
-import { NavLink } from 'react-router-dom';
+import { useLocation, NavLink } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useTransition } from '../hooks/useTransition';
 import {
   faHandHoldingHeart,
   faHome,
-  faBookOpen,
   faDumbbell,
-  faSignOutAlt,
 } from '@fortawesome/free-solid-svg-icons';
 
 const Sidebar = () => {
+  const location = useLocation();
+  const { triggerTransition } = useTransition();
+
+  const handleNavigation = (e: React.MouseEvent, to: string) => {
+    e.preventDefault();
+    if (location.pathname !== to) {
+      triggerTransition(to);
+    }
+  };
+
   return (
     <aside className="w-72 bg-[#215c5c] text-[#f4f4f4] flex flex-col p-8 shadow-lg flex-shrink-0">
       <div className="flex items-center gap-4 pb-8 border-b border-white border-opacity-10 mb-8">
@@ -20,6 +29,7 @@ const Sidebar = () => {
           <li className="mb-2">
             <NavLink
               to="/"
+              onClick={(e) => handleNavigation(e, '/')}
               className={({ isActive }) =>
                 `flex items-center gap-4 text-white text-lg p-4 rounded-xl transition-colors duration-300 ${
                   isActive ? 'bg-white bg-opacity-20 font-semibold' : 'hover:bg-white hover:bg-opacity-10'
@@ -32,20 +42,8 @@ const Sidebar = () => {
           </li>
           <li className="mb-2">
             <NavLink
-              to="/dashboard"
-              className={({ isActive }) =>
-                `flex items-center gap-4 text-white text-lg p-4 rounded-xl transition-colors duration-300 ${
-                  isActive ? 'bg-white bg-opacity-20 font-semibold' : 'hover:bg-white hover:bg-opacity-10'
-                }`
-              }
-            >
-              <FontAwesomeIcon icon={faBookOpen} className="text-xl" />
-              Lecciones
-            </NavLink>
-          </li>
-          <li className="mb-2">
-            <NavLink
               to="/training"
+              onClick={(e) => handleNavigation(e, '/training')}
               className={({ isActive }) =>
                 `flex items-center gap-4 text-white text-lg p-4 rounded-xl transition-colors duration-300 ${
                   isActive ? 'bg-white bg-opacity-20 font-semibold' : 'hover:bg-white hover:bg-opacity-10'
@@ -58,12 +56,6 @@ const Sidebar = () => {
           </li>
         </ul>
       </nav>
-      <div className="mt-auto pt-8 border-t border-white border-opacity-10">
-        <button className="flex items-center gap-4 text-white text-lg p-4 rounded-xl transition-all duration-300 hover:bg-red-500 hover:text-white w-full text-left transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg">
-          <FontAwesomeIcon icon={faSignOutAlt} className="text-xl" />
-          Cerrar Sesión
-        </button>
-      </div>
     </aside>
   );
 };

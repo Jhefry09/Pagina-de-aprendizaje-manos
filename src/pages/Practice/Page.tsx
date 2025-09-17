@@ -60,8 +60,12 @@ const PracticePage = () => {
       hands.setOptions({
         maxNumHands: 1,
         modelComplexity: 1,
-        minDetectionConfidence: 0.7,
-        minTrackingConfidence: 0.5,
+        minDetectionConfidence: 0.7,  // Ensures more confident detections
+        minTrackingConfidence: 0.7,   // More stable tracking
+        selfieMode: false,             // Optimized for front camera
+        staticImageMode: false,       // For video stream
+        smoothLandmarks: true,        // Reduces jitter
+        refineLandmarks: true,        // More accurate landmarks
       });
 
       hands.onResults((results: Results) => {
@@ -92,7 +96,6 @@ const PracticePage = () => {
                 const baseLandmarks = normalizeLandmarks(vocalBase.landmarks);
                 const score = parseFloat(compareHands(normalizedHand, baseLandmarks));
                 newScores[vowel] = score.toFixed(1);
-                
                 if (score > maxScore) {
                   maxScore = score;
                   detected = vowel;
