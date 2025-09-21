@@ -1,8 +1,10 @@
-import { createContext } from 'react';
+import { createContext } from "react";
 
 export interface TransitionContextType {
   isTransitioning: boolean;
   triggerTransition: (to: string) => void;
 }
 
-export const TransitionContext = createContext<TransitionContextType | undefined>(undefined);
+export const TransitionContext = createContext<
+  TransitionContextType | undefined
+>(undefined);

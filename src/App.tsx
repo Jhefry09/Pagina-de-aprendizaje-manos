@@ -3,6 +3,7 @@ import {
   Routes,
   Route,
   useLocation,
+  Link,
 } from "react-router-dom";
 import { TransitionProvider } from "./contexts/TransitionProvider";
 import Sidebar from "./components/Sidebar";
@@ -16,7 +17,10 @@ const AppContent = () => {
 
   return (
     <div className="flex min-h-screen bg-[#e0e0e0] font-roboto text-gray-800">
-      <Sidebar />
+      <Sidebar /> 
+      <nav>
+        <Link to="/registro">Registro</Link> | <Link to="/login">Login</Link>
+      </nav>
       <main className="flex-grow p-8 overflow-y-auto">
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
