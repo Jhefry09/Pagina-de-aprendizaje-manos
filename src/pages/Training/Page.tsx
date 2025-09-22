@@ -11,12 +11,13 @@ const TrainingPage = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { updateVocalModel } = useVocalContext();
   const [landmarks, setLandmarks] = useState<NormalizedLandmark[]>([]);
-  const [selectedVocal, setSelectedVocal] = useState("");
+  const [selectedLetter, setSelectedLetter] = useState("");
   const [apiResponse, setApiResponse] = useState<{
     type: "success" | "error" | "info";
     message: string;
   } | null>(null);
   const [countdown, setCountdown] = useState<number | null>(null);
+  const [isRightHandDetected, setIsRightHandDetected] = useState(false);
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
 
   const loadScript = (src: string) => {
@@ -61,7 +62,7 @@ const TrainingPage = () => {
         });
 
         hands.setOptions({
-          maxNumHands: 1,
+          maxNumHands: 2,
           modelComplexity: 1,
           minDetectionConfidence: 0.7,
           minTrackingConfidence: 0.7,
@@ -81,22 +82,41 @@ const TrainingPage = () => {
               canvasRef.current.width,
               canvasRef.current.height,
             );
-            if (
-              results.multiHandLandmarks &&
-              results.multiHandLandmarks.length > 0
-            ) {
-              const handLandmarks = results.multiHandLandmarks[0];
-              window.drawConnectors(
-                canvasCtx,
-                handLandmarks,
-                window.HAND_CONNECTIONS,
-                { color: "#f2994a", lineWidth: 2 },
-              );
-              window.drawLandmarks(canvasCtx, handLandmarks, {
-                color: "#215c5c",
-                lineWidth: 1,
-              });
-              setLandmarks(handLandmarks);
+            
+            let rightHandLandmarks = null;
+            let foundRightHand = false;
+
+            if (results.multiHandLandmarks && results.multiHandedness) {
+              for (let i = 0; i < results.multiHandLandmarks.length; i++) {
+                const handLandmarks = results.multiHandLandmarks[i];
+                const detectedHandedness = results.multiHandedness[i]?.label || 'Right';
+                
+                const isUserRightHand = detectedHandedness === 'Left';
+                
+                window.drawConnectors(
+                  canvasCtx,
+                  handLandmarks,
+                  window.HAND_CONNECTIONS,
+                  { 
+                    color: isUserRightHand ? "#f2994a" : "#cccccc", 
+                    lineWidth: 2 
+                  },
+                );
+                window.drawLandmarks(canvasCtx, handLandmarks, {
+                  color: isUserRightHand ? "#215c5c" : "#999999",
+                  lineWidth: 1,
+                });
+
+                if (isUserRightHand) {
+                  rightHandLandmarks = handLandmarks;
+                  foundRightHand = true;
+                }
+              }
+            }
+
+            setIsRightHandDetected(foundRightHand);
+            if (foundRightHand && rightHandLandmarks) {
+              setLandmarks(rightHandLandmarks);
             } else {
               setLandmarks([]);
             }
@@ -152,14 +172,24 @@ const TrainingPage = () => {
     };
   }, []);
 
-  const startCountdown = (vocal: string) => {
-    setSelectedVocal(vocal);
+  const startCountdown = (letter: string) => {
+    if (!isRightHandDetected) {
+      setApiResponse({
+        type: "error",
+        message: "Por favor, muestra tu mano DERECHA frente a la cámara antes de entrenar.",
+      });
+      return;
+    }
+
+    setSelectedLetter(letter);
     setCountdown(3);
+    setApiResponse(null);
+    
     countdownRef.current = setInterval(() => {
       setCountdown((prev) => {
         if (prev === 1) {
           clearInterval(countdownRef.current as NodeJS.Timeout);
-          captureAndSaveModel(vocal);
+          captureAndSaveModel(letter);
           return null;
         }
         return prev ? prev - 1 : null;
@@ -173,7 +203,7 @@ const TrainingPage = () => {
       countdownRef.current = null;
     }
     setCountdown(null);
-    setSelectedVocal("");
+    setSelectedLetter("");
   };
 
   useEffect(() => {
@@ -184,12 +214,14 @@ const TrainingPage = () => {
     };
   }, []);
 
-  const captureAndSaveModel = async (vocal: string) => {
-    if (landmarks.length === 0) {
+  const captureAndSaveModel = async (letter: string) => {
+    if (landmarks.length === 0 || !isRightHandDetected) {
       setApiResponse({
         type: "error",
-        message: "No se detectó ninguna mano para capturar el modelo.",
+        message: "No se detectó la mano DERECHA para capturar el modelo. Intenta de nuevo.",
       });
+      setSelectedLetter("");
+      setCountdown(null);
       return;
     }
 
@@ -200,18 +232,18 @@ const TrainingPage = () => {
       z: lm.z,
     }));
 
-    updateVocalModel(vocal, normalizedLandmarks);
-    setSelectedVocal("");
+    updateVocalModel(letter, normalizedLandmarks);
+    setSelectedLetter("");
     setCountdown(null);
 
     try {
-      const response = await fetch("/vocales/procesar", {
+      const response = await fetch("/letras/procesar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          nombre: vocal.toLowerCase(), // 👈 AJUSTADO
+          nombre: letter.toLowerCase(),
           vectoresJson: {
-            landmarks: normalizedLandmarks, // ✅ ya como JSON
+            landmarks: normalizedLandmarks,
           },
         }),
       });
@@ -222,7 +254,7 @@ const TrainingPage = () => {
           type: "error",
           message:
             data.message ||
-            "Error al procesar la vocal. Por favor, inténtalo de nuevo.",
+            "Error al procesar la letra. Por favor, inténtalo de nuevo.",
         });
         return;
       }
@@ -230,7 +262,7 @@ const TrainingPage = () => {
         type: "success",
         message:
           data.message ||
-          `Modelo para la vocal '${vocal.toUpperCase()}' guardado exitosamente.`,
+          `Modelo para la letra '${letter.toUpperCase()}' guardado exitosamente con mano derecha.`,
       });
     } catch (error: unknown) {
       const errorMessage =
@@ -242,15 +274,51 @@ const TrainingPage = () => {
     }
   };
 
+  // Definir las letras del alfabeto y funciones especiales con colores
+  const alphabet = [
+    { letter: "a", color: "bg-red-400 hover:bg-red-500" },
+    { letter: "b", color: "bg-blue-400 hover:bg-blue-500" },
+    { letter: "c", color: "bg-green-400 hover:bg-green-500" },
+    { letter: "d", color: "bg-yellow-400 hover:bg-yellow-500" },
+    { letter: "e", color: "bg-purple-400 hover:bg-purple-500" },
+    { letter: "f", color: "bg-pink-400 hover:bg-pink-500" },
+    { letter: "g", color: "bg-indigo-400 hover:bg-indigo-500" },
+    { letter: "h", color: "bg-orange-400 hover:bg-orange-500" },
+    { letter: "i", color: "bg-teal-400 hover:bg-teal-500" },
+    { letter: "j", color: "bg-cyan-400 hover:bg-cyan-500" },
+    { letter: "k", color: "bg-emerald-400 hover:bg-emerald-500" },
+    { letter: "l", color: "bg-lime-400 hover:bg-lime-500" },
+    { letter: "m", color: "bg-amber-400 hover:bg-amber-500" },
+    { letter: "n", color: "bg-rose-400 hover:bg-rose-500" },
+    { letter: "o", color: "bg-violet-400 hover:bg-violet-500" },
+    { letter: "p", color: "bg-fuchsia-400 hover:bg-fuchsia-500" },
+    { letter: "q", color: "bg-sky-400 hover:bg-sky-500" },
+    { letter: "r", color: "bg-stone-400 hover:bg-stone-500" },
+    { letter: "s", color: "bg-neutral-400 hover:bg-neutral-500" },
+    { letter: "t", color: "bg-zinc-400 hover:bg-zinc-500" },
+    { letter: "u", color: "bg-slate-400 hover:bg-slate-500" },
+    { letter: "v", color: "bg-gray-400 hover:bg-gray-500" },
+    { letter: "w", color: "bg-red-500 hover:bg-red-600" },
+    { letter: "x", color: "bg-blue-500 hover:bg-blue-600" },
+    { letter: "y", color: "bg-green-500 hover:bg-green-600" },
+    { letter: "z", color: "bg-purple-500 hover:bg-purple-600" },
+  ];
+
+  // Funciones especiales
+  const specialFunctions = [
+    { letter: "ESPACIO", color: "bg-gray-600 hover:bg-gray-700", displayName: "ESP" },
+    { letter: "BORRAR", color: "bg-red-600 hover:bg-red-700", displayName: "DEL" },
+  ];
+
   return (
     <section className="p-6 bg-gray-50 min-h-screen">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-700 font-montserrat">
-            Entrenamiento de Gestos
+            Entrenamiento de Gestos del Alfabeto
           </h1>
           <p className="text-gray-600">
-            Crea un nuevo modelo de gesto para una vocal
+            Crea un nuevo modelo de gesto para cada letra del alfabeto usando tu mano DERECHA
           </p>
         </div>
       </div>
@@ -261,6 +329,15 @@ const TrainingPage = () => {
           <h2 className="text-xl font-semibold mb-4 text-gray-800">
             Vista Previa
           </h2>
+          
+          {/* Hand detection status */}
+          <div className="mb-4 p-3 rounded-lg flex items-center">
+            <div className={`w-3 h-3 rounded-full mr-3 ${isRightHandDetected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+            <span className={`font-medium ${isRightHandDetected ? 'text-green-700' : 'text-red-700'}`}>
+              {isRightHandDetected ? 'Mano derecha detectada ✋' : 'Mano derecha NO detectada - Levanta tu mano DERECHA'}
+            </span>
+          </div>
+
           <div className="relative w-full aspect-video bg-gray-900 rounded-lg overflow-hidden mx-auto mb-6 shadow-lg">
             <video
               ref={videoRef}
@@ -276,6 +353,19 @@ const TrainingPage = () => {
               height="480"
             />
           </div>
+          
+          {!isRightHandDetected && (
+            <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
+              <div className="flex items-center">
+                <svg className="w-5 h-5 text-yellow-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                <p className="text-yellow-800 text-sm">
+                  <strong>Importante:</strong> Levanta tu mano DERECHA (la que aparece del lado derecho en la pantalla). Las otras manos se muestran en gris y no se usarán para entrenar.
+                </p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Controls */}
@@ -285,48 +375,95 @@ const TrainingPage = () => {
           </h2>
           <div className="w-full">
             <h3 className="text-lg font-medium text-gray-700 mb-4">
-              Selecciona una vocal:
+              Selecciona una letra del alfabeto o función especial:
             </h3>
-            <div className="grid grid-cols-3 gap-4 mb-6">
-              {[
-                { letter: "a", color: "bg-red-400 hover:bg-red-500" },
-                { letter: "e", color: "bg-yellow-400 hover:bg-yellow-500" },
-                { letter: "i", color: "bg-blue-400 hover:bg-blue-500" },
-                { letter: "o", color: "bg-green-400 hover:bg-green-500" },
-                { letter: "u", color: "bg-purple-400 hover:bg-purple-500" },
-              ].map(({ letter, color }) => (
-                <button
-                  key={letter}
-                  onClick={() => startCountdown(letter)}
-                  disabled={!!countdown}
-                  className={`relative flex items-center justify-center p-6 rounded-xl shadow-md transition-all duration-300 ${
-                    selectedVocal === letter
-                      ? `${color.replace("hover:", "")} text-white scale-105`
-                      : `${color} text-white hover:shadow-lg`
-                  } ${countdown ? "opacity-50 cursor-not-allowed" : ""}`}
-                >
-                  <span className="text-2xl font-bold">
-                    {letter.toUpperCase()}
-                  </span>
-                  {selectedVocal === letter && countdown && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-xl">
-                      <span className="text-4xl font-bold text-white">
-                        {countdown}
-                      </span>
-                    </div>
-                  )}
-                </button>
-              ))}
+            
+            {/* Scrollable alphabet grid */}
+            <div className="max-h-96 overflow-y-auto mb-6 p-2 border rounded-lg">
+              <div className="space-y-4">
+                {/* Alphabet Letters */}
+                <div>
+                  <h4 className="text-sm font-medium text-gray-600 mb-2 px-2">Letras del Alfabeto:</h4>
+                  <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                    {alphabet.map(({ letter, color }) => (
+                      <button
+                        key={letter}
+                        onClick={() => startCountdown(letter)}
+                        disabled={!!countdown || !isRightHandDetected}
+                        className={`relative flex items-center justify-center p-3 rounded-lg shadow-sm transition-all duration-300 ${
+                          selectedLetter === letter
+                            ? `${color.replace("hover:", "")} text-white scale-105 shadow-md`
+                            : `${color} text-white hover:shadow-md transform hover:scale-102`
+                        } ${countdown || !isRightHandDetected ? "opacity-50 cursor-not-allowed" : ""}`}
+                      >
+                        <span className="text-lg font-bold">
+                          {letter.toUpperCase()}
+                        </span>
+                        {selectedLetter === letter && countdown && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-60 rounded-lg">
+                            <span className="text-2xl font-bold text-white">
+                              {countdown}
+                            </span>
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Special Functions */}
+                <div>
+                  <h4 className="text-sm font-medium text-gray-600 mb-2 px-2">Funciones Especiales:</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    {specialFunctions.map(({ letter, color, displayName }) => (
+                      <button
+                        key={letter}
+                        onClick={() => startCountdown(letter)}
+                        disabled={!!countdown || !isRightHandDetected}
+                        className={`relative flex items-center justify-center p-4 rounded-lg shadow-sm transition-all duration-300 ${
+                          selectedLetter === letter
+                            ? `${color.replace("hover:", "")} text-white scale-105 shadow-md`
+                            : `${color} text-white hover:shadow-md transform hover:scale-102`
+                        } ${countdown || !isRightHandDetected ? "opacity-50 cursor-not-allowed" : ""}`}
+                      >
+                        <div className="text-center">
+                          <span className="text-lg font-bold block">
+                            {displayName}
+                          </span>
+                          <span className="text-xs opacity-75">
+                            {letter}
+                          </span>
+                        </div>
+                        {selectedLetter === letter && countdown && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-60 rounded-lg">
+                            <span className="text-2xl font-bold text-white">
+                              {countdown}
+                            </span>
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
+            
             {countdown && (
               <button
                 onClick={cancelCountdown}
-                className="w-full py-2 px-4 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition-all duration-300"
+                className="w-full py-3 px-4 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition-all duration-300 mb-4"
               >
-                Cancelar
+                Cancelar Entrenamiento
               </button>
             )}
+            
+            {/* Progress indicator */}
+            <div className="text-center text-sm text-gray-600">
+              <p>Entrena cada letra del alfabeto y las funciones especiales para crear un modelo completo</p>
+              <p className="text-xs mt-1">26 letras + 2 funciones especiales disponibles para entrenar</p>
+            </div>
           </div>
+          
           {apiResponse && (
             <div
               className={`mt-4 w-full p-4 rounded-lg transform transition-all duration-300 ease-out animate-fadeInUp ${
