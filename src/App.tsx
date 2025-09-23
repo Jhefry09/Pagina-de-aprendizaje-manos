@@ -9,6 +9,7 @@ import Navbar from "./components/Navbar";
 import HomePage from "./pages/Home/Page";
 import TrainingPage from "./pages/Training/Page";
 import PracticePage from "./pages/Practice_Words/Page";
+import WelcomePage from "./pages/Welcome/Page";
 import { AnimatePresence } from "framer-motion";
 
 const AppContent = () => {
@@ -32,6 +33,7 @@ const AppContent = () => {
             <Route path="/" element={<HomePage />} />
             <Route path="/training" element={<TrainingPage />} />
             <Route path="/practice/:moduleType" element={<PracticePage />} />
+            <Route path="/Welcome" element={<WelcomePage/>} />
           </Routes>
         </AnimatePresence>
       </main>
