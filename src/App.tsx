@@ -5,11 +5,13 @@ import {
   useLocation,
 } from "react-router-dom";
 import { TransitionProvider } from "./contexts/TransitionProvider";
+import { AuthProvider } from "./contexts/AuthContext";
 import Navbar from "./components/Navbar";
 import HomePage from "./pages/Home/Page";
 import TrainingPage from "./pages/Training/Page";
-import PracticePage from "./pages/Practice_Words/Page";
-import WelcomePage from "./pages/Welcome/Page";
+import PracticePage from "./pages/PracticeWords/Page";
+import DashboardPage from "./pages/Dashboard/Page";
+import LoginPage from "./pages/Login/Page";
 import { AnimatePresence } from "framer-motion";
 
 const AppContent = () => {
@@ -22,18 +24,15 @@ const AppContent = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-gray-100">
-      <Navbar 
-        userName="Carlos" 
-        userRole="Administrador" 
-        activeLink={activeLink} 
-      />
+      <Navbar activeLink={activeLink} />
       <main className="pt-20 md:pt-24">
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
             <Route path="/" element={<HomePage />} />
             <Route path="/training" element={<TrainingPage />} />
             <Route path="/practice/:moduleType" element={<PracticePage />} />
-            <Route path="/Welcome" element={<WelcomePage/>} />
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/login" element={<LoginPage />} />
           </Routes>
         </AnimatePresence>
       </main>
@@ -44,9 +43,11 @@ const AppContent = () => {
 const App = () => {
   return (
     <Router>
-      <TransitionProvider>
-        <AppContent />
-      </TransitionProvider>
+      <AuthProvider>
+        <TransitionProvider>
+          <AppContent />
+        </TransitionProvider>
+      </AuthProvider>
     </Router>
   );
 };

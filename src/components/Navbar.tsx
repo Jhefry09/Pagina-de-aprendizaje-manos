@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { User, ChevronDown, X, Menu } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth';
+import type { AuthContextType } from '../contexts/auth-context';
 
 interface NavLinkProps {
   href: string;
@@ -9,25 +10,26 @@ interface NavLinkProps {
 }
 
 interface NavbarProps {
-  userName: string;
-  userRole: string;
   activeLink?: string;
 }
 
 const NavLink = ({ href, children, isActive = false }: NavLinkProps) => (
   <a
     href={href}
-    className={`px-3 py-2 text-sm font-medium transition-colors duration-200 ${
+    className={`px-3 py-2.5 text-sm font-medium transition-colors duration-200 rounded-lg ${
       isActive 
-        ? 'text-white border-b-2 border-blue-500' 
-        : 'text-gray-400 hover:text-white'
+        ? 'text-white bg-gray-800/50' 
+        : 'text-gray-300 hover:text-white hover:bg-gray-700/50'
     }`}
   >
     {children}
   </a>
 );
 
-const Navbar = ({ userName, userRole, activeLink = 'inicio' }: NavbarProps) => {
+const Navbar = ({ activeLink = 'inicio' }: NavbarProps) => {
+  const auth = useAuth() as AuthContextType;
+  const userName = auth.user?.name || 'Usuario';
+  const userRole = auth.user?.role || 'Invitado';
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showClassesDropdown, setShowClassesDropdown] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
@@ -62,35 +64,47 @@ const Navbar = ({ userName, userRole, activeLink = 'inicio' }: NavbarProps) => {
             <NavLink href="/" isActive={activeLink === 'inicio'}>Inicio</NavLink>
             
             <div className="relative">
-              <button 
-                onClick={() => setShowClassesDropdown(!showClassesDropdown)}
-                onMouseEnter={() => setShowClassesDropdown(true)}
-                onMouseLeave={() => setShowClassesDropdown(false)}
-                className="px-3 py-2 text-sm font-medium text-gray-400 hover:text-white flex items-center transition-colors duration-200"
-              >
-                Clases
-                <ChevronDown className={`ml-1 h-4 w-4 transition-transform duration-200 ${showClassesDropdown ? 'transform rotate-180' : ''}`} />
-              </button>
-              
-              {showClassesDropdown && (
+              <div className="relative">
+                <button 
+                  onClick={() => setShowClassesDropdown(!showClassesDropdown)}
+                  onMouseEnter={() => setShowClassesDropdown(true)}
+                  className={`px-3 py-2.5 text-sm font-medium flex items-center space-x-1 rounded-lg transition-all duration-200 ${
+                    showClassesDropdown || activeLink === 'clases'
+                      ? 'text-white bg-gray-800/50'
+                      : 'text-gray-300 hover:text-white hover:bg-gray-700/50'
+                  }`}
+                >
+                  <span>Clases</span>
+                  <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${
+                    showClassesDropdown ? 'transform rotate-180' : ''
+                  }`} />
+                </button>
+                
                 <div 
-                  className="absolute left-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50"
+                  className={`absolute left-0 mt-1 w-48 rounded-xl shadow-xl bg-gray-800/95 backdrop-blur-sm border border-gray-700/50 z-50 transition-all duration-200 origin-top ${
+                    showClassesDropdown 
+                      ? 'opacity-100 scale-100 translate-y-0 pointer-events-auto' 
+                      : 'opacity-0 scale-95 -translate-y-1 pointer-events-none'
+                  }`}
                   onMouseEnter={() => setShowClassesDropdown(true)}
                   onMouseLeave={() => setShowClassesDropdown(false)}
                 >
-                  <div className="py-1">
+                  <div className="py-2">
                     {modules.map((module) => (
                       <a
                         key={module.id}
                         href={`#${module.id}`}
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-150"
+                        className="block px-4 py-2.5 text-sm text-gray-200 hover:bg-gray-700/70 transition-colors duration-150"
+                        onClick={() => setShowClassesDropdown(false)}
                       >
-                        <span className="flex-1">{module.title}</span>
+                        <span className="flex items-center space-x-2">
+                          <span className="flex-1">{module.title}</span>
+                        </span>
                       </a>
                     ))}
                   </div>
                 </div>
-              )}
+              </div>
             </div>
             
             <NavLink href="/training">
@@ -103,14 +117,23 @@ const Navbar = ({ userName, userRole, activeLink = 'inicio' }: NavbarProps) => {
             <div className="relative">
               <button 
                 onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
-                className="px-4 py-2 rounded-lg text-sm font-medium text-gray-200 hover:bg-gray-700/50 hover:text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-blue-400 flex items-center space-x-1"
+                className="px-3 py-2 rounded-lg text-sm font-medium text-gray-200 hover:bg-gray-700/50 hover:text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-blue-400 flex items-center space-x-1.5"
               >
-                <span>Perfil</span>
-                <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isProfileDropdownOpen ? 'transform rotate-180' : ''}`} />
+                <div className="h-8 w-8 rounded-full bg-gray-700 flex items-center justify-center border border-gray-600">
+                  <User className="h-4 w-4 text-gray-300" />
+                </div>
+                <span className="hidden sm:inline">Perfil</span>
+                <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${
+                  isProfileDropdownOpen ? 'transform rotate-180' : ''
+                }`} />
               </button>
               
               {isProfileDropdownOpen && (
-                <div className={`absolute right-0 mt-2 w-56 rounded-xl shadow-xl bg-gray-800 ring-1 ring-white/10 focus:outline-none z-10 overflow-hidden transition-all duration-200 origin-top-right ${isProfileDropdownOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0 pointer-events-none'}`}
+                <div className={`absolute right-0 mt-2 w-56 rounded-xl shadow-xl bg-gray-800/95 backdrop-blur-sm border border-gray-700/50 z-10 overflow-hidden transition-all duration-200 origin-top-right ${
+                  isProfileDropdownOpen 
+                    ? 'opacity-100 scale-100 translate-y-0 pointer-events-auto' 
+                    : 'opacity-0 scale-95 -translate-y-1 pointer-events-none'
+                }`}
                 role="menu"
                 aria-orientation="vertical"
                 aria-labelledby="options-menu"
