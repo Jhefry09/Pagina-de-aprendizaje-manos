@@ -2,37 +2,13 @@ import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { Loader2, LogIn } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import * as faceapi from 'face-api.js';
+import Webcam from 'react-webcam';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CameraIcon, UserIcon, ArrowPathIcon, CheckCircleIcon, ExclamationTriangleIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { FaceSmileIcon as FaceSmileSolid } from '@heroicons/react/24/solid';
 
 const LoginPage: React.FC = () => {
-  // Usamos un tipo personalizado para el ref del video
-  type WebcamWithVideo = {
-    video: HTMLVideoElement | null;
-    getScreenshot: () => string | null;
-  };
-  
-  const webcamRef = useRef<WebcamWithVideo>({ 
-    video: null, 
-    getScreenshot: () => {
-      const video = webcamRef.current?.video;
-      if (!video) return null;
-      
-      const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return null;
-      
-      // Voltear horizontalmente para que coincida con la vista previa
-      ctx.translate(canvas.width, 0);
-      ctx.scale(-1, 1);
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      
-      return canvas.toDataURL('image/jpeg');
-    }
-  });
+  const webcamRef = useRef<Webcam>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [imgSrc, setImgSrc] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -44,154 +20,177 @@ const LoginPage: React.FC = () => {
   // Cargar modelos de face-api.js
   useEffect(() => {
     let isMounted = true;
-    let stream: MediaStream | null = null;
     
     const loadModels = async () => {
       if (!isMounted) return;
       
       setIsLoading(true);
-      setError(null);
       
       try {
-        // Mostrar mensaje de carga
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        await Promise.all([
-          faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
-          faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
-          faceapi.nets.faceRecognitionNet.loadFromUri('/models'),
-        ]);
+        // Cargar los modelos necesarios
+        await faceapi.nets.tinyFaceDetector.loadFromUri('/models');
+        await faceapi.nets.faceLandmark68Net.loadFromUri('/models');
         
         if (isMounted) {
           setModelsLoaded(true);
+          setIsLoading(false);
         }
       } catch (err) {
-        console.error('Error al cargar modelos:', err);
+        console.error('Error cargando modelos:', err);
         if (isMounted) {
-          setError('Error al cargar los modelos de reconocimiento facial. Por favor, recarga la página.');
-        }
-      } finally {
-        if (isMounted) {
+          setError('Error al cargar los modelos de reconocimiento facial');
           setIsLoading(false);
         }
       }
     };
-
-    // Iniciar la cámara
-    const startCamera = async () => {
-      try {
-        const mediaStream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-            facingMode: 'user'
-          },
-          audio: false
-        });
-        
-        if (webcamRef.current && isMounted) {
-          const video = webcamRef.current.video;
-          if (video) {
-            video.srcObject = mediaStream;
-            stream = mediaStream;
-          }
-        }
-      } catch (err) {
-        console.error('Error al acceder a la cámara:', err);
-        if (isMounted) {
-          setError('No se pudo acceder a la cámara. Asegúrate de haber otorgado los permisos necesarios.');
-        }
-      }
-    };
-
-    loadModels();
-    startCamera();
     
-    // Limpiar al desmontar
+    loadModels();
+    
+    // Limpieza
     return () => {
       isMounted = false;
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
     };
   }, []);
 
   // Detectar rostros en tiempo real
   const detectFaces = useCallback(async () => {
-    if (!modelsLoaded || !webcamRef.current || !canvasRef.current) return;
-
-    const video = webcamRef.current.video;
-    if (!video) return;
-
+    const video = webcamRef.current?.video;
+    if (!video || !canvasRef.current) return;
+    
+    // Asegurarse de que el video esté listo
+    if (video.readyState !== 4) return;
+    
+    const canvas = canvasRef.current;
+    const displaySize = { 
+      width: 480,  // Resolución reducida para mejor rendimiento
+      height: 360
+    };
+    
+    // Establecer dimensiones del canvas
+    canvas.width = displaySize.width;
+    canvas.height = displaySize.height;
+    
+    faceapi.matchDimensions(canvas, displaySize);
+    
     try {
-      const displaySize = { width: video.width, height: video.height };
-      faceapi.matchDimensions(canvasRef.current, displaySize);
-
-      const detections = await faceapi.detectAllFaces(
-        video,
-        new faceapi.TinyFaceDetectorOptions({
-          inputSize: 320,
-          scoreThreshold: 0.5
-        })
-      ).withFaceLandmarks();
-
-      const canvas = canvasRef.current;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-
-      // Limpiar canvas
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // Dibujar detecciones con un estilo más suave
+      // Detectar rostros con opciones optimizadas para mayor estabilidad
+      const options = new faceapi.TinyFaceDetectorOptions({
+        inputSize: 224,  // Tamaño balanceado entre rendimiento y precisión
+        scoreThreshold: 0.45  // Umbral más bajo para mayor estabilidad
+      });
+      
+      // Aplicar suavizado para reducir parpadeo
+      const detections = await faceapi
+        .detectAllFaces(video, options)
+        .withFaceLandmarks();
+      
+      // Dibujar detecciones en el canvas
+      const context = canvas.getContext('2d');
+      if (!context) return;
+      
+      // Limpiar el canvas
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // Dibujar recuadro de guía
+      const guideSize = Math.min(canvas.width, canvas.height) * 0.7;
+      const guideX = (canvas.width - guideSize) / 2;
+      const guideY = (canvas.height - guideSize) / 2;
+      
+      context.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+      context.lineWidth = 2;
+      context.setLineDash([5, 5]);
+      context.strokeRect(guideX, guideY, guideSize, guideSize);
+      context.setLineDash([]);
+      
       if (detections.length > 0) {
+        // Aplicar transformación de espejo a todo el canvas
+        context.save();
+        context.scale(-1, 1);  // Invertir horizontalmente
+        context.translate(-canvas.width, 0);
+        
+        // Suavizar las detecciones
         const resizedDetections = faceapi.resizeResults(detections, displaySize);
         
-        // Dibujar caja de detección con estilo mejorado
-        resizedDetections.forEach(({ detection, landmarks }) => {
-          const { x, y, width, height } = detection.box;
-          
-          // Dibujar caja suavizada
-          ctx.strokeStyle = '#3b82f6';
-          ctx.lineWidth = 2;
-          ctx.strokeRect(x, y, width, height);
-          
-          // Dibujar puntos de referencia faciales
-          ctx.fillStyle = '#3b82f6';
-          landmarks.positions.forEach(point => {
-            ctx.beginPath();
-            ctx.arc(point.x, point.y, 2, 0, 2 * Math.PI);
-            ctx.fill();
-          });
-        });
+        // Dibujar con opacidad para suavizar transiciones
+        context.globalAlpha = 0.8;
+        faceapi.draw.drawDetections(canvas, resizedDetections);
+        faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
+        context.globalAlpha = 1.0;
+        
+        context.restore();
       }
-
-      // Actualizar estado de detección de rostro con un pequeño retraso para evitar parpadeo
-      const faceCurrentlyDetected = detections.length > 0;
-      if (faceCurrentlyDetected !== faceDetected) {
-        setTimeout(() => setFaceDetected(faceCurrentlyDetected), 100);
+      
+      // Usar un umbral de tiempo para evitar cambios bruscos en la detección
+      setFaceDetected(prev => {
+        const now = Date.now();
+        const faceFound = detections.length > 0;
+        
+        // Si hay rostro detectado, actualizar inmediatamente
+        if (faceFound) return true;
+        
+        // Si no hay rostro, esperar un poco antes de actualizar para evitar parpadeos
+        const timeSinceLastDetection = now - (lastDetectionRef.current || 0);
+        if (timeSinceLastDetection < 300) { // 300ms de retraso
+          return prev;
+        }
+        return false;
+      });
+      
+      if (detections.length > 0) {
+        lastDetectionRef.current = Date.now();
       }
     } catch (err) {
-      console.error('Error en la detección facial:', err);
+      console.error('Error detectando rostros:', err);
     }
-  }, [modelsLoaded, faceDetected]);
-
-  // Actualizar detección de rostros
+  }, []);
+  
+  // Referencia para el tiempo de la última detección
+  const lastDetectionRef = useRef<number>(0);
+  
+  // Actualizar las detecciones con requestAnimationFrame para mejor sincronización
   useEffect(() => {
     if (!modelsLoaded) return;
-
-    const interval = setInterval(detectFaces, 100);
-    return () => clearInterval(interval);
+    
+    let animationFrameId: number;
+    let lastTime = 0;
+    const fpsInterval = 1000 / 15; // Objetivo de 15 FPS para la detección
+    
+    const detectLoop = (time: number) => {
+      if (!lastTime) lastTime = time;
+      const elapsed = time - lastTime;
+      
+      // Controlar la frecuencia de detección
+      if (elapsed > fpsInterval) {
+        lastTime = time - (elapsed % fpsInterval);
+        detectFaces();
+      }
+      
+      animationFrameId = requestAnimationFrame(detectLoop);
+    };
+    
+    // Iniciar el bucle de detección
+    animationFrameId = requestAnimationFrame(detectLoop);
+    
+    // Limpieza
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+    };
   }, [modelsLoaded, detectFaces]);
 
   // Capturar imagen
   const capture = useCallback(() => {
     if (!webcamRef.current) return;
     
-    const imageSrc = webcamRef.current.getScreenshot();
-    if (imageSrc) {
-      setImgSrc(imageSrc);
+    try {
+      const imageSrc = webcamRef.current.getScreenshot();
+      if (imageSrc) {
+        setImgSrc(imageSrc);
+      }
+    } catch (err) {
+      console.error('Error capturando imagen:', err);
+      setError('Error al capturar la imagen');
     }
-  }, [webcamRef]);
+  }, []);
 
   // Enviar imagen al servidor para autenticación
   const handleLogin = async () => {
@@ -234,11 +233,10 @@ const LoginPage: React.FC = () => {
     }
   };
 
-  // Volver a tomar foto
-  const retakePhoto = () => {
+  // Volver a tomar la foto
+  const retake = useCallback(() => {
     setImgSrc(null);
-    setError(null);
-  };
+  }, []);
 
   // Efecto de carga
   if (isLoading && !modelsLoaded) {
@@ -336,72 +334,54 @@ const LoginPage: React.FC = () => {
                 {/* Vista de la cámara */}
                 <div className="flex-1">
                   <div className="relative aspect-video bg-gray-100 rounded-xl overflow-hidden shadow-inner border-2 border-gray-200">
-                    {!imgSrc ? (
-                      <>
-                        <video
-                          ref={(node) => {
-                            if (node && webcamRef.current) {
-                              webcamRef.current.video = node;
-                            }
-                          }}
-                          autoPlay
-                          playsInline
-                          muted
-                          className="w-full h-full object-cover"
-                          style={{
-                            transform: 'scaleX(-1)' // Espejo para que coincida con el movimiento real
-                          }}
-                        />
-                        <canvas
-                          ref={canvasRef}
-                          className="absolute top-0 left-0 w-full h-full pointer-events-none"
-                          style={{
-                            transform: 'scaleX(-1)',
-                          }}
-                        />
-                        
-                        {/* Indicador de detección */}
-                        <motion.div 
-                          className={`absolute bottom-4 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded-full text-sm font-medium flex items-center ${
-                            faceDetected 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-yellow-100 text-yellow-800'
-                          }`}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.5 }}
-                        >
-                          {faceDetected ? (
-                            <>
-                              <CheckCircleIcon className="h-4 w-4 mr-1.5" />
-                              Rostro detectado
-                            </>
-                          ) : (
-                            <>
-                              <ExclamationTriangleIcon className="h-4 w-4 mr-1.5" />
-                              Acerca tu rostro
-                            </>
-                          )}
-                        </motion.div>
-                      </>
-                    ) : (
-                      <motion.div
-                        initial={{ scale: 0.9, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        className="w-full h-full relative"
-                      >
-                        <img
-                          src={imgSrc}
-                          alt="Captura de rostro"
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
-                          <div className="bg-white bg-opacity-90 p-3 rounded-full shadow-lg">
-                            <FaceSmileSolid className="h-8 w-8 text-blue-600" />
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
+                    {/* Video de la cámara */}
+                    <div className="relative w-full h-full overflow-hidden rounded-2xl">
+                      <Webcam
+                        audio={false}
+                        ref={webcamRef}
+                        screenshotFormat="image/jpeg"
+                        videoConstraints={{
+                          facingMode: 'user',
+                          width: { ideal: 640 },
+                          height: { ideal: 480 },
+                          frameRate: { ideal: 15, max: 30 },
+                          resizeMode: 'crop-and-scale'
+                        }}
+                        className="absolute inset-0 w-full h-full object-cover"
+                        mirrored={true} // Invertir la vista previa
+                        style={{
+                          transform: 'scaleX(-1)' // Invertir horizontalmente para que coincida con el espejo
+                        }}
+                      />
+                      <canvas
+                        ref={canvasRef}
+                        className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+                      />
+                    </div>
+
+                    {/* Indicador de detección */}
+                    <motion.div 
+                      className={`absolute bottom-4 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded-full text-sm font-medium flex items-center ${
+                        faceDetected 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-yellow-100 text-yellow-800'
+                      }`}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.5 }}
+                    >
+                      {faceDetected ? (
+                        <>
+                          <CheckCircleIcon className="h-4 w-4 mr-1.5" />
+                          Rostro detectado
+                        </>
+                      ) : (
+                        <>
+                          <ExclamationTriangleIcon className="h-4 w-4 mr-1.5" />
+                          Acerca tu rostro
+                        </>
+                      )}
+                    </motion.div>
                   </div>
 
                   <AnimatePresence mode="wait">
