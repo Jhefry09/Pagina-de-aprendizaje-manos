@@ -13,6 +13,7 @@ import PracticePage from "./pages/PracticeWords/Page";
 import DashboardPage from "./pages/Dashboard/Page";
 import LoginPage from "./pages/Login/Page";
 import RegistroPage from "./pages/Registro/page";
+import NumerosPage from "./pages/numeros/page";
 import { AnimatePresence } from "framer-motion";
 
 const AppContent = () => {
@@ -20,9 +21,10 @@ const AppContent = () => {
   const isHomePage = location.pathname === '/';
   const isTrainingPage = location.pathname.startsWith('/training');
   const isPracticePage = location.pathname.startsWith('/practice');
+  const isNumerosPage = location.pathname.startsWith('/numeros');
   const isAuthPage = location.pathname === '/login' || location.pathname === '/registro';
   
-  const activeLink = isHomePage ? 'inicio' : isTrainingPage ? 'clases' : isPracticePage ? 'practicar' : '';
+  const activeLink = isHomePage ? 'inicio' : isTrainingPage ? 'clases' : isPracticePage ? 'practicar' : isNumerosPage ? 'numeros' : '';
 
   // Rutas de autenticación sin layout principal
   if (isAuthPage) {
@@ -47,6 +49,7 @@ const AppContent = () => {
             <Route path="/training" element={<TrainingPage />} />
             <Route path="/practice/:moduleType" element={<PracticePage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/numeros" element={<NumerosPage />} />
           </Routes>
         </AnimatePresence>
       </main>
