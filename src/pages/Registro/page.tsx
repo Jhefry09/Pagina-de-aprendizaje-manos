@@ -55,7 +55,7 @@ const RegistroPage: React.FC = () => {
   };
 
   return (
-    <div className="h-screen w-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex overflow-hidden">
+    <div className="min-h-screen w-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex">
       {/* Panel de Branding - Izquierda */}
       <motion.div 
         className="flex-[0.42] flex flex-col justify-center items-center p-12 relative"
@@ -132,7 +132,7 @@ const RegistroPage: React.FC = () => {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
           >
-            REGISTRANDO ROSTRO
+            Registrando Usuario
           </motion.h3>
 
           {/* Módulo de Cámara */}
@@ -142,47 +142,16 @@ const RegistroPage: React.FC = () => {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.8 }}
           >
-            <div className="aspect-square bg-black rounded-2xl overflow-hidden border-2 border-slate-600 relative">
+            <div className="w-full h-[24rem] bg-black rounded-2xl overflow-hidden border-2 border-slate-600 relative" style={{ aspectRatio: '1/1' }}>
               <video
                 ref={webcamRef}
                 autoPlay
                 playsInline
                 muted
-                className="w-full h-full object-cover filter grayscale"
+                className="w-full h-full object-cover"
                 style={{ transform: 'scaleX(-1)' }}
               />
               
-              {/* Malla de Detección */}
-              <motion.div
-                className="absolute inset-0 pointer-events-none"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1.5 }}
-              >
-                  <div className="absolute inset-8 border-2 border-yellow-400 rounded-lg">
-                    <div className="w-full h-full grid grid-cols-8 grid-rows-8 gap-0">
-                      {Array.from({ length: 64 }).map((_, i) => (
-                        <motion.div
-                          key={i}
-                          className="border border-yellow-400/30"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: [0, 1, 0] }}
-                          transition={{ 
-                            delay: i * 0.02,
-                            duration: 2,
-                            repeat: Infinity,
-                            repeatDelay: 1
-                          }}
-                        />
-                      ))}
-                    </div>
-                    
-                    <div className="absolute top-0 left-0 w-6 h-6 border-l-4 border-t-4 border-yellow-400"></div>
-                    <div className="absolute top-0 right-0 w-6 h-6 border-r-4 border-t-4 border-yellow-400"></div>
-                    <div className="absolute bottom-0 left-0 w-6 h-6 border-l-4 border-b-4 border-yellow-400"></div>
-                    <div className="absolute bottom-0 right-0 w-6 h-6 border-r-4 border-b-4 border-yellow-400"></div>
-                  </div>
-                </motion.div>
             </div>
           </motion.div>
 
