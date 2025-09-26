@@ -12,6 +12,8 @@ import TrainingPage from "./pages/Training/Page";
 import PracticePage from "./pages/PracticeWords/Page";
 import DashboardPage from "./pages/Dashboard/Page";
 import LoginPage from "./pages/Login/Page";
+import RegistroPage from "./pages/Registro/page";
+import NumerosPage from "./pages/numeros/page";
 import { AnimatePresence } from "framer-motion";
 import VocalesPage from "./pages/vocales/page";
 
@@ -20,13 +22,30 @@ const AppContent = () => {
   const isHomePage = location.pathname === '/';
   const isTrainingPage = location.pathname.startsWith('/training');
   const isPracticePage = location.pathname.startsWith('/practice');
+  const isNumerosPage = location.pathname.startsWith('/numeros');
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/registro';
   
-  const activeLink = isHomePage ? 'inicio' : isTrainingPage ? 'clases' : isPracticePage ? 'practicar' : '';
+  const activeLink = isHomePage ? 'inicio' : isTrainingPage ? 'clases' : isPracticePage ? 'practicar' : isNumerosPage ? 'numeros' : '';
 
+  // Rutas de autenticación sin layout principal
+  if (isAuthPage) {
+    return (
+      <div className="main-animated-bg">
+        <AnimatePresence mode="wait">
+          <Routes location={location} key={location.pathname}>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/registro" element={<RegistroPage />} />
+          </Routes>
+        </AnimatePresence>
+      </div>
+    );
+  }
+
+  // Rutas principales con layout normal
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-gray-100">
+    <div className="min-h-screen main-animated-bg">
       <Navbar activeLink={activeLink} />
-      <main className="pt-20 md:pt-24">
+      <main>
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
             <Route path="/" element={<HomePage />} />
@@ -35,6 +54,7 @@ const AppContent = () => {
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/vocales" element={<VocalesPage />} />
+            <Route path="/numeros" element={<NumerosPage />} />
           </Routes>
         </AnimatePresence>
       </main>

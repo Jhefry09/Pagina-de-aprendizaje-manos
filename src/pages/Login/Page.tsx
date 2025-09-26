@@ -3,8 +3,9 @@ import { Loader2, LogIn } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import * as faceapi from 'face-api.js';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CameraIcon, UserIcon, ArrowPathIcon, CheckCircleIcon, ExclamationTriangleIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { CameraIcon, ArrowPathIcon, CheckCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { FaceSmileIcon as FaceSmileSolid } from '@heroicons/react/24/solid';
+import mujerImage from '../../assets/mujer.png';
 
 const LoginPage: React.FC = () => {
   // Usamos un tipo personalizado para el ref del video
@@ -49,13 +50,8 @@ const LoginPage: React.FC = () => {
     const loadModels = async () => {
       if (!isMounted) return;
       
-      setIsLoading(true);
-      setError(null);
-      
       try {
-        // Mostrar mensaje de carga
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
+        // Cargar modelos en segundo plano sin bloquear la interfaz
         await Promise.all([
           faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
           faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
@@ -67,12 +63,9 @@ const LoginPage: React.FC = () => {
         }
       } catch (err) {
         console.error('Error al cargar modelos:', err);
+        // Los modelos fallarán silenciosamente, la interfaz seguirá funcionando
         if (isMounted) {
-          setError('Error al cargar los modelos de reconocimiento facial. Por favor, recarga la página.');
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
+          setModelsLoaded(false);
         }
       }
     };
@@ -142,7 +135,7 @@ const LoginPage: React.FC = () => {
       // Limpiar canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Dibujar detecciones con un estilo más suave
+      // Dibujar detecciones con estilo premium (amarillo neón)
       if (detections.length > 0) {
         const resizedDetections = faceapi.resizeResults(detections, displaySize);
         
@@ -150,13 +143,13 @@ const LoginPage: React.FC = () => {
         resizedDetections.forEach(({ detection, landmarks }) => {
           const { x, y, width, height } = detection.box;
           
-          // Dibujar caja suavizada
-          ctx.strokeStyle = '#3b82f6';
-          ctx.lineWidth = 2;
+          // Dibujar caja suavizada en amarillo neón
+          ctx.strokeStyle = '#eab308'; // yellow-500
+          ctx.lineWidth = 3;
           ctx.strokeRect(x, y, width, height);
           
-          // Dibujar puntos de referencia faciales
-          ctx.fillStyle = '#3b82f6';
+          // Dibujar puntos de referencia faciales en amarillo
+          ctx.fillStyle = '#eab308';
           landmarks.positions.forEach(point => {
             ctx.beginPath();
             ctx.arc(point.x, point.y, 2, 0, 2 * Math.PI);
@@ -165,7 +158,7 @@ const LoginPage: React.FC = () => {
         });
       }
 
-      // Actualizar estado de detección de rostro con un pequeño retraso para evitar parpadeo
+      // Actualizar estado de detección de rostro
       const faceCurrentlyDetected = detections.length > 0;
       if (faceCurrentlyDetected !== faceDetected) {
         setTimeout(() => setFaceDetected(faceCurrentlyDetected), 100);
@@ -240,308 +233,260 @@ const LoginPage: React.FC = () => {
     setError(null);
   };
 
-  // Efecto de carga
-  if (isLoading && !modelsLoaded) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center max-w-md"
-        >
-          <div className="w-20 h-20 mx-auto mb-6 relative">
-            <motion.div
-              animate={{ 
-                rotate: 360,
-                scale: [1, 1.2, 1]
-              }}
-              transition={{ 
-                duration: 2, 
-                repeat: Infinity,
-                ease: "linear"
-              }}
-              className="w-full h-full rounded-full border-4 border-blue-100"
-            ></motion.div>
-            <FaceSmileSolid className="w-10 h-10 text-blue-500 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">Preparando el reconocimiento facial</h1>
-          <p className="text-gray-600 mb-6">Estamos cargando los modelos necesarios. Por favor, espera un momento...</p>
-          <div className="w-full bg-gray-200 rounded-full h-2.5">
-            <motion.div 
-              className="bg-blue-600 h-2.5 rounded-full"
-              initial={{ width: '0%' }}
-              animate={{ width: '100%' }}
-              transition={{ duration: 2, repeat: Infinity, repeatType: 'reverse' }}
-            ></motion.div>
-          </div>
-        </motion.div>
-      </div>
-    );
-  }
+  // Cargar modelos en segundo plano sin mostrar pantalla de carga
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <AnimatePresence>
-        <motion.main 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="max-w-5xl mx-auto px-4 py-12 sm:px-6 lg:px-8"
-        >
-          <motion.div 
-            className="text-center mb-12"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-          >
+    <div className="min-h-screen w-screen main-animated-bg flex">
+      {/* Panel de Branding - Izquierda (40-45%) */}
+      <motion.div 
+        className="flex-[0.42] flex flex-col justify-center items-center p-12 relative"
+        initial={{ opacity: 0, x: -50 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.8 }}
+      >
+        {/* Contenedor centrado completo */}
+        <div className="flex flex-col items-center justify-center h-full">
+          {/* Texto de Bienvenida */}
+          <div className="text-center mb-12">
             <motion.h1 
-              className="text-3xl font-bold text-gray-900 sm:text-4xl mb-3 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-cyan-500"
-              initial={{ y: -20 }}
-              animate={{ y: 0 }}
+              className="text-white text-3xl font-light mb-3"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
             >
-              Iniciar Sesión
+              Bienvenido a
             </motion.h1>
-            <motion.p 
-              className="text-lg text-gray-600"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.4 }}
+            <motion.h2 
+              className="text-amber-400 text-7xl font-bold mb-5"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
             >
-              Coloca tu rostro frente a la cámara para identificarte
+              SeeTalk
+            </motion.h2>
+            <motion.p 
+              className="text-gray-300 text-xl font-light"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.7 }}
+            >
+              Comunicación Inteligente
             </motion.p>
-          </motion.div>
+          </div>
 
-          <motion.div 
-            className="bg-white rounded-2xl shadow-xl overflow-hidden"
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.2, type: 'spring', damping: 25 }}
+          {/* Ilustración de Marca */}
+          <motion.div
+            className="relative flex justify-center items-center"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.9, duration: 0.8 }}
           >
-            <div className="p-6 sm:p-8">
-              {error && (
-                <motion.div 
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-r-lg"
+            <motion.img 
+              src={mujerImage}
+              alt="Lenguaje de Señas"
+              className="w-80 h-auto object-contain"
+              animate={{ 
+                y: [0, -10, 0],
+                rotate: [0, 2, -2, 0]
+              }}
+              transition={{ 
+                duration: 4, 
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            />
+          </motion.div>
+        </div>
+      </motion.div>
+
+      {/* Panel de Interacción - Derecha (55-60%) */}
+      <motion.div 
+        className="flex-[0.58] flex items-center justify-center p-8"
+        initial={{ opacity: 0, x: 50 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.8, delay: 0.2 }}
+      >
+        <div className="bg-slate-800/70 backdrop-blur-sm rounded-3xl p-10 w-full max-w-md border border-slate-700/50 shadow-2xl">
+          {/* Título del Proceso */}
+          <motion.h3 
+            className="text-white text-xl font-medium text-center mb-8"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
+          >
+            Iniciando Reconocimiento Facial
+          </motion.h3>
+
+          {/* Errores */}
+          {error && (
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 p-4 bg-red-900/50 border border-red-500/50 rounded-xl"
+            >
+              <div className="flex">
+                <ExclamationTriangleIcon className="h-5 w-5 text-red-400 mr-3 flex-shrink-0 mt-0.5" />
+                <p className="text-red-300">{error}</p>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Módulo de Cámara */}
+          <motion.div 
+            className="relative mb-8"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.8 }}
+          >
+            <div className="w-full h-96 bg-black rounded-2xl overflow-hidden border-2 border-slate-600 relative" style={{ aspectRatio: '1/1' }}>
+              {!imgSrc ? (
+                <>
+                  <video
+                    ref={(node) => {
+                      if (node && webcamRef.current) {
+                        webcamRef.current.video = node;
+                      }
+                    }}
+                    autoPlay
+                    playsInline
+                    muted
+                    className="w-full h-full object-cover"
+                    style={{ transform: 'scaleX(-1)' }}
+                  />
+                  <canvas
+                    ref={canvasRef}
+                    className="absolute top-0 left-0 w-full h-full pointer-events-none"
+                    style={{ transform: 'scaleX(-1)' }}
+                  />
+                  
+
+                  {/* Indicador de detección */}
+                  <motion.div 
+                    className={`absolute bottom-4 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded-full text-sm font-medium flex items-center ${
+                      faceDetected 
+                        ? 'bg-green-900/70 text-green-300 border border-green-500/50' 
+                        : 'bg-yellow-900/70 text-yellow-300 border border-yellow-500/50'
+                    }`}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 }}
+                  >
+                    {faceDetected ? (
+                      <>
+                        <CheckCircleIcon className="h-4 w-4 mr-1.5" />
+                        Rostro detectado
+                      </>
+                    ) : (
+                      <>
+                        <ExclamationTriangleIcon className="h-4 w-4 mr-1.5" />
+                        Acerca tu rostro
+                      </>
+                    )}
+                  </motion.div>
+                </>
+              ) : (
+                <motion.div
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  className="w-full h-full relative"
                 >
-                  <div className="flex">
-                    <ExclamationTriangleIcon className="h-5 w-5 text-red-500 mr-3 flex-shrink-0 mt-0.5" />
-                    <p className="text-red-700">{error}</p>
+                  <img
+                    src={imgSrc}
+                    alt="Captura de rostro"
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
+                    <div className="bg-white bg-opacity-90 p-3 rounded-full shadow-lg">
+                      <FaceSmileSolid className="h-8 w-8 text-blue-600" />
+                    </div>
                   </div>
                 </motion.div>
               )}
-
-              <div className="flex flex-col lg:flex-row gap-8">
-                {/* Vista de la cámara */}
-                <div className="flex-1">
-                  <div className="relative aspect-video bg-gray-100 rounded-xl overflow-hidden shadow-inner border-2 border-gray-200">
-                    {!imgSrc ? (
-                      <>
-                        <video
-                          ref={(node) => {
-                            if (node && webcamRef.current) {
-                              webcamRef.current.video = node;
-                            }
-                          }}
-                          autoPlay
-                          playsInline
-                          muted
-                          className="w-full h-full object-cover"
-                          style={{
-                            transform: 'scaleX(-1)' // Espejo para que coincida con el movimiento real
-                          }}
-                        />
-                        <canvas
-                          ref={canvasRef}
-                          className="absolute top-0 left-0 w-full h-full pointer-events-none"
-                          style={{
-                            transform: 'scaleX(-1)',
-                          }}
-                        />
-                        
-                        {/* Indicador de detección */}
-                        <motion.div 
-                          className={`absolute bottom-4 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded-full text-sm font-medium flex items-center ${
-                            faceDetected 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-yellow-100 text-yellow-800'
-                          }`}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.5 }}
-                        >
-                          {faceDetected ? (
-                            <>
-                              <CheckCircleIcon className="h-4 w-4 mr-1.5" />
-                              Rostro detectado
-                            </>
-                          ) : (
-                            <>
-                              <ExclamationTriangleIcon className="h-4 w-4 mr-1.5" />
-                              Acerca tu rostro
-                            </>
-                          )}
-                        </motion.div>
-                      </>
-                    ) : (
-                      <motion.div
-                        initial={{ scale: 0.9, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        className="w-full h-full relative"
-                      >
-                        <img
-                          src={imgSrc}
-                          alt="Captura de rostro"
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
-                          <div className="bg-white bg-opacity-90 p-3 rounded-full shadow-lg">
-                            <FaceSmileSolid className="h-8 w-8 text-blue-600" />
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-                  </div>
-
-                  <AnimatePresence mode="wait">
-                    {!imgSrc ? (
-                      <motion.button
-                        key="capture-button"
-                        onClick={capture}
-                        disabled={!faceDetected || isLoading}
-                        className={`mt-6 w-full flex items-center justify-center px-6 py-3.5 border border-transparent rounded-xl shadow-sm text-base font-medium text-white ${
-                          faceDetected && !isLoading
-                            ? 'bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600'
-                            : 'bg-gray-300 cursor-not-allowed'
-                        } transition-all duration-300 transform hover:scale-[1.02]`}
-                        whileTap={{ scale: 0.98 }}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ delay: 0.3 }}
-                      >
-                        <CameraIcon className="h-5 w-5 mr-2" />
-                        {isLoading ? 'Procesando...' : 'Tomar Foto'}
-                      </motion.button>
-                    ) : (
-                      <motion.div 
-                        key="action-buttons"
-                        className="mt-6 grid grid-cols-2 gap-3"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ delay: 0.2 }}
-                      >
-                        <button
-                          onClick={retakePhoto}
-                          className="px-4 py-3.5 border border-gray-300 rounded-xl text-gray-700 font-medium hover:bg-gray-50 transition-all flex items-center justify-center"
-                        >
-                          <ArrowPathIcon className="h-5 w-5 mr-2" />
-                          Volver a tomar
-                        </button>
-                        <button
-                          onClick={handleLogin}
-                          disabled={isLoading}
-                          className={`px-4 py-3.5 border border-transparent rounded-xl text-white font-medium flex items-center justify-center ${
-                            isLoading
-                              ? 'bg-blue-400 cursor-not-allowed'
-                              : 'bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600'
-                          } transition-all`}
-                        >
-                          {isLoading ? (
-                            <>
-                              <Loader2 className="animate-spin h-5 w-5 mr-2" />
-                              Verificando...
-                            </>
-                          ) : (
-                            <>
-                              <LogIn className="h-5 w-5 mr-2" />
-                              Iniciar Sesión
-                            </>
-                          )}
-                        </button>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-
-                {/* Instrucciones */}
-                <motion.div 
-                  className="flex-1 flex flex-col justify-center"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.4 }}
-                >
-                  <div className="bg-gradient-to-br from-blue-50 to-cyan-50 p-6 rounded-xl border border-blue-100 shadow-sm">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                      <UserIcon className="h-5 w-5 text-blue-600 mr-2" />
-                      Instrucciones para el reconocimiento facial
-                    </h3>
-                    <ul className="space-y-3 text-gray-700">
-                      {[
-                        'Asegúrate de estar en un lugar bien iluminado',
-                        'Mira directamente a la cámara',
-                        'Mantén una expresión neutral',
-                        'Evita usar gorras o lentes oscuros',
-                        'Asegúrate de que tu rostro esté completamente visible'
-                      ].map((instruction, index) => (
-                        <motion.li 
-                          key={index}
-                          className="flex items-start group"
-                          initial={{ opacity: 0, x: 10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: 0.5 + (index * 0.1) }}
-                        >
-                          <span className="flex-shrink-0 h-6 w-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-medium mt-0.5 mr-2 group-hover:bg-blue-200 transition-colors">
-                            {index + 1}
-                          </span>
-                          <span className="text-gray-700 group-hover:text-gray-900 transition-colors">
-                            {instruction}
-                          </span>
-                        </motion.li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <motion.div 
-                    className="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-r-lg"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.8 }}
-                  >
-                    <div className="flex">
-                      <div className="flex-shrink-0">
-                        <ExclamationTriangleIcon className="h-5 w-5 text-yellow-500" />
-                      </div>
-                      <div className="ml-3">
-                        <p className="text-sm text-yellow-700">
-                          Tu privacidad es importante. No almacenamos imágenes de tu rostro, solo las usamos para identificarte de forma segura.
-                        </p>
-                      </div>
-                    </div>
-                  </motion.div>
-
-                  <motion.div 
-                    className="mt-6 text-center"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 1 }}
-                  >
-                    <button 
-                      onClick={() => navigate('/')}
-                      className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors"
-                    >
-                      <ArrowLeftIcon className="h-4 w-4 mr-1" />
-                      Volver al inicio
-                    </button>
-                  </motion.div>
-                </motion.div>
-              </div>
             </div>
           </motion.div>
-        </motion.main>
-      </AnimatePresence>
+
+          {/* Botones de Acción */}
+          <AnimatePresence mode="wait">
+            {!imgSrc ? (
+              <motion.button
+                key="capture-button"
+                onClick={capture}
+                disabled={!faceDetected || isLoading}
+                className={`w-full py-4 rounded-xl font-semibold text-lg transition-all duration-300 ${
+                  faceDetected && !isLoading
+                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transform hover:scale-[1.02]'
+                    : 'bg-slate-600 text-slate-400 cursor-not-allowed'
+                }`}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ delay: 1 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <CameraIcon className="inline h-5 w-5 mr-2" />
+                {isLoading ? 'Procesando...' : 'Tomar Foto'}
+              </motion.button>
+            ) : (
+              <motion.div 
+                key="action-buttons"
+                className="grid grid-cols-2 gap-4"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ delay: 0.2 }}
+              >
+                <button
+                  onClick={retakePhoto}
+                  className="py-3 px-4 bg-slate-600 hover:bg-slate-700 text-white font-semibold rounded-xl transition-all duration-300 transform hover:scale-[1.02] flex items-center justify-center"
+                >
+                  <ArrowPathIcon className="h-5 w-5 mr-2" />
+                  Volver a tomar
+                </button>
+                
+                <button
+                  onClick={handleLogin}
+                  disabled={isLoading}
+                  className={`py-3 px-4 font-semibold rounded-xl transition-all duration-300 transform hover:scale-[1.02] flex items-center justify-center ${
+                    isLoading
+                      ? 'bg-slate-600/50 text-slate-400 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg'
+                  }`}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="animate-spin h-5 w-5 mr-2" />
+                      Verificando...
+                    </>
+                  ) : (
+                    <>
+                      <LogIn className="h-5 w-5 mr-2" />
+                      Iniciar Sesión
+                    </>
+                  )}
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Navegación Secundaria */}
+          <motion.div 
+            className="text-center mt-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.2 }}
+          >
+            <p className="text-gray-400 text-sm">
+              ¿No tiene una cuenta?{' '}
+              <button
+                onClick={() => navigate('/registro')}
+                className="text-amber-400 hover:text-amber-300 font-medium underline transition-colors"
+              >
+                AQUÍ CREA UNA
+              </button>
+            </p>
+          </motion.div>
+        </div>
+      </motion.div>
     </div>
   );
 };

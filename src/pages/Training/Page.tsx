@@ -290,6 +290,7 @@ const TrainingPage = () => {
     { letter: "l", color: "bg-lime-400 hover:bg-lime-500" },
     { letter: "m", color: "bg-amber-400 hover:bg-amber-500" },
     { letter: "n", color: "bg-rose-400 hover:bg-rose-500" },
+    { letter: "ñ", color: "bg-violet-300 hover:bg-violet-400" },
     { letter: "o", color: "bg-violet-400 hover:bg-violet-500" },
     { letter: "p", color: "bg-fuchsia-400 hover:bg-fuchsia-500" },
     { letter: "q", color: "bg-sky-400 hover:bg-sky-500" },
@@ -304,28 +305,55 @@ const TrainingPage = () => {
     { letter: "z", color: "bg-purple-500 hover:bg-purple-600" },
   ];
 
+  // Números
+  const numbers = [
+    { letter: "0", color: "bg-slate-600 hover:bg-slate-700" },
+    { letter: "1", color: "bg-slate-600 hover:bg-slate-700" },
+    { letter: "2", color: "bg-slate-600 hover:bg-slate-700" },
+    { letter: "3", color: "bg-slate-600 hover:bg-slate-700" },
+    { letter: "4", color: "bg-slate-600 hover:bg-slate-700" },
+    { letter: "5", color: "bg-slate-600 hover:bg-slate-700" },
+    { letter: "6", color: "bg-slate-600 hover:bg-slate-700" },
+    { letter: "7", color: "bg-slate-600 hover:bg-slate-700" },
+    { letter: "8", color: "bg-slate-600 hover:bg-slate-700" },
+    { letter: "9", color: "bg-slate-600 hover:bg-slate-700" },
+  ];
+
+  // Símbolos matemáticos
+  const mathSymbols = [
+    { letter: ".", color: "bg-orange-600 hover:bg-orange-700", displayName: "." },
+    { letter: "/", color: "bg-orange-600 hover:bg-orange-700", displayName: "÷" },
+    { letter: "*", color: "bg-orange-600 hover:bg-orange-700", displayName: "×" },
+    { letter: "-", color: "bg-orange-600 hover:bg-orange-700", displayName: "−" },
+    { letter: "+", color: "bg-orange-600 hover:bg-orange-700", displayName: "+" },
+    { letter: "=", color: "bg-orange-600 hover:bg-orange-700", displayName: "=" },
+  ];
+
   // Funciones especiales
   const specialFunctions = [
-    { letter: "ESPACIO", color: "bg-gray-600 hover:bg-gray-700", displayName: "ESP" },
-    { letter: "BORRAR", color: "bg-red-600 hover:bg-red-700", displayName: "DEL" },
+    { letter: "espacio", color: "bg-gray-600 hover:bg-gray-700", displayName: "ESP" },
+    { letter: "borrar", color: "bg-red-600 hover:bg-red-700", displayName: "DEL" },
+    { letter: "interCambiar", color: "bg-blue-600 hover:bg-blue-700", displayName: "↔" },
   ];
 
   return (
-    <section className="p-6 bg-gray-50 min-h-screen">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-700 font-montserrat">
-            Entrenamiento de Gestos del Alfabeto
-          </h1>
-          <p className="text-gray-600">
-            Crea un nuevo modelo de gesto para cada letra del alfabeto usando tu mano DERECHA
-          </p>
+    <section className="p-6 min-h-screen">
+      <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6 mb-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800 font-montserrat">
+              Entrenamiento de Gestos del Alfabeto
+            </h1>
+            <p className="text-gray-600">
+              Crea un nuevo modelo de gesto para cada letra del alfabeto usando tu mano DERECHA
+            </p>
+          </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Webcam Preview */}
-        <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6">
           <h2 className="text-xl font-semibold mb-4 text-gray-800">
             Vista Previa
           </h2>
@@ -369,13 +397,13 @@ const TrainingPage = () => {
         </div>
 
         {/* Controls */}
-        <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6">
           <h2 className="text-xl font-semibold mb-4 text-gray-800">
             Panel de Control
           </h2>
           <div className="w-full">
             <h3 className="text-lg font-medium text-gray-700 mb-4">
-              Selecciona una letra del alfabeto o función especial:
+              Selecciona una letra del alfabeto, número, símbolo o función especial:
             </h3>
             
             {/* Scrollable alphabet grid */}
@@ -411,11 +439,41 @@ const TrainingPage = () => {
                   </div>
                 </div>
                 
-                {/* Special Functions */}
+                {/* Numbers */}
                 <div>
-                  <h4 className="text-sm font-medium text-gray-600 mb-2 px-2">Funciones Especiales:</h4>
-                  <div className="grid grid-cols-2 gap-3">
-                    {specialFunctions.map(({ letter, color, displayName }) => (
+                  <h4 className="text-sm font-medium text-gray-600 mb-2 px-2">Números:</h4>
+                  <div className="grid grid-cols-5 gap-3">
+                    {numbers.map(({ letter, color }) => (
+                      <button
+                        key={letter}
+                        onClick={() => startCountdown(letter)}
+                        disabled={!!countdown || !isRightHandDetected}
+                        className={`relative flex items-center justify-center p-3 rounded-lg shadow-sm transition-all duration-300 ${
+                          selectedLetter === letter
+                            ? `${color.replace("hover:", "")} text-white scale-105 shadow-md`
+                            : `${color} text-white hover:shadow-md transform hover:scale-102`
+                        } ${countdown || !isRightHandDetected ? "opacity-50 cursor-not-allowed" : ""}`}
+                      >
+                        <span className="text-lg font-bold">
+                          {letter}
+                        </span>
+                        {selectedLetter === letter && countdown && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-60 rounded-lg">
+                            <span className="text-2xl font-bold text-white">
+                              {countdown}
+                            </span>
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Math Symbols */}
+                <div>
+                  <h4 className="text-sm font-medium text-gray-600 mb-2 px-2">Símbolos Matemáticos:</h4>
+                  <div className="grid grid-cols-3 gap-3">
+                    {mathSymbols.map(({ letter, color, displayName }) => (
                       <button
                         key={letter}
                         onClick={() => startCountdown(letter)}
@@ -445,6 +503,41 @@ const TrainingPage = () => {
                     ))}
                   </div>
                 </div>
+                
+                {/* Special Functions */}
+                <div>
+                  <h4 className="text-sm font-medium text-gray-600 mb-2 px-2">Funciones Especiales:</h4>
+                  <div className="grid grid-cols-3 gap-3">
+                    {specialFunctions.map(({ letter, color, displayName }) => (
+                      <button
+                        key={letter}
+                        onClick={() => startCountdown(letter)}
+                        disabled={!!countdown || !isRightHandDetected}
+                        className={`relative flex items-center justify-center p-4 rounded-lg shadow-sm transition-all duration-300 ${
+                          selectedLetter === letter
+                            ? `${color.replace("hover:", "")} text-white scale-105 shadow-md`
+                            : `${color} text-white hover:shadow-md transform hover:scale-102`
+                        } ${countdown || !isRightHandDetected ? "opacity-50 cursor-not-allowed" : ""}`}
+                      >
+                        <div className="text-center">
+                          <span className="text-lg font-bold block">
+                            {displayName}
+                          </span>
+                          <span className="text-xs opacity-75">
+                            {letter.toUpperCase()}
+                          </span>
+                        </div>
+                        {selectedLetter === letter && countdown && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-60 rounded-lg">
+                            <span className="text-2xl font-bold text-white">
+                              {countdown}
+                            </span>
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
             
@@ -459,8 +552,8 @@ const TrainingPage = () => {
             
             {/* Progress indicator */}
             <div className="text-center text-sm text-gray-600">
-              <p>Entrena cada letra del alfabeto y las funciones especiales para crear un modelo completo</p>
-              <p className="text-xs mt-1">26 letras + 2 funciones especiales disponibles para entrenar</p>
+              <p>Entrena cada letra del alfabeto, números y símbolos para crear un modelo completo</p>
+              <p className="text-xs mt-1">27 letras + 10 números + 6 símbolos + 3 funciones especiales disponibles para entrenar</p>
             </div>
           </div>
           
