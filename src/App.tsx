@@ -13,6 +13,7 @@ import PracticePage from "./pages/PracticeWords/Page";
 import DashboardPage from "./pages/Dashboard/Page";
 import LoginPage from "./pages/Login/Page";
 import { AnimatePresence } from "framer-motion";
+import VocalesPage from "./pages/vocales/page";
 
 const AppContent = () => {
   const location = useLocation();
@@ -33,6 +34,7 @@ const AppContent = () => {
             <Route path="/practice/:moduleType" element={<PracticePage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/vocales" element={<VocalesPage />} />
           </Routes>
         </AnimatePresence>
       </main>

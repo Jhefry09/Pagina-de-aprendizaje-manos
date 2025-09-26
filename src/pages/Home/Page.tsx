@@ -18,7 +18,7 @@ const Page = () => {
   const handleModuleClick = (moduleId: string) => {
     // Mapeo de módulos a sus rutas correspondientes
     const moduleRoutes: { [key: string]: string } = {
-      'vocales': '/practice/vocales',
+      'vocales': '/vocales',
       'abecedario': '/practice/abecedario',
       'numeros': '/practice/numeros',
       'formar-palabras': '/practice/palabras',
