@@ -18,7 +18,7 @@ const SectionCard: React.FC<{
   children: React.ReactNode;
 }> = ({ title, icon = '📊', accent = 'from-blue-400 to-blue-500', children }) => {
   return (
-    <section className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <section className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
       <div className={`px-5 py-4 bg-gradient-to-r ${accent} text-white font-semibold`}>{icon} {title}</div>
       <div className="p-5">{children}</div>
     </section>
@@ -366,10 +366,10 @@ const DashboardPage: React.FC = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <main className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-6 sm:py-8 w-full">
         {/* Hero */}
-        <section className="bg-white py-8 sm:py-12 mb-8 sm:mb-12 rounded-xl shadow-sm border border-gray-100 mx-2 sm:mx-0">
+        <section className="bg-white/95 backdrop-blur-sm py-8 sm:py-12 mb-8 sm:mb-12 rounded-2xl shadow-2xl border border-white/20 mx-2 sm:mx-0">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <div className="flex items-center justify-center space-x-2 mb-4 sm:mb-6">
               <span className="text-2xl">📈</span>

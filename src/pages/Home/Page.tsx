@@ -67,36 +67,38 @@ const Page = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <main className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-6 sm:py-8 w-full">
-        {/* Hero Section - Minimalista */}
-        <section className="bg-white py-8 sm:py-12 mb-8 sm:mb-12 rounded-xl shadow-sm border border-gray-100 mx-2 sm:mx-0">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <div className="flex items-center justify-center space-x-2 mb-4 sm:mb-6">
-              <span className="text-2xl">👋</span>
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
-                {greeting}, {auth.user?.name || 'Aprendiz'}
-              </h1>
-            </div>
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-3 sm:mb-4">
-              Aprende lengua de señas con nosotros
-            </h2>
-            <p className="text-base sm:text-lg text-gray-600 mb-6 sm:mb-8 max-w-2xl mx-auto px-2">
-              Descubre una forma sencilla y accesible de aprender lengua de señas a tu propio ritmo.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center max-w-md mx-auto">
-              <a 
-                href="#modulos" 
-                className="w-full sm:w-auto px-5 py-2.5 sm:px-6 sm:py-3 bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600 transition-colors text-center shadow-sm text-sm sm:text-base"
-              >
-                Comenzar ahora
-              </a>
-              <a 
-                href="#tutorial" 
-                className="w-full sm:w-auto px-5 py-2.5 sm:px-6 sm:py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors text-center text-sm sm:text-base"
-              >
-                Ver demostración
-              </a>
+        {/* Hero Section - Contenedor Flotante */}
+        <section className="mb-8 sm:mb-12 mx-2 sm:mx-0">
+          <div className="bg-white/95 backdrop-blur-sm py-8 sm:py-12 rounded-2xl shadow-2xl border border-white/20 max-w-4xl mx-auto">
+            <div className="px-4 sm:px-6 lg:px-8 text-center">
+              <div className="flex items-center justify-center space-x-2 mb-4 sm:mb-6">
+                <span className="text-2xl">👋</span>
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
+                  {greeting}, {auth.user?.name || 'Aprendiz'}
+                </h1>
+              </div>
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-3 sm:mb-4">
+                Comunicación inteligente y accesible
+              </h2>
+              <p className="text-base sm:text-lg text-gray-600 mb-6 sm:mb-8 max-w-2xl mx-auto px-2">
+                Descubre una nueva forma de comunicarte con tecnología avanzada y reconocimiento inteligente.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center max-w-md mx-auto">
+                <a 
+                  href="#modulos" 
+                  className="w-full sm:w-auto px-5 py-2.5 sm:px-6 sm:py-3 bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600 transition-all duration-300 text-center shadow-lg hover:shadow-xl transform hover:scale-105 text-sm sm:text-base"
+                >
+                  Comenzar ahora
+                </a>
+                <a 
+                  href="#tutorial" 
+                  className="w-full sm:w-auto px-5 py-2.5 sm:px-6 sm:py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-all duration-300 text-center shadow-sm hover:shadow-md transform hover:scale-105 text-sm sm:text-base"
+                >
+                  Ver demostración
+                </a>
+              </div>
             </div>
           </div>
         </section>
@@ -104,9 +106,9 @@ const Page = () => {
         {/* Modules Section */}
         <section id="modulos" className="mb-12 sm:mb-16 px-2 sm:px-0">
           <div className="text-center mb-8 sm:mb-10">
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 mb-2">Nuestros Módulos Educativos</h2>
-            <div className="w-16 sm:w-20 h-1 bg-blue-500 mx-auto rounded-full"></div>
-            <p className="mt-3 sm:mt-4 text-sm sm:text-base text-gray-600 max-w-2xl mx-auto px-2">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-2 drop-shadow-lg">Nuestros Módulos Educativos</h2>
+            <div className="w-16 sm:w-20 h-1 bg-blue-400 mx-auto rounded-full shadow-lg"></div>
+            <p className="mt-3 sm:mt-4 text-sm sm:text-base text-gray-200 max-w-2xl mx-auto px-2 drop-shadow-md">
               Selecciona un módulo para comenzar tu aprendizaje en lengua de señas de manera interactiva y divertida.
             </p>
           </div>

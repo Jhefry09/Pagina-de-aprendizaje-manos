@@ -29,20 +29,22 @@ const AppContent = () => {
   // Rutas de autenticación sin layout principal
   if (isAuthPage) {
     return (
-      <AnimatePresence mode="wait">
-        <Routes location={location} key={location.pathname}>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/registro" element={<RegistroPage />} />
-        </Routes>
-      </AnimatePresence>
+      <div className="main-animated-bg">
+        <AnimatePresence mode="wait">
+          <Routes location={location} key={location.pathname}>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/registro" element={<RegistroPage />} />
+          </Routes>
+        </AnimatePresence>
+      </div>
     );
   }
 
   // Rutas principales con layout normal
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-gray-100">
+    <div className="min-h-screen main-animated-bg">
       <Navbar activeLink={activeLink} />
-      <main className="pt-20 md:pt-24">
+      <main>
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
             <Route path="/" element={<HomePage />} />

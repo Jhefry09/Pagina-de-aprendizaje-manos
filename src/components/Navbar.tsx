@@ -43,18 +43,18 @@ const Navbar = ({ activeLink = 'inicio' }: NavbarProps) => {
   ];
 
   return (
-    <nav className="bg-gradient-to-r from-gray-900 to-gray-800 text-white shadow-xl sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-20">
+    <nav className="relative z-50 px-4 sm:px-6 lg:px-8 pt-4 pb-2">
+      <div className="max-w-7xl mx-auto bg-slate-900/95 backdrop-blur-md text-white shadow-2xl rounded-2xl border border-white/10 px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between h-16">
           {/* Logo */}
           <div className="flex items-center">
               <a href="/" className="flex items-center space-x-2 group">
-                <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent">
-                  SignLearn AI
+                <span className="text-2xl font-bold text-white">
+                  SeeTalk
                 </span>
                 <span className="hidden md:inline-block h-8 w-0.5 bg-gray-500"></span>
                 <span className="hidden md:inline text-sm font-medium text-gray-300 group-hover:text-white transition-colors">
-                  Aprendizaje Inclusivo
+                  Comunicación Inteligente
                 </span>
               </a>
           </div>
@@ -122,7 +122,7 @@ const Navbar = ({ activeLink = 'inicio' }: NavbarProps) => {
                 <div className="h-8 w-8 rounded-full bg-gray-700 flex items-center justify-center border border-gray-600">
                   <User className="h-4 w-4 text-gray-300" />
                 </div>
-                <span className="hidden sm:inline">Perfil</span>
+                <span className="hidden sm:inline">{userName}</span>
                 <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${
                   isProfileDropdownOpen ? 'transform rotate-180' : ''
                 }`} />
@@ -162,27 +162,28 @@ const Navbar = ({ activeLink = 'inicio' }: NavbarProps) => {
               )}
             </div>
           </div>
-        </div>
-        
-        {/* Mobile menu button */}
-        <div className="md:hidden flex items-center">
-          <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-blue-400 transition-colors"
-          >
-            <span className="sr-only">Abrir menú principal</span>
-            {isMobileMenuOpen ? (
-              <X className="block h-6 w-6" />
-            ) : (
-              <Menu className="block h-6 w-6" />
-            )}
-          </button>
+          
+          {/* Mobile menu button */}
+          <div className="md:hidden flex items-center">
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-blue-400 transition-colors"
+            >
+              <span className="sr-only">Abrir menú principal</span>
+              {isMobileMenuOpen ? (
+                <X className="block h-6 w-6" />
+              ) : (
+                <Menu className="block h-6 w-6" />
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Mobile menu */}
       <div className={`md:hidden transition-all duration-300 ease-in-out overflow-hidden ${isMobileMenuOpen ? 'max-h-96' : 'max-h-0'}`}>
-        <div className="px-2 pt-2 pb-3 space-y-1">
+        <div className="mx-4 mt-2 bg-slate-900/95 backdrop-blur-md rounded-2xl border border-white/10 shadow-2xl">
+          <div className="px-4 pt-2 pb-3 space-y-1">
           <a
             href="/"
             className="block px-4 py-3 rounded-lg text-base font-medium text-white hover:bg-gray-700/50 transition-colors"
@@ -243,6 +244,7 @@ const Navbar = ({ activeLink = 'inicio' }: NavbarProps) => {
               Cerrar sesión
             </a>
           </div>
+        </div>
         </div>
       </div>
     </nav>

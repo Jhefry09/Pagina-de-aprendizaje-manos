@@ -58,3 +58,87 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Animación de fondo súper suave - Más pasos intermedios con colores de Figma */
+@keyframes backgroundSolidFlow {
+  0% {
+    background-color: #071939; /* Azul muy oscuro (Figma) */
+  }
+  16.66% {
+    background-color: #08204a; /* Paso intermedio muy sutil */
+  }
+  33.33% {
+    background-color: #0a2d5a; /* Color intermedio suave */
+  }
+  50% {
+    background-color: #125C7C; /* Verde azulado (Figma) */
+  }
+  66.66% {
+    background-color: #0a2d5a; /* Color intermedio suave (regreso) */
+  }
+  83.33% {
+    background-color: #08204a; /* Paso intermedio muy sutil (regreso) */
+  }
+  100% {
+    background-color: #071939; /* Vuelta al inicio */
+  }
+}
+
+@keyframes backgroundFlowVibrant {
+  0% {
+    background: radial-gradient(ellipse at top left, #0f172a 0%, #1e293b 20%, #334155 40%, #475569 60%, #334155 80%, #1e293b 100%);
+    background-position: 0% 0%;
+  }
+  14.28% {
+    background: radial-gradient(ellipse at top center, #1e293b 0%, #334155 18%, #475569 35%, #64748b 52%, #475569 68%, #334155 85%, #1e293b 100%);
+    background-position: 50% 0%;
+  }
+  28.56% {
+    background: radial-gradient(ellipse at top right, #334155 0%, #475569 16%, #64748b 32%, #94a3b8 48%, #64748b 64%, #475569 80%, #334155 100%);
+    background-position: 100% 0%;
+  }
+  42.84% {
+    background: radial-gradient(ellipse at center right, #475569 0%, #64748b 15%, #94a3b8 30%, #cbd5e1 45%, #94a3b8 60%, #64748b 75%, #475569 100%);
+    background-position: 100% 50%;
+  }
+  57.12% {
+    background: radial-gradient(ellipse at bottom right, #64748b 0%, #94a3b8 14%, #cbd5e1 28%, #e2e8f0 42%, #cbd5e1 56%, #94a3b8 70%, #64748b 84%, #475569 100%);
+    background-position: 100% 100%;
+  }
+  71.4% {
+    background: radial-gradient(ellipse at bottom center, #94a3b8 0%, #64748b 17%, #475569 34%, #334155 51%, #1e293b 68%, #0f172a 85%, #1e293b 100%);
+    background-position: 50% 100%;
+  }
+  85.68% {
+    background: radial-gradient(ellipse at bottom left, #475569 0%, #334155 20%, #1e293b 40%, #0f172a 60%, #1e293b 80%, #334155 100%);
+    background-position: 0% 100%;
+  }
+  100% {
+    background: radial-gradient(ellipse at top left, #0f172a 0%, #1e293b 20%, #334155 40%, #475569 60%, #334155 80%, #1e293b 100%);
+    background-position: 0% 0%;
+  }
+}
+
+/* Clases para fondo animado - Transición súper suave sin brusquedad */
+.animated-bg {
+  background-color: #071939;
+  animation: backgroundSolidFlow 45s ease-in-out infinite;
+}
+
+.animated-bg-subtle {
+  background-color: #071939;
+  animation: backgroundSolidFlow 50s ease-in-out infinite;
+}
+
+/* Fondo animado para páginas principales - Colores de Figma súper suaves */
+.main-animated-bg {
+  background-color: #071939;
+  animation: backgroundSolidFlow 45s ease-in-out infinite;
+}
+
+/* Versión alternativa aún más vibrante */
+.main-animated-bg-vibrant {
+  background: radial-gradient(ellipse at center, #0f172a 0%, #1e293b 20%, #334155 40%, #475569 60%, #334155 80%, #1e293b 100%);
+  background-size: 350% 350%;
+  animation: backgroundFlowVibrant 18s ease-in-out infinite;
+}
+

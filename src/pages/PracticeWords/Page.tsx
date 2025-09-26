@@ -303,9 +303,10 @@ const PracticePage = () => {
   };
 
   return (
-    <section className="p-6 bg-gray-50 min-h-screen">
-      <div className="flex items-center justify-between mb-6">
-        <div>
+    <section className="p-6 min-h-screen">
+      <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6 mb-6">
+        <div className="flex items-center justify-between">
+          <div>
           <h1 className="text-2xl font-bold text-gray-700 font-montserrat">
             Entrenando letra <span className="text-[#f2994a]">{selectedLetter.toUpperCase()}</span>
           </h1>
@@ -317,10 +318,11 @@ const PracticePage = () => {
         >
           Volver al Inicio
         </Link>
+        </div>
       </div>
 
       {/* Text Box for Written Letters */}
-      <div className="mb-6 bg-white p-4 rounded-lg shadow-md">
+      <div className="mb-6 bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6">
         <div className="flex justify-between items-center mb-2">
           <span className="font-medium text-gray-700">Texto escrito:</span>
           <button
@@ -339,14 +341,14 @@ const PracticePage = () => {
 
       {/* Hand Status Indicators */}
       <div className="mb-6 grid grid-cols-2 gap-4">
-        <div className="bg-white p-4 rounded-lg shadow-md">
+        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6">
           <h3 className="font-medium text-gray-700 mb-2">Mano Derecha (Lado derecho - Detección)</h3>
           <div className="flex items-center">
             <div className={`w-3 h-3 rounded-full mr-2 ${detectedLetter ? 'bg-green-500' : 'bg-red-500'}`}></div>
             <span className="text-sm">{detectedLetter ? `Detectando: ${getDisplayName(detectedLetter)}` : 'No detectada'}</span>
           </div>
         </div>
-        <div className="bg-white p-4 rounded-lg shadow-md">
+        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6">
           <h3 className="font-medium text-gray-700 mb-2">Mano Izquierda (Lado izquierdo - Ejecutar)</h3>
           <div className="flex items-center">
             <div className={`w-3 h-3 rounded-full mr-2 ${leftHandClosed ? 'bg-blue-500' : 'bg-gray-400'}`}></div>
@@ -355,7 +357,7 @@ const PracticePage = () => {
         </div>
       </div>
 
-      <div className="my-6 bg-white p-4 rounded-lg shadow-md">
+      <div className="my-6 bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6">
         <div className="flex justify-between items-center mb-2">
           <span className="font-medium text-gray-700">Precisión (Mano Derecha):</span>
           <span className="font-bold">{scores[detectedLetter] || '0.0'}%</span>
@@ -375,7 +377,7 @@ const PracticePage = () => {
 
       <div className="text-center">
         {/* Alphabet and Special Functions Grid - Scrollable */}
-        <div className="mb-6 bg-white p-4 rounded-lg shadow-md">
+        <div className="mb-6 bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6">
           <h3 className="text-lg font-semibold mb-3 text-gray-700">Precisión por Elemento:</h3>
           <div className="max-h-60 overflow-y-auto border rounded-lg p-2">
             <div className="space-y-4">
@@ -439,7 +441,7 @@ const PracticePage = () => {
         </div>
 
         {/* Quick Stats */}
-        <div className="mt-6 bg-white p-4 rounded-lg shadow-md">
+        <div className="mt-6 bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6">
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
               <div className="text-2xl font-bold text-blue-600">{writtenText.length}</div>

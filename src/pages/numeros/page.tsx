@@ -334,26 +334,28 @@ const MathCalculatorPage = () => {
     };
 
     return (
-        <section className="p-6 bg-gray-50 min-h-screen">
-            <div className="flex items-center justify-between mb-6">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-700 font-montserrat">
-                        Calculadora con <span className="text-[#f2994a]">Lenguaje de Señas</span>
-                    </h1>
-                    <p className="text-gray-600">
-                        Usa tu mano derecha para formar números y operadores, cierra la mano izquierda para ejecutar
-                    </p>
+        <section className="p-6 min-h-screen">
+            <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6 mb-6">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-700 font-montserrat">
+                            Calculadora con <span className="text-[#f2994a]">Lenguaje de Señas</span>
+                        </h1>
+                        <p className="text-gray-600">
+                            Usa tu mano derecha para formar números y operadores, cierra la mano izquierda para ejecutar
+                        </p>
+                    </div>
+                    <Link
+                        to="/"
+                        className="px-4 py-2 text-sm font-semibold text-[#f2994a] hover:text-white hover:bg-[#f2994a] rounded-lg transition-all duration-300 border border-[#f2994a]"
+                    >
+                        Volver al Inicio
+                    </Link>
                 </div>
-                <Link
-                    to="/"
-                    className="px-4 py-2 text-sm font-semibold text-[#f2994a] hover:text-white hover:bg-[#f2994a] rounded-lg transition-all duration-300 border border-[#f2994a]"
-                >
-                    Volver al Inicio
-                </Link>
             </div>
 
             {/* Calculator Display */}
-            <div className="mb-6 bg-white p-6 rounded-lg shadow-md">
+            <div className="mb-6 bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6">
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-semibold text-gray-700">Calculadora</h3>
                     <div className="flex gap-2">
@@ -397,7 +399,7 @@ const MathCalculatorPage = () => {
 
             {/* Hand Status Indicators */}
             <div className="mb-6 grid grid-cols-2 gap-4">
-                <div className="bg-white p-4 rounded-lg shadow-md">
+                <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6">
                     <h3 className="font-medium text-gray-700 mb-2">Mano Derecha (Detección)</h3>
                     <div className="flex items-center">
                         <div className={`w-3 h-3 rounded-full mr-2 ${detectedSymbol ? 'bg-green-500' : 'bg-red-500'}`}></div>
@@ -406,7 +408,7 @@ const MathCalculatorPage = () => {
             </span>
                     </div>
                 </div>
-                <div className="bg-white p-4 rounded-lg shadow-md">
+                <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6">
                     <h3 className="font-medium text-gray-700 mb-2">Mano Izquierda (Ejecutar)</h3>
                     <div className="flex items-center">
                         <div className={`w-3 h-3 rounded-full mr-2 ${leftHandClosed ? 'bg-blue-500' : 'bg-gray-400'}`}></div>
@@ -416,7 +418,7 @@ const MathCalculatorPage = () => {
             </div>
 
             {/* Precision Indicator */}
-            <div className="my-6 bg-white p-4 rounded-lg shadow-md">
+            <div className="my-6 bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6">
                 <div className="flex justify-between items-center mb-2">
                     <span className="font-medium text-gray-700">Precisión:</span>
                     <span className="font-bold">{scores[detectedSymbol] || '0.0'}%</span>
@@ -436,7 +438,7 @@ const MathCalculatorPage = () => {
             </div>
 
             {/* Math Symbols Grid */}
-            <div className="mb-6 bg-white p-4 rounded-lg shadow-md">
+            <div className="mb-6 bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6">
                 <h3 className="text-lg font-semibold mb-3 text-gray-700">Precisión por Símbolo:</h3>
                 <div className="max-h-60 overflow-y-auto border rounded-lg p-2">
                     <div className="space-y-4">
@@ -509,7 +511,7 @@ const MathCalculatorPage = () => {
 
             {/* History */}
             {history.length > 0 && (
-                <div className="bg-white p-4 rounded-lg shadow-md">
+                <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6">
                     <div className="flex justify-between items-center mb-3">
                         <h3 className="text-lg font-semibold text-gray-700">Historial de Cálculos</h3>
                         <button
@@ -530,7 +532,7 @@ const MathCalculatorPage = () => {
             )}
 
             {/* Quick Stats */}
-            <div className="mt-6 bg-white p-4 rounded-lg shadow-md">
+            <div className="mt-6 bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6">
                 <div className="grid grid-cols-3 gap-4 text-center">
                     <div>
                         <div className="text-2xl font-bold text-blue-600">{currentExpression.length}</div>

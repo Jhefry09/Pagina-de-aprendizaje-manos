@@ -236,7 +236,7 @@ const LoginPage: React.FC = () => {
   // Cargar modelos en segundo plano sin mostrar pantalla de carga
 
   return (
-    <div className="min-h-screen w-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex">
+    <div className="min-h-screen w-screen main-animated-bg flex">
       {/* Panel de Branding - Izquierda (40-45%) */}
       <motion.div 
         className="flex-[0.42] flex flex-col justify-center items-center p-12 relative"
@@ -262,7 +262,7 @@ const LoginPage: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
             >
-              SignLearn AI
+              SeeTalk
             </motion.h2>
             <motion.p 
               className="text-gray-300 text-xl font-light"
@@ -270,7 +270,7 @@ const LoginPage: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.7 }}
             >
-              tu espacio exclusivo
+              Comunicación Inteligente
             </motion.p>
           </div>
 

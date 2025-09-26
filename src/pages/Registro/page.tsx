@@ -55,7 +55,7 @@ const RegistroPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen w-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex">
+    <div className="min-h-screen w-screen main-animated-bg flex">
       {/* Panel de Branding - Izquierda */}
       <motion.div 
         className="flex-[0.42] flex flex-col justify-center items-center p-12 relative"
@@ -81,7 +81,7 @@ const RegistroPage: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
             >
-              SignLearn AI
+              SeeTalk
             </motion.h2>
             <motion.p 
               className="text-gray-300 text-xl font-light"
@@ -89,7 +89,7 @@ const RegistroPage: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.7 }}
             >
-              crea tu cuenta ahora
+              Comunicación Inteligente
             </motion.p>
           </div>
 

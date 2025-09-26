@@ -337,21 +337,23 @@ const TrainingPage = () => {
   ];
 
   return (
-    <section className="p-6 bg-gray-50 min-h-screen">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-700 font-montserrat">
-            Entrenamiento de Gestos del Alfabeto
-          </h1>
-          <p className="text-gray-600">
-            Crea un nuevo modelo de gesto para cada letra del alfabeto usando tu mano DERECHA
-          </p>
+    <section className="p-6 min-h-screen">
+      <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6 mb-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800 font-montserrat">
+              Entrenamiento de Gestos del Alfabeto
+            </h1>
+            <p className="text-gray-600">
+              Crea un nuevo modelo de gesto para cada letra del alfabeto usando tu mano DERECHA
+            </p>
+          </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Webcam Preview */}
-        <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6">
           <h2 className="text-xl font-semibold mb-4 text-gray-800">
             Vista Previa
           </h2>
@@ -395,7 +397,7 @@ const TrainingPage = () => {
         </div>
 
         {/* Controls */}
-        <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6">
           <h2 className="text-xl font-semibold mb-4 text-gray-800">
             Panel de Control
           </h2>
