@@ -1,4 +1,18 @@
+import aImg from "../../assets/a-sena.png";
+import eImg from "../../assets/e-sena.png";
+import iImg from "../../assets/i-sena.png";
+import oImg from "../../assets/o-sena.png";
+import uImg from "../../assets/u-sena.png";
+
 export default function Vocales() {
+  const vocales = [
+    { letra: "A", img: aImg },
+    { letra: "E", img: eImg },
+    { letra: "I", img: iImg },
+    { letra: "O", img: oImg },
+    { letra: "U", img: uImg },
+  ];
+
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gradient-to-b from-[#0b3c5d] to-[#0b2345] gap-6">
       
@@ -19,18 +33,18 @@ export default function Vocales() {
 
         {/* Tarjetas de vocales */}
         <div className="flex justify-center gap-6">
-          {["a", "e", "i", "o", "u"].map((v) => (
+          {vocales.map((v) => (
             <div
-              key={v}
+              key={v.letra}
               className="bg-gradient-to-b from-[#DA8739] to-[#7A491B] rounded-lg p-4 w-32 h-40 flex flex-col items-center justify-between shadow-md hover:scale-105 transition"
             >
               <img
-                src={`/images/${v}-sena.png`}
-                alt={`${v.toUpperCase()} en señas`}
+                src={v.img}
+                alt={`${v.letra} en señas`}
                 className="w-20 h-20 object-contain"
               />
               <span className="text-white font-bold text-xl">
-                {v.toUpperCase()}
+                {v.letra}
               </span>
             </div>
           ))}
