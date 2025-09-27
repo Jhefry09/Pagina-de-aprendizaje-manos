@@ -337,14 +337,14 @@ const TrainingPage = () => {
   ];
 
   return (
-    <section className="p-6 min-h-screen">
+    <section className="p-6 w-full">
       <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6 mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800 font-montserrat">
+            <h1 className="global-title-dark font-montserrat">
               Entrenamiento de Gestos del Alfabeto
             </h1>
-            <p className="text-gray-600">
+            <p className="global-body-text-dark">
               Crea un nuevo modelo de gesto para cada letra del alfabeto usando tu mano DERECHA
             </p>
           </div>

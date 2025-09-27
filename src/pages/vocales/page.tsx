@@ -14,20 +14,20 @@ export default function Vocales() {
   ];
 
   return (
-    <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gradient-to-b from-[#0b3c5d] to-[#0b2345] gap-6">
+    <div className="w-full flex flex-col items-center justify-center pt-20 pb-6 gap-6">
       
       {/* Caja superior */}
-      <div className="bg-white/95 rounded-lg shadow-xl p-8 w-[800px] text-center">
-        <h2 className="text-2xl font-bold mb-2">Sección de Vocales</h2>
-        <p className="text-gray-700">
+      <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-8 w-[800px] text-center">
+        <h2 className="global-title-dark mb-2">Sección de Vocales</h2>
+        <p className="global-body-text-dark">
           Domina las vocales en lengua de señas con ejercicios interactivos y prácticos.
         </p>
       </div>
 
       {/* Caja inferior */}
-      <div className="bg-white/95 rounded-lg shadow-xl p-8 w-[800px] text-center">
+      <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-8 w-[800px] text-center">
         {/* Botón principal */}
-        <button className="bg-gradient-to-b from-[#125C7C] to-[#071939] hover:opacity-90 text-white font-semibold px-6 py-2 rounded-md shadow mb-8">
+        <button className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-semibold px-6 py-3 rounded-xl shadow-lg mb-8 global-body-text">
           Seleccionar
         </button>
 

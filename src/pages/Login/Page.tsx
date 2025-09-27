@@ -291,7 +291,7 @@ const LoginPage: React.FC = () => {
     }, []);
 
     return (
-        <div className="min-h-screen w-screen main-animated-bg flex">
+        <div className="w-full flex">
             {/* Panel de Branding - Izquierda (40-45%) */}
             <motion.div
                 className="flex-[0.42] flex flex-col justify-center items-center p-12 relative"
@@ -361,7 +361,7 @@ const LoginPage: React.FC = () => {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
             >
-                <div className="bg-slate-800/70 backdrop-blur-sm rounded-3xl p-10 w-full max-w-md border border-slate-700/50 shadow-2xl">
+                <div className="bg-slate-800/70 backdrop-blur-sm rounded-3xl p-10 w-full max-w-lg border border-slate-700/50 shadow-2xl">
                     {/* Título del Proceso */}
                     <motion.h3
                         className="text-white text-xl font-medium text-center mb-8"

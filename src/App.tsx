@@ -2,6 +2,7 @@ import {
     BrowserRouter as Router,
     Routes,
     Route,
+    Navigate,
     useLocation,
 } from "react-router-dom";
 import { TransitionProvider } from "./contexts/TransitionProvider";
@@ -20,47 +21,45 @@ import { AnimatePresence } from "framer-motion";
 
 const AppContent = () => {
     const location = useLocation();
-    const isHomePage = location.pathname === '/';
     const isTrainingPage = location.pathname.startsWith('/training');
     const isPracticePage = location.pathname.startsWith('/practice');
     const isNumerosPage = location.pathname.startsWith('/numeros');
     const isVocalesPage = location.pathname.startsWith('/vocales');
     const isAuthPage = location.pathname === '/login' || location.pathname === '/registro';
-
-    const activeLink = isHomePage ? 'inicio' :
+    const isWelcomePage = location.pathname === '/welcome';
+    const activeLink = location.pathname === '/home' ? 'inicio' :
         isTrainingPage ? 'clases' :
             isPracticePage ? 'practicar' :
                 isNumerosPage ? 'numeros' :
                     isVocalesPage ? 'vocales' : '';
-
-    // Rutas de autenticación sin layout principal
-    if (isAuthPage) {
+    
+    if (isAuthPage || isWelcomePage) {
         return (
-            <div className="main-animated-bg">
+            <div className="min-h-screen w-full global-bg-static">
                 <AnimatePresence mode="wait">
                     <Routes location={location} key={location.pathname}>
                         <Route path="/login" element={<LoginPage />} />
                         <Route path="/registro" element={<RegistroPage />} />
+                        <Route path="/welcome" element={<WelcomePage />} />
                     </Routes>
                 </AnimatePresence>
             </div>
         );
     }
-
-    // Rutas principales con layout normal
+    // Rutas principales con layout normal y navbar
     return (
-        <div className="min-h-screen main-animated-bg">
+        <div className="min-h-screen w-full global-bg-static">
             <Navbar activeLink={activeLink} />
-            <main>
+            <main className="w-full">
                 <AnimatePresence mode="wait">
                     <Routes location={location} key={location.pathname}>
-                        <Route path="/welcome" element={<WelcomePage />} />
-                        <Route path="/" element={<HomePage />} />
+                        <Route path="/" element={<Navigate to="/welcome" replace />} />
+                        <Route path="/home" element={<HomePage />} />
                         <Route path="/training" element={<TrainingPage />} />
                         <Route path="/practice/:moduleType" element={<PracticePage />} />
                         <Route path="/dashboard" element={<DashboardPage />} />
-                        <Route path="/vocales" element={<VocalesPage />} />
                         <Route path="/numeros" element={<NumerosPage />} />
+                        <Route path="/vocales" element={<VocalesPage />} />
                     </Routes>
                 </AnimatePresence>
             </main>

@@ -288,7 +288,7 @@ const RegistroPage: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen w-screen main-animated-bg flex">
+        <div className="w-full flex">
             {/* Canvas oculto para capturar fotos */}
             <canvas ref={canvasRef} style={{ display: 'none' }} />
 
@@ -361,7 +361,7 @@ const RegistroPage: React.FC = () => {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
             >
-                <div className="bg-slate-800/70 backdrop-blur-sm rounded-3xl p-10 w-full max-w-md border border-slate-700/50 shadow-2xl">
+                <div className="bg-slate-800/70 backdrop-blur-sm rounded-3xl p-10 w-full max-w-lg border border-slate-700/50 shadow-2xl">
                     <motion.h3
                         className="text-white text-xl font-medium text-center mb-8"
                         initial={{ opacity: 0 }}

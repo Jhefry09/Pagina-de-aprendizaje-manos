@@ -19,6 +19,7 @@ const getGreeting = () => {
 const Page = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<UserData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const greeting = getGreeting();
 
   // Cargar datos del usuario desde localStorage y escuchar cambios
@@ -40,6 +41,11 @@ const Page = () => {
 
     // Cargar datos inicialmente
     loadUserData();
+    
+    // Simular un pequeño delay para evitar el bug de renderizado
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 100);
 
     // Escuchar cambios en localStorage (para cuando se actualice desde otro lugar)
     const handleStorageChange = (e: StorageEvent) => {
@@ -118,34 +124,32 @@ const Page = () => {
   const userName = user?.usuario || user?.name || 'Aprendiz';
 
   return (
-    <div className="min-h-screen">
+    <div className="w-full">
       <main className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-6 sm:py-8 w-full">
-        {/* Hero Section - Contenedor Flotante */}
         <section className="mb-8 sm:mb-12 mx-2 sm:mx-0">
           <div className="bg-white/95 backdrop-blur-sm py-8 sm:py-12 rounded-2xl shadow-2xl border border-white/20 max-w-4xl mx-auto">
             <div className="px-4 sm:px-6 lg:px-8 text-center">
               <div className="flex items-center justify-center space-x-2 mb-4 sm:mb-6">
                 <span className="text-2xl">👋</span>
-                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
-                  {greeting}, {userName}
+                <h1 className="global-title-dark">
+                  {greeting}, {userName}!
                 </h1>
               </div>
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-3 sm:mb-4">
-                Comunicación inteligente y accesible
-              </h2>
-              <p className="text-base sm:text-lg text-gray-600 mb-6 sm:mb-8 max-w-2xl mx-auto px-2">
-                Descubre una nueva forma de comunicarte con tecnología avanzada y reconocimiento inteligente.
+              <p className="global-large-text-dark mb-6 sm:mb-8 max-w-2xl mx-auto px-2">
+                Bienvenido a <strong>SeeTalk</strong>, tu plataforma de aprendizaje de lengua de señas. 
+                Selecciona un módulo para continuar con tu progreso educativo.
               </p>
+              
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center max-w-md mx-auto">
                 <a 
                   href="#modulos" 
-                  className="w-full sm:w-auto px-5 py-2.5 sm:px-6 sm:py-3 bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600 transition-all duration-300 text-center shadow-lg hover:shadow-xl transform hover:scale-105 text-sm sm:text-base"
+                  className="w-full sm:w-auto px-5 py-2.5 sm:px-6 sm:py-3 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-medium rounded-lg transition-all duration-300 text-center shadow-lg hover:shadow-xl transform hover:scale-105 global-body-text"
                 >
                   Comenzar ahora
                 </a>
                 <a 
                   href="#tutorial" 
-                  className="w-full sm:w-auto px-5 py-2.5 sm:px-6 sm:py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-all duration-300 text-center shadow-sm hover:shadow-md transform hover:scale-105 text-sm sm:text-base"
+                  className="w-full sm:w-auto px-5 py-2.5 sm:px-6 sm:py-3 border-2 border-gray-900 text-gray-900 bg-white font-semibold rounded-lg hover:bg-gray-900 hover:text-white transition-all duration-300 text-center shadow-lg hover:shadow-xl transform hover:scale-105"
                 >
                   Ver demostración
                 </a>
@@ -157,15 +161,29 @@ const Page = () => {
         {/* Modules Section */}
         <section id="modulos" className="mb-12 sm:mb-16 px-2 sm:px-0">
           <div className="text-center mb-8 sm:mb-10">
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-2 drop-shadow-lg">Nuestros Módulos Educativos</h2>
-            <div className="w-16 sm:w-20 h-1 bg-blue-400 mx-auto rounded-full shadow-lg"></div>
-            <p className="mt-3 sm:mt-4 text-sm sm:text-base text-gray-200 max-w-2xl mx-auto px-2 drop-shadow-md">
+            <h2 className="global-title mb-2 drop-shadow-lg">Nuestros Módulos Educativos</h2>
+            <div className="w-16 sm:w-20 h-1 bg-amber-400 mx-auto rounded-full shadow-lg"></div>
+            <p className="mt-3 sm:mt-4 global-large-text text-gray-200 max-w-2xl mx-auto px-2 drop-shadow-md">
               Selecciona un módulo para comenzar tu aprendizaje en lengua de señas de manera interactiva y divertida.
             </p>
           </div>
 
           <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-5 md:gap-6 w-full">
-            {modules.map((module) => (
+            {isLoading ? (
+              // Skeleton loading para módulos
+              Array.from({ length: 5 }).map((_, index) => (
+                <div key={index} className="bg-white rounded-xl sm:rounded-2xl shadow-md overflow-hidden animate-pulse">
+                  <div className="h-1 sm:h-1.5 bg-gray-200"></div>
+                  <div className="p-4 sm:p-5 md:p-6 text-center">
+                    <div className="mb-4 sm:mb-5 p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-gray-100 w-full max-w-[140px] sm:max-w-[160px] mx-auto h-24 sm:h-28"></div>
+                    <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                    <div className="h-3 bg-gray-200 rounded mb-3"></div>
+                    <div className="h-8 bg-gray-200 rounded"></div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              modules.map((module) => (
               <div
                 key={module.id}
                 onClick={() => handleModuleClick(module.id)}
@@ -216,7 +234,8 @@ const Page = () => {
                 {/* Hover effect */}
                 <div className={`absolute inset-0 bg-gradient-to-t from-black/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl pointer-events-none`}></div>
               </div>
-            ))}
+              ))
+            )}
           </div>
         </section>
       </main>
