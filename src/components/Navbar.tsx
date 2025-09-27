@@ -72,11 +72,16 @@ const Navbar = ({ activeLink = 'inicio' }: NavbarProps) => {
     const userInitial = userName.charAt(0).toUpperCase();
 
     const modules = [
-        { id: 'vocales', title: 'Vocales' },
-        { id: 'abecedario', title: 'Abecedario' },
-        { id: 'formar-palabras', title: 'Formar Palabras' },
-        { id: 'operaciones-matematicas', title: 'Operaciones Matemáticas' },
+        { id: 'vocales', title: 'Vocales', route: '/vocales' },
+        { id: 'abecedario', title: 'Abecedario', route: '/abecedario' },
+        { id: 'formar-palabras', title: 'Formar Palabras', route: '/practice/palabras' },
+        { id: 'operaciones-matematicas', title: 'Operaciones Matemáticas', route: '/numeros' },
     ];
+
+    const handleModuleNavigation = (route: string) => {
+        navigate(route);
+        setShowClassesDropdown(false);
+    };
 
     return (
         <nav className="relative z-[9999] px-4 sm:px-6 lg:px-8 pt-4 pb-2">
@@ -99,7 +104,10 @@ const Navbar = ({ activeLink = 'inicio' }: NavbarProps) => {
                     <div className="hidden md:flex items-center space-x-2 ml-8">
                         <NavLink href="/home" isActive={activeLink === 'inicio'}>Inicio</NavLink>
 
-                        <div className="relative">
+                        <div 
+                            className="relative"
+                            onMouseLeave={() => setShowClassesDropdown(false)}
+                        >
                             <div className="relative">
                                 <button
                                     onClick={() => setShowClassesDropdown(!showClassesDropdown)}
@@ -127,16 +135,15 @@ const Navbar = ({ activeLink = 'inicio' }: NavbarProps) => {
                                 >
                                     <div className="py-2">
                                         {modules.map((module) => (
-                                            <a
+                                            <button
                                                 key={module.id}
-                                                href={`#${module.id}`}
-                                                className="block px-4 py-2.5 text-base text-gray-200 hover:bg-gray-700/70 transition-colors duration-150"
-                                                onClick={() => setShowClassesDropdown(false)}
+                                                onClick={() => handleModuleNavigation(module.route)}
+                                                className="w-full text-left block px-4 py-2.5 text-base text-gray-200 hover:bg-gray-700/70 transition-colors duration-150"
                                             >
                         <span className="flex items-center space-x-2">
                           <span className="flex-1">{module.title}</span>
                         </span>
-                                            </a>
+                                            </button>
                                         ))}
                                     </div>
                                 </div>
@@ -258,14 +265,16 @@ const Navbar = ({ activeLink = 'inicio' }: NavbarProps) => {
                         <div className="px-2">
                             <p className="text-xs uppercase font-semibold text-gray-400 px-2 py-1">Clases</p>
                             {modules.map((module) => (
-                                <a
+                                <button
                                     key={module.id}
-                                    href={`/${module.id}`}
-                                    className="block px-4 py-2 rounded-lg text-base font-medium text-gray-200 hover:bg-gray-700/50 transition-colors"
-                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    onClick={() => {
+                                        handleModuleNavigation(module.route);
+                                        setIsMobileMenuOpen(false);
+                                    }}
+                                    className="w-full text-left block px-4 py-2 rounded-lg text-base font-medium text-gray-200 hover:bg-gray-700/50 transition-colors"
                                 >
                                     {module.title}
-                                </a>
+                                </button>
                             ))}
                         </div>
                         <div className="border-t border-gray-700 my-1"></div>
