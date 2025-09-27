@@ -14,16 +14,14 @@ import DashboardPage from "./pages/Dashboard/Page";
 import LoginPage from "./pages/Login/Page";
 import RegistroPage from "./pages/Registro/page";
 import NumerosPage from "./pages/numeros/page";
+import WelcomePage from "./pages/Welcome/Page";
 import { AnimatePresence } from "framer-motion";
-import VocalesPage from "./pages/vocales/page";
 
 const AppContent = () => {
   const location = useLocation();
   const isHomePage = location.pathname === '/';
   const isTrainingPage = location.pathname.startsWith('/training');
   const isPracticePage = location.pathname.startsWith('/practice');
-  const isNumerosPage = location.pathname.startsWith('/numeros');
-  const isAuthPage = location.pathname === '/login' || location.pathname === '/registro';
   
   const activeLink = isHomePage ? 'inicio' : isTrainingPage ? 'clases' : isPracticePage ? 'practicar' : isNumerosPage ? 'numeros' : '';
 
@@ -48,6 +46,7 @@ const AppContent = () => {
       <main>
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
+            <Route path="/welcome" element={<WelcomePage />} />
             <Route path="/" element={<HomePage />} />
             <Route path="/training" element={<TrainingPage />} />
             <Route path="/practice/:moduleType" element={<PracticePage />} />
