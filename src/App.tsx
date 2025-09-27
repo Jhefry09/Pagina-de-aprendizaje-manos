@@ -23,18 +23,21 @@ import { AnimatePresence } from "framer-motion";
 
 const AppContent = () => {
     const location = useLocation();
-    const isTrainingPage = location.pathname.startsWith('/training');
-    const isPracticePage = location.pathname.startsWith('/practice');
-    const isNumerosPage = location.pathname.startsWith('/numeros');
-    const isVocalesPage = location.pathname.startsWith('/vocales');
+    
+    // Definir rutas y estados
     const isAuthPage = location.pathname === '/login' || location.pathname === '/registro';
     const isWelcomePage = location.pathname === '/welcome';
+    const isTrainingPage = location.pathname.startsWith('/training');
+    const isNumerosPage = location.pathname.startsWith('/numeros');
+    const isVocalesPage = location.pathname.startsWith('/vocales');
+    const isAbecedarioPage = location.pathname.startsWith('/abecedario');
 
+    // Determinar enlace activo para navbar
     const activeLink = location.pathname === '/home' ? 'inicio' :
         isTrainingPage ? 'clases' :
-            isPracticePage ? 'practicar' :
-                isNumerosPage ? 'numeros' :
-                    isVocalesPage ? 'vocales' : '';
+            isNumerosPage ? 'numeros' :
+                isVocalesPage ? 'vocales' :
+                    isAbecedarioPage ? 'abecedario' : '';
 
     // Rutas sin navbar (auth y welcome)
     if (isAuthPage || isWelcomePage) {
