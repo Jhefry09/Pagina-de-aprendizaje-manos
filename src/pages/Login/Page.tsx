@@ -234,7 +234,7 @@ const LoginPage: React.FC = () => {
                 }
 
                 // Redirigir a la página Home (ruta raíz)
-                navigate('/');
+                navigate('/home');
             } else {
                 setError(`Error: ${JSON.stringify(data)}`);
             }
