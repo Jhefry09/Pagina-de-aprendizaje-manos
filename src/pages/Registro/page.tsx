@@ -5,11 +5,17 @@ import mujerImage from '../../assets/mujer.png';
 
 const RegistroPage: React.FC = () => {
   const webcamRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [nombres, setNombres] = useState<string>('');
   const [isRegistering, setIsRegistering] = useState<boolean>(false);
+  const [countdown, setCountdown] = useState<number>(0);
+  const [showCountdown, setShowCountdown] = useState<boolean>(false);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [registrationStatus, setRegistrationStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [errorMessage, setErrorMessage] = useState<string>('');
   const navigate = useNavigate();
 
-  // Inicializar cámara
+  // Inicializar cámarafetch
   useEffect(() => {
     const startCamera = async () => {
       try {
@@ -23,6 +29,7 @@ const RegistroPage: React.FC = () => {
         }
       } catch (error) {
         console.error('Error accessing camera:', error);
+        setErrorMessage('Error al acceder a la cámara. Por favor, verifica los permisos.');
       }
     };
 
@@ -36,18 +43,111 @@ const RegistroPage: React.FC = () => {
     };
   }, []);
 
-  // Simular registro
+  // Función para capturar foto del video
+  const capturePhoto = (): string | null => {
+    if (!webcamRef.current || !canvasRef.current) return null;
+
+    const canvas = canvasRef.current;
+    const context = canvas.getContext('2d');
+    if (!context) return null;
+
+    // Obtener dimensiones originales del video
+    const originalWidth = webcamRef.current.videoWidth;
+    const originalHeight = webcamRef.current.videoHeight;
+
+    // Reducir resolución a la mitad
+    const reducedWidth = Math.floor(originalWidth / 2);
+    const reducedHeight = Math.floor(originalHeight / 2);
+
+    // Configurar el canvas con el tamaño reducido
+    canvas.width = reducedWidth;
+    canvas.height = reducedHeight;
+
+    // Dibujar el frame actual del video en el canvas con tamaño reducido
+    context.drawImage(webcamRef.current, 0, 0, originalWidth, originalHeight, 0, 0, reducedWidth, reducedHeight);
+    
+    // Convertir a data URL con calidad reducida (JPEG con 70% de calidad)
+    return canvas.toDataURL('image/jpeg', 0.7);
+  };
+
+  // Función para enviar datos al backend
+  const enviarAlBackend = async (nombre: string, fotoDataUrl: string) => {
+    try {
+      // Convertir data URL a blob
+      const response = await fetch(fotoDataUrl);
+      const blob = await response.blob();
+
+      // Crear FormData
+      const formData = new FormData();
+      formData.append('nombre', nombre);
+      formData.append('foto', blob, 'registro.png');
+
+      // Enviar al backend
+      const resp = await fetch('/usuarios/registrar', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!resp.ok) {
+        throw new Error(`Error del servidor: ${resp.status}`);
+      }
+
+      const data = await resp.json();
+      return data;
+    } catch (error) {
+      console.error('Error al enviar al backend:', error);
+      throw error;
+    }
+  };
+
+  // Manejar el proceso completo de registro con cuenta regresiva
   const handleRegistrar = async () => {
-    if (!nombres.trim()) return;
+    if (!nombres.trim()) {
+      setErrorMessage('Por favor, ingresa tu nombre completo.');
+      return;
+    }
     
     setIsRegistering(true);
+    setShowCountdown(true);
+    setRegistrationStatus('idle');
+    setErrorMessage('');
     
-    // Simulación de registro
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // Iniciar cuenta regresiva de 5 segundos
+    for (let i = 5; i > 0; i--) {
+      setCountdown(i);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
     
-    setIsRegistering(false);
-    // Redirigir al login
-    navigate('/login');
+    setCountdown(0);
+    setShowCountdown(false);
+    
+    try {
+      // Capturar la foto
+      const fotoDataUrl = capturePhoto();
+      if (!fotoDataUrl) {
+        throw new Error('No se pudo capturar la imagen');
+      }
+      
+      setCapturedImage(fotoDataUrl);
+      
+      // Enviar al backend
+      const resultado = await enviarAlBackend(nombres, fotoDataUrl);
+      
+      console.log('Registro exitoso:', resultado);
+      setRegistrationStatus('success');
+      
+      // Mostrar resultado y redirigir después de 2 segundos
+      setTimeout(() => {
+        navigate('/login');
+      }, 2000);
+      
+    } catch (error) {
+      console.error('Error en el registro:', error);
+      setRegistrationStatus('error');
+      setErrorMessage(error instanceof Error ? error.message : 'Error desconocido durante el registro');
+    } finally {
+      setIsRegistering(false);
+    }
   };
 
   const handleVolver = () => {
@@ -56,6 +156,9 @@ const RegistroPage: React.FC = () => {
 
   return (
     <div className="min-h-screen w-screen main-animated-bg flex">
+      {/* Canvas oculto para capturar fotos */}
+      <canvas ref={canvasRef} style={{ display: 'none' }} />
+      
       {/* Panel de Branding - Izquierda */}
       <motion.div 
         className="flex-[0.42] flex flex-col justify-center items-center p-12 relative"
@@ -135,6 +238,17 @@ const RegistroPage: React.FC = () => {
             Registrando Usuario
           </motion.h3>
 
+          {/* Mostrar mensaje de error si existe */}
+          {errorMessage && (
+            <motion.div 
+              className="mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <p className="text-red-300 text-sm">{errorMessage}</p>
+            </motion.div>
+          )}
+
           {/* Módulo de Cámara */}
           <motion.div 
             className="relative mb-6"
@@ -143,15 +257,59 @@ const RegistroPage: React.FC = () => {
             transition={{ delay: 0.8 }}
           >
             <div className="w-full h-[24rem] bg-black rounded-2xl overflow-hidden border-2 border-slate-600 relative" style={{ aspectRatio: '1/1' }}>
-              <video
-                ref={webcamRef}
-                autoPlay
-                playsInline
-                muted
-                className="w-full h-full object-cover"
-                style={{ transform: 'scaleX(-1)' }}
-              />
+              {!capturedImage ? (
+                <video
+                  ref={webcamRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className="w-full h-full object-cover"
+                  style={{ transform: 'scaleX(-1)' }}
+                />
+              ) : (
+                <img
+                  src={capturedImage}
+                  alt="Foto capturada"
+                  className="w-full h-full object-cover"
+                />
+              )}
               
+              {/* Overlay de cuenta regresiva */}
+              {showCountdown && (
+                <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                  <motion.div 
+                    className="text-white text-8xl font-bold"
+                    key={countdown}
+                    initial={{ scale: 0.5, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 1.5, opacity: 0 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    {countdown}
+                  </motion.div>
+                </div>
+              )}
+
+              {/* Overlay de estado */}
+              {registrationStatus === 'success' && (
+                <div className="absolute inset-0 bg-green-500 bg-opacity-75 flex items-center justify-center">
+                  <div className="text-white text-center">
+                    <div className="text-4xl mb-4">✅</div>
+                    <div className="text-xl font-semibold">¡Registro Exitoso!</div>
+                    <div className="text-sm">Redirigiendo al login...</div>
+                  </div>
+                </div>
+              )}
+
+              {registrationStatus === 'error' && (
+                <div className="absolute inset-0 bg-red-500 bg-opacity-75 flex items-center justify-center">
+                  <div className="text-white text-center">
+                    <div className="text-4xl mb-4">❌</div>
+                    <div className="text-xl font-semibold">Error en el Registro</div>
+                    <div className="text-sm">Inténtalo nuevamente</div>
+                  </div>
+                </div>
+              )}
             </div>
           </motion.div>
 
@@ -167,7 +325,8 @@ const RegistroPage: React.FC = () => {
               value={nombres}
               onChange={(e) => setNombres(e.target.value)}
               placeholder="NOMBRES Y APELLIDOS"
-              className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all"
+              disabled={isRegistering}
+              className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all disabled:opacity-50"
             />
           </motion.div>
 
@@ -180,7 +339,8 @@ const RegistroPage: React.FC = () => {
           >
             <button
               onClick={handleVolver}
-              className="py-3 px-4 bg-slate-600 hover:bg-slate-700 text-white font-semibold rounded-xl transition-all duration-300 transform hover:scale-[1.02]"
+              disabled={isRegistering}
+              className="py-3 px-4 bg-slate-600 hover:bg-slate-700 text-white font-semibold rounded-xl transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Volver
             </button>
@@ -194,9 +354,23 @@ const RegistroPage: React.FC = () => {
                   : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg'
               }`}
             >
-              {isRegistering ? 'Registrando...' : 'Registrar'}
+              {isRegistering ? (showCountdown ? `${countdown}` : 'Registrando...') : 'Registrar'}
             </button>
           </motion.div>
+
+          {/* Instrucciones adicionales */}
+          {!isRegistering && (
+            <motion.div 
+              className="mt-6 text-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1.4 }}
+            >
+              <p className="text-gray-400 text-sm">
+                Al hacer clic en "Registrar", comenzará una cuenta regresiva de 5 segundos antes de tomar la foto automáticamente.
+              </p>
+            </motion.div>
+          )}
         </div>
       </motion.div>
     </div>

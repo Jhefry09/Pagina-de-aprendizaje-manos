@@ -1,7 +1,13 @@
 // import React from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
-import type { AuthContextType } from '../../contexts/auth-context';
+
+interface UserData {
+  usuario: string;
+  name: string;
+  id: number;
+  rol: string;
+}
 
 const getGreeting = () => {
   const hour = new Date().getHours();
@@ -12,8 +18,49 @@ const getGreeting = () => {
 
 const Page = () => {
   const navigate = useNavigate();
-  const auth = useAuth() as AuthContextType;
+  const [user, setUser] = useState<UserData | null>(null);
   const greeting = getGreeting();
+
+  // Cargar datos del usuario desde localStorage y escuchar cambios
+  useEffect(() => {
+    const loadUserData = () => {
+      const userData = localStorage.getItem('user');
+      if (userData) {
+        try {
+          const parsedUser = JSON.parse(userData);
+          setUser(parsedUser);
+        } catch (error) {
+          console.error('Error al parsear datos del usuario:', error);
+          setUser(null);
+        }
+      } else {
+        setUser(null);
+      }
+    };
+
+    // Cargar datos inicialmente
+    loadUserData();
+
+    // Escuchar cambios en localStorage (para cuando se actualice desde otro lugar)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'user') {
+        loadUserData();
+      }
+    };
+
+    // Escuchar el evento personalizado para cambios internos de localStorage
+    const handleLocalStorageUpdate = () => {
+      loadUserData();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('userDataUpdated', handleLocalStorageUpdate);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('userDataUpdated', handleLocalStorageUpdate);
+    };
+  }, []);
   
   const handleModuleClick = (moduleId: string) => {
     // Mapeo de módulos a sus rutas correspondientes
@@ -28,6 +75,7 @@ const Page = () => {
     const route = moduleRoutes[moduleId] || '/training';
     navigate(route);
   };
+
   const modules = [
     {
       id: 'vocales',
@@ -66,6 +114,9 @@ const Page = () => {
     },
   ];
 
+  // Obtener el nombre del usuario (prioriza 'usuario' sobre 'name')
+  const userName = user?.usuario || user?.name || 'Aprendiz';
+
   return (
     <div className="min-h-screen">
       <main className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-6 sm:py-8 w-full">
@@ -76,7 +127,7 @@ const Page = () => {
               <div className="flex items-center justify-center space-x-2 mb-4 sm:mb-6">
                 <span className="text-2xl">👋</span>
                 <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
-                  {greeting}, {auth.user?.name || 'Aprendiz'}
+                  {greeting}, {userName}
                 </h1>
               </div>
               <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-3 sm:mb-4">
