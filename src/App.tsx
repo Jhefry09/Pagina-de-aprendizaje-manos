@@ -16,7 +16,8 @@ import RegistroPage from "./pages/Registro/page";
 import NumerosPage from "./pages/numeros/page";
 import { AnimatePresence } from "framer-motion";
 import VocalesPage from "./pages/vocales/page";
-
+import AbecedarioPage from "./pages/abecedario/Page";
+import NumerosAprendizajePage from "./pages/numeros-aprendizaje/Page";
 const AppContent = () => {
   const location = useLocation();
   const isHomePage = location.pathname === '/';
@@ -55,6 +56,8 @@ const AppContent = () => {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/vocales" element={<VocalesPage />} />
             <Route path="/numeros" element={<NumerosPage />} />
+            <Route path="/abecedario" element={<AbecedarioPage />} />
+            <Route path="/numeros-aprendizaje" element={<NumerosAprendizajePage />} />
           </Routes>
         </AnimatePresence>
       </main>

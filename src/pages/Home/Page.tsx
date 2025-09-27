@@ -66,8 +66,8 @@ const Page = () => {
     // Mapeo de módulos a sus rutas correspondientes
     const moduleRoutes: { [key: string]: string } = {
       'vocales': '/vocales',
-      'abecedario': '/practice/abecedario',
-      'numeros': '/practice/numeros',
+      'abecedario': '/abecedario',
+      'numeros': '/numeros-aprendizaje',
       'formar-palabras': '/practice/palabras',
       'operaciones-matematicas': '/practice/matematicas'
     };
