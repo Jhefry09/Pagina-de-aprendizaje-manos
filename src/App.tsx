@@ -16,6 +16,8 @@ import LoginPage from "./pages/Login/Page";
 import RegistroPage from "./pages/Registro/page";
 import NumerosPage from "./pages/numeros/page";
 import VocalesPage from "./pages/vocales/page";
+import AbecedarioPage from "./pages/abecedario/Page";
+import NumerosAprendizajePage from "./pages/numeros-aprendizaje/Page";
 import WelcomePage from "./pages/Welcome/Page";
 import { AnimatePresence } from "framer-motion";
 
@@ -27,12 +29,14 @@ const AppContent = () => {
     const isVocalesPage = location.pathname.startsWith('/vocales');
     const isAuthPage = location.pathname === '/login' || location.pathname === '/registro';
     const isWelcomePage = location.pathname === '/welcome';
+
     const activeLink = location.pathname === '/home' ? 'inicio' :
         isTrainingPage ? 'clases' :
             isPracticePage ? 'practicar' :
                 isNumerosPage ? 'numeros' :
                     isVocalesPage ? 'vocales' : '';
-    
+
+    // Rutas sin navbar (auth y welcome)
     if (isAuthPage || isWelcomePage) {
         return (
             <div className="min-h-screen w-full global-bg-static">
@@ -46,6 +50,7 @@ const AppContent = () => {
             </div>
         );
     }
+
     // Rutas principales con layout normal y navbar
     return (
         <div className="min-h-screen w-full global-bg-static">
@@ -60,6 +65,8 @@ const AppContent = () => {
                         <Route path="/dashboard" element={<DashboardPage />} />
                         <Route path="/numeros" element={<NumerosPage />} />
                         <Route path="/vocales" element={<VocalesPage />} />
+                        <Route path="/abecedario" element={<AbecedarioPage />} />
+                        <Route path="/numeros-aprendizaje" element={<NumerosAprendizajePage />} />
                     </Routes>
                 </AnimatePresence>
             </main>
