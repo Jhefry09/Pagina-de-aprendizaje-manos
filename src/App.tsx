@@ -12,6 +12,7 @@ import TrainingPage from "./pages/Training/Page";
 import PracticePage from "./pages/PracticeWords/Page";
 import DashboardPage from "./pages/Dashboard/Page";
 import LoginPage from "./pages/Login/Page";
+import WelcomePage from "./pages/Welcome/Page";
 import { AnimatePresence } from "framer-motion";
 
 const AppContent = () => {
@@ -28,6 +29,7 @@ const AppContent = () => {
       <main className="pt-20 md:pt-24">
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
+            <Route path="/welcome" element={<WelcomePage />} />
             <Route path="/" element={<HomePage />} />
             <Route path="/training" element={<TrainingPage />} />
             <Route path="/practice/:moduleType" element={<PracticePage />} />

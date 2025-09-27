@@ -14,7 +14,7 @@
     "@fortawesome/free-solid-svg-icons": "^7.0.1",
     "@fortawesome/react-fontawesome": "^3.0.2",
     "@heroicons/react": "^2.2.0",
-    "face-api.js": "^0.22.2",
+    "face-api.js": "^0.20.0",
     "framer-motion": "^12.23.19",
     "lucide-react": "^0.544.0",
     "react": "^18.2.0",
@@ -38,5 +38,8 @@
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.39.1",
     "vite": "^7.1.2"
+  },
+  "overrides": {
+    "node-fetch": "2.6.9"
   }
 }
