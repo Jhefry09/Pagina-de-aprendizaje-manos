@@ -38,5 +38,8 @@
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.39.1",
     "vite": "^7.1.2"
+  },
+  "overrides": {
+    "node-fetch": "2.6.9"
   }
 }
