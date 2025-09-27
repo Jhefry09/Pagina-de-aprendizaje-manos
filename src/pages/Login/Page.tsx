@@ -248,20 +248,45 @@ const LoginPage: React.FC = () => {
     };
 
     // Volver a tomar foto
-    const retakePhoto = useCallback(() => {
+    const retakePhoto = useCallback(async () => {
         setImgSrc(null);
         setError(null);
+        setCameraReady(false);
         
-        // Reiniciar el estado de la cámara
+        // Detener el stream actual si existe
         const video = webcamRef.current?.video;
-        if (video) {
-            // Asegurar que el video esté visible y reproduciéndose
-            video.style.display = 'block';
-            if (video.paused) {
-                video.play().catch(console.error);
+        if (video && video.srcObject) {
+            const stream = video.srcObject as MediaStream;
+            stream.getTracks().forEach(track => track.stop());
+            video.srcObject = null;
+        }
+        
+        // Reiniciar la cámara con un nuevo stream
+        try {
+            const mediaStream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 },
+                    facingMode: 'user'
+                },
+                audio: false
+            });
+
+            if (webcamRef.current?.video) {
+                const videoElement = webcamRef.current.video;
+                videoElement.srcObject = mediaStream;
+                videoElement.style.display = 'block';
+                
+                videoElement.onloadedmetadata = () => {
+                    setCameraReady(true);
+                };
+                
+                // Asegurar que el video se reproduzca
+                videoElement.play().catch(console.error);
             }
-            // Forzar la actualización del estado de la cámara
-            setCameraReady(true);
+        } catch (err) {
+            console.error('Error al reiniciar la cámara:', err);
+            setError('No se pudo reiniciar la cámara. Intente recargar la página.');
         }
     }, []);
 

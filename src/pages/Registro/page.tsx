@@ -154,6 +154,37 @@ const RegistroPage: React.FC = () => {
     navigate('/login');
   };
 
+  // Función para volver a tomar foto (nueva funcionalidad)
+  const retakePhoto = async () => {
+    setCapturedImage(null);
+    setRegistrationStatus('idle');
+    setErrorMessage('');
+    
+    // Detener el stream actual si existe
+    if (webcamRef.current?.srcObject) {
+      const stream = webcamRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => track.stop());
+      webcamRef.current.srcObject = null;
+    }
+    
+    // Reiniciar la cámara con un nuevo stream
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: 640, height: 480, facingMode: 'user' },
+        audio: false
+      });
+      
+      if (webcamRef.current) {
+        webcamRef.current.srcObject = stream;
+        // Asegurar que el video se reproduzca
+        webcamRef.current.play().catch(console.error);
+      }
+    } catch (error) {
+      console.error('Error al reiniciar la cámara:', error);
+      setErrorMessage('Error al reiniciar la cámara. Por favor, recarga la página.');
+    }
+  };
+
   return (
     <div className="min-h-screen w-screen main-animated-bg flex">
       {/* Canvas oculto para capturar fotos */}
@@ -337,25 +368,53 @@ const RegistroPage: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.2 }}
           >
-            <button
-              onClick={handleVolver}
-              disabled={isRegistering}
-              className="py-3 px-4 bg-slate-600 hover:bg-slate-700 text-white font-semibold rounded-xl transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Volver
-            </button>
-            
-            <button
-              onClick={handleRegistrar}
-              disabled={!nombres.trim() || isRegistering}
-              className={`py-3 px-4 font-semibold rounded-xl transition-all duration-300 transform hover:scale-[1.02] ${
-                !nombres.trim() || isRegistering
-                  ? 'bg-slate-600/50 text-slate-400 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg'
-              }`}
-            >
-              {isRegistering ? (showCountdown ? `${countdown}` : 'Registrando...') : 'Registrar'}
-            </button>
+            {capturedImage && registrationStatus !== 'success' ? (
+              // Botones cuando hay imagen capturada
+              <>
+                <button
+                  onClick={retakePhoto}
+                  disabled={isRegistering}
+                  className="py-3 px-4 bg-slate-600 hover:bg-slate-700 text-white font-semibold rounded-xl transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Volver a tomar
+                </button>
+                
+                <button
+                  onClick={handleRegistrar}
+                  disabled={isRegistering}
+                  className={`py-3 px-4 font-semibold rounded-xl transition-all duration-300 transform hover:scale-[1.02] ${
+                    isRegistering
+                      ? 'bg-slate-600/50 text-slate-400 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white shadow-lg'
+                  }`}
+                >
+                  {isRegistering ? 'Registrando...' : 'Confirmar Registro'}
+                </button>
+              </>
+            ) : (
+              // Botones normales cuando no hay imagen
+              <>
+                <button
+                  onClick={handleVolver}
+                  disabled={isRegistering}
+                  className="py-3 px-4 bg-slate-600 hover:bg-slate-700 text-white font-semibold rounded-xl transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Volver
+                </button>
+                
+                <button
+                  onClick={handleRegistrar}
+                  disabled={!nombres.trim() || isRegistering}
+                  className={`py-3 px-4 font-semibold rounded-xl transition-all duration-300 transform hover:scale-[1.02] ${
+                    !nombres.trim() || isRegistering
+                      ? 'bg-slate-600/50 text-slate-400 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg'
+                  }`}
+                >
+                  {isRegistering ? (showCountdown ? `${countdown}` : 'Registrando...') : 'Registrar'}
+                </button>
+              </>
+            )}
           </motion.div>
 
           {/* Instrucciones adicionales */}
