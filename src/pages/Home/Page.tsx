@@ -69,7 +69,7 @@ const Page = () => {
       'abecedario': '/abecedario',
       'numeros': '/numeros-aprendizaje',
       'formar-palabras': '/practice/palabras',
-      'operaciones-matematicas': '/practice/matematicas'
+      'operaciones-matematicas': '/numeros'
     };
     
     const route = moduleRoutes[moduleId] || '/training';
