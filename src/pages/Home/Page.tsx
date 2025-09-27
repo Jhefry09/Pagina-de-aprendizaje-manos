@@ -135,25 +135,10 @@ const Page = () => {
                   {greeting}, {userName}!
                 </h1>
               </div>
-              <p className="global-large-text-dark mb-6 sm:mb-8 max-w-2xl mx-auto px-2">
+              <p className="global-large-text-dark max-w-2xl mx-auto px-2 text-center">
                 Bienvenido a <strong>SeeTalk</strong>, tu plataforma de aprendizaje de lengua de señas. 
                 Selecciona un módulo para continuar con tu progreso educativo.
               </p>
-              
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center max-w-md mx-auto">
-                <a 
-                  href="#modulos" 
-                  className="w-full sm:w-auto px-5 py-2.5 sm:px-6 sm:py-3 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-medium rounded-lg transition-all duration-300 text-center shadow-lg hover:shadow-xl transform hover:scale-105 global-body-text"
-                >
-                  Comenzar ahora
-                </a>
-                <a 
-                  href="#tutorial" 
-                  className="w-full sm:w-auto px-5 py-2.5 sm:px-6 sm:py-3 border-2 border-gray-900 text-gray-900 bg-white font-semibold rounded-lg hover:bg-gray-900 hover:text-white transition-all duration-300 text-center shadow-lg hover:shadow-xl transform hover:scale-105"
-                >
-                  Ver demostración
-                </a>
-              </div>
             </div>
           </div>
         </section>
