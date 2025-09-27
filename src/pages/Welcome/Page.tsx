@@ -1,12 +1,13 @@
-import React from "react";
 // Las rutas de importación son correctas si la estructura es:
 // src/pages/Welcome/Page.tsx y src/assets/img/*
 import logo from "../../assets/img/logo_2.png"; 
 import abecedario from "../../assets/img/abedecedario.png"; 
 import numero from "../../assets/img/numero.png"; 
 import vocales from "../../assets/img/vocales.png"; 
+import { useNavigate } from "react-router-dom";
 
 export default function App() {
+  const navigate = useNavigate();
   return (
     <main className="min-h-screen bg-gradient-to-b from-[#01121C] via-[#022134] to-[#055282] text-white antialiased">
       {/* HERO */}
@@ -89,7 +90,7 @@ export default function App() {
 
       {/* FOOTER - Botón con estilo modificado */}
       <footer className="py-16 text-center">
-        <button className="bg-gray-300 hover:bg-gray-400 text-white px-12 py-5 rounded-3xl text-3xl font-semibold transition-transform transform hover:-translate-y-1 shadow-lg">
+        <button onClick={() => navigate('/login')} className="bg-gray-300 hover:bg-gray-400 text-white px-12 py-5 rounded-3xl text-3xl font-semibold transition-transform transform hover:-translate-y-1 shadow-lg">
           Iniciar
         </button>
       </footer>
