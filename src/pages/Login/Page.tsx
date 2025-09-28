@@ -5,6 +5,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { CameraIcon, ArrowPathIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { FaceSmileIcon as FaceSmileSolid } from '@heroicons/react/24/solid';
 import mujerImage from '../../assets/mujer.png';
+import { useAuth } from '../../hooks/useAuth';
+
+interface ProgresoLetra {
+    id: number;
+    letra: string;
+    completado: boolean;
+}
 
 const LoginPage: React.FC = () => {
     // Usamos un tipo personalizado para el ref del video
@@ -41,6 +48,7 @@ const LoginPage: React.FC = () => {
     const [countdown, setCountdown] = useState<number>(0);
     const [isCapturing, setIsCapturing] = useState<boolean>(false);
     const navigate = useNavigate();
+    const { login, updateUserProgress } = useAuth();
 
     // Inicializar cámara
     useEffect(() => {
@@ -148,8 +156,9 @@ const LoginPage: React.FC = () => {
                     rol: data.rol
                 };
 
-                // Guardar datos de autenticación
+                // Guardar datos de autenticación en localStorage y en el contexto
                 localStorage.setItem('user', JSON.stringify(userData));
+                login(userData);
 
                 // Disparar evento personalizado para notificar cambios en localStorage
                 window.dispatchEvent(new CustomEvent('userDataUpdated'));
@@ -167,7 +176,7 @@ const LoginPage: React.FC = () => {
                     });
 
                     if (progresoRes.ok) {
-                        const progresoData = await progresoRes.json();
+                        const progresoData: ProgresoLetra[] = await progresoRes.json();
                         console.log('Progreso de letras:', progresoData);
 
                         // Crear objeto completo con información del usuario y progreso
@@ -178,70 +187,88 @@ const LoginPage: React.FC = () => {
                                 rol: data.rol
                             },
                             progreso: progresoData,
-                            letrasCompletadas: progresoData.filter((letra: any) => letra.completado === true),
+                            letrasCompletadas: progresoData.filter((letra: ProgresoLetra) => letra.completado === true),
                             totalLetras: progresoData.length,
                             porcentajeCompletado: progresoData.length > 0
-                                ? ((progresoData.filter((letra: any) => letra.completado === true).length / progresoData.length) * 100).toFixed(1)
+                                ? ((progresoData.filter((letra: ProgresoLetra) => letra.completado === true).length / progresoData.length) * 100).toFixed(1)
                                 : '0.0',
                             fechaUltimaActualizacion: new Date().toISOString()
                         };
 
-                        // Guardar progreso completo asociado al usuario
+                        // Guardar progreso completo asociado al usuario en localStorage y en el contexto
                         localStorage.setItem('userProgress', JSON.stringify(userProgressData));
+                        updateUserProgress(userProgressData);
 
                         // También mantener por separado para retrocompatibilidad
                         localStorage.setItem('progresoLetras', JSON.stringify(progresoData));
 
                         console.log(`Usuario ${data.usuario} tiene ${userProgressData.letrasCompletadas.length} letras completadas de ${userProgressData.totalLetras} (${userProgressData.porcentajeCompletado}%)`);
                     } else {
-                        console.warn('No se pudo obtener el progreso de letras');
-
-                        // Crear objeto con datos básicos del usuario sin progreso
-                        const userProgressData = {
-                            usuario: {
-                                id: data.id,
-                                nombre: data.usuario,
-                                rol: data.rol
-                            },
-                            progreso: [],
-                            letrasCompletadas: [],
-                            totalLetras: 0,
-                            porcentajeCompletado: '0.0',
-                            fechaUltimaActualizacion: new Date().toISOString()
-                        };
-
-                        localStorage.setItem('userProgress', JSON.stringify(userProgressData));
+                        console.warn('No se pudo obtener el progreso de letras del backend. Intentando cargar desde localStorage.');
+                        const localProgress = localStorage.getItem('userProgress');
+                        if (localProgress) {
+                            try {
+                                const parsedLocalProgress = JSON.parse(localProgress);
+                                updateUserProgress(parsedLocalProgress);
+                                console.log('Progreso de letras cargado desde localStorage.');
+                            } catch (parseError) {
+                                console.error('Error al parsear progreso de localStorage:', parseError);
+                            }
+                        }
                     }
                 } catch (progresoError) {
-                    console.error('Error al obtener progreso de letras:', progresoError);
-
-                    // Crear objeto con datos básicos del usuario en caso de error
-                    const userProgressData = {
-                        usuario: {
-                            id: data.id,
-                            nombre: data.usuario,
-                            rol: data.rol
-                        },
-                        progreso: [],
-                        letrasCompletadas: [],
-                        totalLetras: 0,
-                        porcentajeCompletado: '0.0',
-                        fechaUltimaActualizacion: new Date().toISOString(),
-                        error: 'No se pudo cargar el progreso'
-                    };
-
-                    localStorage.setItem('userProgress', JSON.stringify(userProgressData));
+                    console.error('Error al obtener el progreso de letras del backend:', progresoError);
+                    console.warn('Intentando cargar progreso desde localStorage como fallback.');
+                    const localProgress = localStorage.getItem('userProgress');
+                    if (localProgress) {
+                        try {
+                            const parsedLocalProgress = JSON.parse(localProgress);
+                            updateUserProgress(parsedLocalProgress);
+                            console.log('Progreso de letras cargado desde localStorage.');
+                        } catch (parseError) {
+                            console.error('Error al parsear progreso de localStorage:', parseError);
+                        }
+                    }
                 }
 
-                // Redirigir a la página Home (ruta raíz)
-                navigate('/home');
+                navigate('/dashboard');
             } else {
-                setError(`Error: ${JSON.stringify(data)}`);
+                setError('Usuario no encontrado. Intenta de nuevo.');
             }
-
         } catch (err) {
-            console.error('Error en el login:', err);
-            setError('No se pudo autenticar. Por favor, intente nuevamente.');
+            console.error('Error durante la autenticación con el backend:', err);
+            setError('Error de conexión o autenticación. Intentando cargar desde datos locales...');
+
+            // Fallback a localStorage si el backend falla
+            const localUser = localStorage.getItem('user');
+            const localProgress = localStorage.getItem('userProgress');
+
+            if (localUser) {
+                try {
+                    const parsedLocalUser = JSON.parse(localUser);
+                    login(parsedLocalUser);
+
+                    if (localProgress) {
+                        try {
+                            const parsedLocalProgress = JSON.parse(localProgress);
+                            updateUserProgress(parsedLocalProgress);
+                            alert(`Bienvenido de nuevo ${parsedLocalUser.usuario} (offline)`);
+                            navigate('/dashboard');
+                        } catch (parseError) {
+                            console.error('Error al parsear progreso de localStorage:', parseError);
+                            setError('Error al cargar progreso local. Por favor, intenta iniciar sesión de nuevo.');
+                        }
+                    } else {
+                        alert(`Bienvenido de nuevo ${parsedLocalUser.usuario} (offline, sin progreso)`);
+                        navigate('/dashboard');
+                    }
+                } catch (parseError) {
+                    console.error('Error al parsear usuario de localStorage:', parseError);
+                    setError('Datos de usuario locales corruptos. Por favor, inicia sesión de nuevo.');
+                }
+            } else {
+                setError('No se pudo iniciar sesión. No hay datos locales disponibles.');
+            }
         } finally {
             setIsLoading(false);
         }

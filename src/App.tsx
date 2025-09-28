@@ -20,6 +20,7 @@ import AbecedarioPage from "./pages/abecedario/Page";
 import NumerosAprendizajePage from "./pages/numeros-aprendizaje/Page";
 import WelcomePage from "./pages/Welcome/Page";
 import { AnimatePresence } from "framer-motion";
+import VocalPracticePage from "./pages/ParcticeVocals/Page";
 
 const AppContent = () => {
     const location = useLocation();
@@ -68,6 +69,7 @@ const AppContent = () => {
                         <Route path="/dashboard" element={<DashboardPage />} />
                         <Route path="/numeros" element={<NumerosPage />} />
                         <Route path="/vocales" element={<VocalesPage />} />
+                        <Route path="/vocales-practica/:vocal" element={<VocalPracticePage />} />
                         <Route path="/abecedario" element={<AbecedarioPage />} />
                         <Route path="/numeros-aprendizaje" element={<NumerosAprendizajePage />} />
                     </Routes>

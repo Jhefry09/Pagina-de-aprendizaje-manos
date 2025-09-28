@@ -232,6 +232,7 @@ const TrainingPage = () => {
       z: lm.z,
     }));
 
+    // Siempre actualizar el modelo en el contexto (y localStorage a través de useVocalContext)
     updateVocalModel(letter, normalizedLandmarks);
     setSelectedLetter("");
     setCountdown(null);
@@ -250,11 +251,12 @@ const TrainingPage = () => {
 
       const data = await response.json();
       if (!response.ok) {
+        // Si el backend responde con un error, pero la conexión fue exitosa
         setApiResponse({
           type: "error",
           message:
             data.message ||
-            "Error al procesar la letra. Por favor, inténtalo de nuevo.",
+            "Error del servidor al procesar la letra. Modelo guardado localmente.",
         });
         return;
       }
@@ -262,14 +264,15 @@ const TrainingPage = () => {
         type: "success",
         message:
           data.message ||
-          `Modelo para la letra '${letter.toUpperCase()}' guardado exitosamente con mano derecha.`,
+          `Modelo para la letra '${letter.toUpperCase()}' guardado exitosamente en el backend y localmente.`,
       });
     } catch (error: unknown) {
+      // Si hay un error de conexión con el backend
       const errorMessage =
         error instanceof Error ? error.message : "Error desconocido";
       setApiResponse({
-        type: "error",
-        message: `Error de conexión: ${errorMessage}. Por favor, verifica tu conexión e inténtalo de nuevo.`,
+        type: "info", // Usar tipo info para indicar que se guardó localmente
+        message: `Error de conexión con el backend: ${errorMessage}. El modelo para '${letter.toUpperCase()}' ha sido guardado LOCALMENTE.`, 
       });
     }
   };
@@ -290,7 +293,6 @@ const TrainingPage = () => {
     { letter: "l", color: "bg-lime-400 hover:bg-lime-500" },
     { letter: "m", color: "bg-amber-400 hover:bg-amber-500" },
     { letter: "n", color: "bg-rose-400 hover:bg-rose-500" },
-    { letter: "ñ", color: "bg-violet-300 hover:bg-violet-400" },
     { letter: "o", color: "bg-violet-400 hover:bg-violet-500" },
     { letter: "p", color: "bg-fuchsia-400 hover:bg-fuchsia-500" },
     { letter: "q", color: "bg-sky-400 hover:bg-sky-500" },
