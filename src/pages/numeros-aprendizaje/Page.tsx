@@ -32,7 +32,7 @@ export default function Page() {
       <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-8 w-[900px] text-center">
         <h2 className="global-title-dark mb-2">Sección de Números</h2>
         <p className="global-body-text-dark">
-          Aprende todos los números del 1 al 10 con tutoriales paso a paso y prácticas guiadas.
+          Aprende todos los números del 0 al 9 con tutoriales paso a paso y prácticas guiadas.
         </p>
       </div>
 
