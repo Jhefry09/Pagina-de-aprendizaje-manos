@@ -134,10 +134,10 @@ const TrainingPage = () => {
 
         if (videoRef.current) {
           // Se define la interfaz localmente para CameraType, si no está global
-          interface CameraTypeLocal {
-            start(): Promise<void>;
-            stop(): void;
-          }
+          // interface CameraTypeLocal {
+          //   start(): Promise<void>;
+          //   stop(): void;
+          // }
           // El 'as unknown as' es necesario porque MediaPipe no es tipado directamente
           camera = new window.Camera(videoRef.current, {
             onFrame: async () => {
