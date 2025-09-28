@@ -111,6 +111,39 @@ const MathCalculatorPage = () => {
         }
     };
 
+    // Helper function to get image name for operators
+    const getImageName = (operator: string): string => {
+        const imageMap: Record<string, string> = {
+            '+': 'mas-sena.png',
+            '-': 'menos-sena.png', 
+            '*': 'mult-sena.png',
+            '/': 'div-sena.png',
+            '=': 'igual-sena.png',
+            '.': 'punto-sena.png'
+        };
+        return imageMap[operator] || 'default-sena.png';
+    };
+
+    // Image error handler
+    const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+        const target = e.currentTarget;
+        target.style.display = 'none';
+        const nextElement = target.nextElementSibling as HTMLElement;
+        if (nextElement) {
+            nextElement.style.display = 'inline';
+        }
+    };
+
+    // Special image error handler for the delete button
+    const handleDeleteImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+        const target = e.currentTarget;
+        target.style.display = 'none';
+        const nextElement = target.nextElementSibling as HTMLElement;
+        if (nextElement) {
+            nextElement.style.display = 'inline';
+        }
+    };
+
     // Memoize the results handler
     const handleResults = useCallback((results: Results) => {
         const canvasCtx = canvasRef.current?.getContext('2d');
@@ -385,9 +418,7 @@ const MathCalculatorPage = () => {
                                         src={`/src/assets/numeros/${num}-sena.png`}
                                         alt={`Señal ${num}`}
                                         className="w-6 h-6 object-contain mb-1"
-                                        onError={(e) => {
-                                            e.target.style.display = 'none';
-                                        }}
+                                        onError={handleImageError}
                                     />
                                     <span className={`text-white text-xs font-bold ${detectedSymbol === num ? 'text-yellow-300' : ''}`}>
                                         {num}
@@ -399,42 +430,26 @@ const MathCalculatorPage = () => {
 
                         {/* Operadores - grid 3x2 */}
                         <div className="grid grid-cols-3 gap-1 mb-3">
-                            {['+', '-', '*', '/', '=', '.'].map((op) => {
-                                const getImageName = (operator) => {
-                                    const imageMap = {
-                                        '+': 'mas-sena.png',
-                                        '-': 'menos-sena.png', 
-                                        '*': 'mult-sena.png',
-                                        '/': 'div-sena.png',
-                                        '=': 'igual-sena.png',
-                                        '.': 'punto-sena.png'
-                                    };
-                                    return imageMap[operator];
-                                };
-
-                                return (
-                                    <div 
-                                        key={op}
-                                        className={`bg-orange-600 rounded-lg p-2 flex flex-col items-center justify-center transition-all ${
-                                            detectedSymbol === op ? 'ring-2 ring-yellow-400 bg-orange-500' : 'hover:bg-orange-700'
-                                        }`}
-                                        style={{ minHeight: '45px' }}
-                                    >
-                                        <img 
-                                            src={`/src/assets/numeros/${getImageName(op)}`}
-                                            alt={`Señal ${op}`}
-                                            className="w-5 h-5 object-contain mb-1"
-                                            onError={(e) => {
-                                                e.target.style.display = 'none';
-                                            }}
-                                        />
-                                        <span className={`text-white font-bold text-sm ${detectedSymbol === op ? 'text-yellow-300' : ''}`}>
-                                            {getDisplayName(op)}
-                                        </span>
-                                        <span className="text-orange-200 text-xs">{scores[op]}%</span>
-                                    </div>
-                                );
-                            })}
+                            {['+', '-', '*', '/', '=', '.'].map((op) => (
+                                <div 
+                                    key={op}
+                                    className={`bg-orange-600 rounded-lg p-2 flex flex-col items-center justify-center transition-all ${
+                                        detectedSymbol === op ? 'ring-2 ring-yellow-400 bg-orange-500' : 'hover:bg-orange-700'
+                                    }`}
+                                    style={{ minHeight: '45px' }}
+                                >
+                                    <img 
+                                        src={`/src/assets/numeros/${getImageName(op)}`}
+                                        alt={`Señal ${op}`}
+                                        className="w-5 h-5 object-contain mb-1"
+                                        onError={handleImageError}
+                                    />
+                                    <span className={`text-white font-bold text-sm ${detectedSymbol === op ? 'text-yellow-300' : ''}`}>
+                                        {getDisplayName(op)}
+                                    </span>
+                                    <span className="text-orange-200 text-xs">{scores[op]}%</span>
+                                </div>
+                            ))}
                         </div>
 
                         {/* Función especial - Borrar */}
@@ -448,10 +463,7 @@ const MathCalculatorPage = () => {
                                     src="/src/assets/numeros/borrar-sena.png"
                                     alt="Señal borrar"
                                     className="w-6 h-6 object-contain mr-2"
-                                    onError={(e) => {
-                                        e.target.style.display = 'none';
-                                        e.target.nextElementSibling.style.display = 'inline';
-                                    }}
+                                    onError={handleDeleteImageError}
                                 />
                                 <span className="text-white text-lg mr-2" style={{ display: 'none' }}>🗑️</span>
                                 <span className={`text-white font-bold text-sm ${detectedSymbol === 'borrar' ? 'text-yellow-300' : ''}`}>
