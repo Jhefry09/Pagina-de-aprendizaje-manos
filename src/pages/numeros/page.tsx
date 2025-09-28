@@ -364,9 +364,10 @@ const MathCalculatorPage = () => {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                {/* Columna izquierda - Cámara */}
-                <div className="lg:col-span-1">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* Columna izquierda - Cámara y Calculadora */}
+                <div className="lg:col-span-1 space-y-4">
+                    {/* Cámara */}
                     <div className="bg-gray-900 rounded-lg p-4">
                         <h2 className="text-blue-400 text-sm mb-3 flex items-center">
                             <span className="mr-2">📷</span> Camara
@@ -397,86 +398,8 @@ const MathCalculatorPage = () => {
                             </div>
                         </div>
                     </div>
-                </div>
 
-                {/* Columna central - Lenguaje de señas */}
-                <div className="lg:col-span-1">
-                    <div className="bg-gray-900 rounded-lg p-4">
-                        <h2 className="text-blue-400 text-sm mb-3">Lenguaje de señas</h2>
-                        
-                        {/* Grid de números 4x4 */}
-                        <div className="grid grid-cols-4 gap-1 mb-3">
-                            {numbers.map((num) => (
-                                <div 
-                                    key={num}
-                                    className={`bg-blue-600 rounded-lg p-3 flex flex-col items-center justify-center transition-all ${
-                                        detectedSymbol === num ? 'ring-2 ring-yellow-400 bg-blue-500' : 'hover:bg-blue-700'
-                                    }`}
-                                    style={{ minHeight: '60px' }}
-                                >
-                                    <img 
-                                        src={`/src/assets/numeros/${num}-sena.png`}
-                                        alt={`Señal ${num}`}
-                                        className="w-6 h-6 object-contain mb-1"
-                                        onError={handleImageError}
-                                    />
-                                    <span className={`text-white text-xs font-bold ${detectedSymbol === num ? 'text-yellow-300' : ''}`}>
-                                        {num}
-                                    </span>
-                                    <span className="text-blue-200 text-xs">{scores[num]}%</span>
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* Operadores - grid 3x2 */}
-                        <div className="grid grid-cols-3 gap-1 mb-3">
-                            {['+', '-', '*', '/', '=', '.'].map((op) => (
-                                <div 
-                                    key={op}
-                                    className={`bg-orange-600 rounded-lg p-2 flex flex-col items-center justify-center transition-all ${
-                                        detectedSymbol === op ? 'ring-2 ring-yellow-400 bg-orange-500' : 'hover:bg-orange-700'
-                                    }`}
-                                    style={{ minHeight: '45px' }}
-                                >
-                                    <img 
-                                        src={`/src/assets/numeros/${getImageName(op)}`}
-                                        alt={`Señal ${op}`}
-                                        className="w-5 h-5 object-contain mb-1"
-                                        onError={handleImageError}
-                                    />
-                                    <span className={`text-white font-bold text-sm ${detectedSymbol === op ? 'text-yellow-300' : ''}`}>
-                                        {getDisplayName(op)}
-                                    </span>
-                                    <span className="text-orange-200 text-xs">{scores[op]}%</span>
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* Función especial - Borrar */}
-                        <div className="grid grid-cols-1 gap-1">
-                            <div 
-                                className={`bg-red-700 rounded-lg p-3 flex items-center justify-center transition-all ${
-                                    detectedSymbol === 'borrar' ? 'ring-2 ring-yellow-400 bg-red-600' : 'hover:bg-red-800'
-                                }`}
-                            >
-                                <img 
-                                    src="/src/assets/numeros/borrar-sena.png"
-                                    alt="Señal borrar"
-                                    className="w-6 h-6 object-contain mr-2"
-                                    onError={handleDeleteImageError}
-                                />
-                                <span className="text-white text-lg mr-2" style={{ display: 'none' }}>🗑️</span>
-                                <span className={`text-white font-bold text-sm ${detectedSymbol === 'borrar' ? 'text-yellow-300' : ''}`}>
-                                    Borrar
-                                </span>
-                                <span className="text-red-200 text-xs ml-2">{scores.borrar}%</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Columna derecha - Calculadora */}
-                <div className="lg:col-span-1">
+                    {/* Calculadora */}
                     <div className="bg-gray-900 rounded-lg p-4">
                         <h2 className="text-blue-400 text-sm mb-3">Calculadora</h2>
                         
@@ -552,6 +475,82 @@ const MathCalculatorPage = () => {
                                 </div>
                             </div>
                         )}
+                    </div>
+                </div>
+
+                {/* Columna derecha - Lenguaje de señas */}
+                <div className="lg:col-span-1">
+                    <div className="bg-gray-900 rounded-lg p-4 h-full">
+                        <h2 className="text-blue-400 text-sm mb-3">Lenguaje de señas</h2>
+                        
+                        {/* Grid de números 4x4 */}
+                        <div className="grid grid-cols-4 gap-1 mb-3">
+                            {numbers.map((num) => (
+                                <div 
+                                    key={num}
+                                    className={`bg-blue-600 rounded-lg p-3 flex flex-col items-center justify-center transition-all ${
+                                        detectedSymbol === num ? 'ring-2 ring-yellow-400 bg-blue-500' : 'hover:bg-blue-700'
+                                    }`}
+                                    style={{ minHeight: '60px' }}
+                                >
+                                    <img 
+                                        src={`/src/assets/numeros/${num}-sena.png`}
+                                        alt={`Señal ${num}`}
+                                        className="w-6 h-6 object-contain mb-1"
+                                        onError={handleImageError}
+                                    />
+                                    <span className={`text-white text-xs font-bold ${detectedSymbol === num ? 'text-yellow-300' : ''}`}>
+                                        {num}
+                                    </span>
+                                    <span className="text-blue-200 text-xs">{scores[num]}%</span>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Operadores - grid 3x2 */}
+                        <div className="grid grid-cols-3 gap-1 mb-3">
+                            {['+', '-', '*', '/', '=', '.'].map((op) => (
+                                <div 
+                                    key={op}
+                                    className={`bg-orange-600 rounded-lg p-2 flex flex-col items-center justify-center transition-all ${
+                                        detectedSymbol === op ? 'ring-2 ring-yellow-400 bg-orange-500' : 'hover:bg-orange-700'
+                                    }`}
+                                    style={{ minHeight: '45px' }}
+                                >
+                                    <img 
+                                        src={`/src/assets/numeros/${getImageName(op)}`}
+                                        alt={`Señal ${op}`}
+                                        className="w-5 h-5 object-contain mb-1"
+                                        onError={handleImageError}
+                                    />
+                                    <span className={`text-white font-bold text-sm ${detectedSymbol === op ? 'text-yellow-300' : ''}`}>
+                                        {getDisplayName(op)}
+                                    </span>
+                                    <span className="text-orange-200 text-xs">{scores[op]}%</span>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Función especial - Borrar */}
+                        <div className="grid grid-cols-1 gap-1">
+                            <div 
+                                className={`bg-red-700 rounded-lg p-3 flex items-center justify-center transition-all ${
+                                    detectedSymbol === 'borrar' ? 'ring-2 ring-yellow-400 bg-red-600' : 'hover:bg-red-800'
+                                }`}
+                            >
+                                <img 
+                                    src="/src/assets/numeros/borrar-sena.png"
+                                    alt="Señal borrar"
+                                    className="w-6 h-6 object-contain mr-2"
+                                    onError={handleDeleteImageError}
+                                />
+                                <span className="text-white text-lg mr-2" style={{ display: 'none' }}>🗑️</span>
+                                <span className={`text-white font-bold text-sm ${detectedSymbol === 'borrar' ? 'text-yellow-300' : ''}`}>
+                                    Borrar
+                                </span>
+                                <span className="text-red-200 text-xs ml-2">{scores.borrar}%</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
