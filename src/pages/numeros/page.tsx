@@ -494,7 +494,7 @@ const MathCalculatorPage = () => {
                                     style={{ minHeight: '60px' }}
                                 >
                                     <img 
-                                        src={`/src/assets/numeros/${num}-sena.png`}
+                                        src={`/assets/numeros/${num}-sena.png`}
                                         alt={`Señal ${num}`}
                                         className="w-6 h-6 object-contain mb-1"
                                         onError={handleImageError}
@@ -518,7 +518,7 @@ const MathCalculatorPage = () => {
                                     style={{ minHeight: '45px' }}
                                 >
                                     <img 
-                                        src={`/src/assets/numeros/${getImageName(op)}`}
+                                        src={`/assets/numeros/${getImageName(op)}`}
                                         alt={`Señal ${op}`}
                                         className="w-5 h-5 object-contain mb-1"
                                         onError={handleImageError}
@@ -539,7 +539,7 @@ const MathCalculatorPage = () => {
                                 }`}
                             >
                                 <img 
-                                    src="/src/assets/numeros/borrar-sena.png"
+                                    src="/assets/numeros/borrar-sena.png"
                                     alt="Señal borrar"
                                     className="w-6 h-6 object-contain mr-2"
                                     onError={handleDeleteImageError}
