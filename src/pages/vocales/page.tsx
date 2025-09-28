@@ -3,6 +3,7 @@ import eImg from "../../assets/e-sena.png";
 import iImg from "../../assets/i-sena.png";
 import oImg from "../../assets/o-sena.png";
 import uImg from "../../assets/u-sena.png";
+import { Link } from "react-router-dom";
 
 export default function Vocales() {
   const vocales = [
@@ -27,9 +28,11 @@ export default function Vocales() {
       {/* Caja inferior */}
       <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-8 w-[800px] text-center">
         {/* Botón principal */}
-        <button className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-semibold px-6 py-3 rounded-xl shadow-lg mb-8 global-body-text">
-          Seleccionar
-        </button>
+        <Link to="/vocales-practica/a">
+          <button className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-semibold px-6 py-3 rounded-xl shadow-lg mb-8 global-body-text">
+            Seleccionar
+          </button>
+        </Link>
 
         {/* Tarjetas de vocales */}
         <div className="flex justify-center gap-8">

@@ -6,11 +6,6 @@ import {
   type MediaPipeHandsInstance,
 } from "../../types";
 
-// NOTA IMPORTANTE: Se ha ELIMINADO la declaración 'declare global' 
-// que causaba errores de módulo en TypeScript.
-// Asegúrate de tener estas declaraciones en un archivo 'global.d.ts' o similar:
-// declare global { interface Window { Hands: any; Camera: any; drawConnectors: any; drawLandmarks: any; HAND_CONNECTIONS: any; } }
-
 const TrainingPage = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -24,9 +19,6 @@ const TrainingPage = () => {
   const [countdown, setCountdown] = useState<number | null>(null);
   const [isRightHandDetected, setIsRightHandDetected] = useState(false);
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
-
-  // ESTADO CLAVE PARA LA TRANSICIÓN ENTRE PANELES
-  const [activePanel, setActivePanel] = useState<'letras' | 'numeros'>('letras');
 
   const loadScript = (src: string) => {
     return new Promise((resolve, reject) => {
@@ -99,8 +91,7 @@ const TrainingPage = () => {
                 const handLandmarks = results.multiHandLandmarks[i];
                 const detectedHandedness = results.multiHandedness[i]?.label || 'Right';
                 
-                // La mano derecha del usuario se detecta como 'Left' en modo no-selfie
-                const isUserRightHand = detectedHandedness === 'Left'; 
+                const isUserRightHand = detectedHandedness === 'Left';
                 
                 window.drawConnectors(
                   canvasCtx,
@@ -125,7 +116,7 @@ const TrainingPage = () => {
 
             setIsRightHandDetected(foundRightHand);
             if (foundRightHand && rightHandLandmarks) {
-              setLandmarks(rightHandLandmarks as NormalizedLandmark[]);
+              setLandmarks(rightHandLandmarks);
             } else {
               setLandmarks([]);
             }
@@ -133,12 +124,10 @@ const TrainingPage = () => {
         });
 
         if (videoRef.current) {
-          // Se define la interfaz localmente para CameraType, si no está global
-          // interface CameraTypeLocal {
-          //   start(): Promise<void>;
-          //   stop(): void;
-          // }
-          // El 'as unknown as' es necesario porque MediaPipe no es tipado directamente
+          interface CameraType {
+            start(): Promise<void>;
+            stop(): void;
+          }
           camera = new window.Camera(videoRef.current, {
             onFrame: async () => {
               if (videoRef.current && hands) {
@@ -152,7 +141,8 @@ const TrainingPage = () => {
             width: 320,
             height: 240,
           }) as unknown as CameraType;
-          await (camera as { start: () => Promise<void> }).start();
+          await camera.start();
+          console.log("Camera started successfully");
         }
       } catch (error) {
         console.error("Error initializing MediaPipe:", error);
@@ -195,10 +185,6 @@ const TrainingPage = () => {
     setCountdown(3);
     setApiResponse(null);
     
-    if (countdownRef.current) {
-        clearInterval(countdownRef.current);
-    }
-    
     countdownRef.current = setInterval(() => {
       setCountdown((prev) => {
         if (prev === 1) {
@@ -239,13 +225,14 @@ const TrainingPage = () => {
       return;
     }
 
-    const normalizedLandmarks: NormalizedLandmark[] = landmarks.map((lm, idx) => ({
+    const normalizedLandmarks = landmarks.map((lm, idx) => ({
       id: idx,
       x: lm.x,
       y: lm.y,
       z: lm.z,
     }));
 
+    // Siempre actualizar el modelo en el contexto (y localStorage a través de useVocalContext)
     updateVocalModel(letter, normalizedLandmarks);
     setSelectedLetter("");
     setCountdown(null);
@@ -264,66 +251,33 @@ const TrainingPage = () => {
 
       const data = await response.json();
       if (!response.ok) {
+        // Si el backend responde con un error, pero la conexión fue exitosa
         setApiResponse({
           type: "error",
           message:
             data.message ||
-            "Error al procesar la letra. Por favor, inténtalo de nuevo.",
+            "Error del servidor al procesar la letra. Modelo guardado localmente.",
         });
         return;
       }
-      
-      const successMessage = (letter.length === 1 && /[a-zñ]/.test(letter.toLowerCase()))
-        ? `¡letra ${letter.toUpperCase()} entrenado correctamente!`
-        : `¡${letter.toUpperCase()} entrenado correctamente!`;
-        
       setApiResponse({
         type: "success",
-        message: successMessage,
+        message:
+          data.message ||
+          `Modelo para la letra '${letter.toUpperCase()}' guardado exitosamente en el backend y localmente.`,
       });
     } catch (error: unknown) {
+      // Si hay un error de conexión con el backend
       const errorMessage =
         error instanceof Error ? error.message : "Error desconocido";
       setApiResponse({
-        type: "error",
-        message: `Error de conexión: ${errorMessage}. Por favor, verifica tu conexión e inténtalo de nuevo.`,
+        type: "info", // Usar tipo info para indicar que se guardó localmente
+        message: `Error de conexión con el backend: ${errorMessage}. El modelo para '${letter.toUpperCase()}' ha sido guardado LOCALMENTE.`, 
       });
     }
   };
 
-  // Componente auxiliar para el renderizado de botones con lógica de cuenta regresiva
-  const RenderButton: React.FC<{ letter: string, color: string, displayName?: string }> = ({ letter, color, displayName }) => (
-    <button
-      key={letter}
-      onClick={() => startCountdown(letter)}
-      disabled={!!countdown || !isRightHandDetected}
-      className={`relative flex items-center justify-center p-3 rounded-lg shadow-sm transition-all duration-300 ${
-        selectedLetter === letter
-          ? `${color.replace("hover:", "")} text-white scale-105 shadow-md`
-          : `${color} text-white hover:shadow-md transform hover:scale-102`
-      } ${countdown || !isRightHandDetected ? "opacity-50 cursor-not-allowed" : ""}`}
-    >
-      <div className="text-center">
-        <span className="text-lg font-bold block">
-          {displayName || letter.toUpperCase()}
-        </span>
-        {displayName && letter.length > 1 && ( // Mostrar nombre secundario solo para funciones (espacio/borrar)
-          <span className="text-xs opacity-75">
-            {letter.toUpperCase()}
-          </span>
-        )}
-      </div>
-      {selectedLetter === letter && countdown && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-60 rounded-lg">
-          <span className="text-2xl font-bold text-white">
-            {countdown}
-          </span>
-        </div>
-      )}
-    </button>
-  );
-
-  // --- Definición de datos (igual a tu código) ---
+  // Definir las letras del alfabeto y funciones especiales con colores
   const alphabet = [
     { letter: "a", color: "bg-red-400 hover:bg-red-500" },
     { letter: "b", color: "bg-blue-400 hover:bg-blue-500" },
@@ -339,7 +293,6 @@ const TrainingPage = () => {
     { letter: "l", color: "bg-lime-400 hover:bg-lime-500" },
     { letter: "m", color: "bg-amber-400 hover:bg-amber-500" },
     { letter: "n", color: "bg-rose-400 hover:bg-rose-500" },
-    { letter: "ñ", color: "bg-violet-300 hover:bg-violet-400" },
     { letter: "o", color: "bg-violet-400 hover:bg-violet-500" },
     { letter: "p", color: "bg-fuchsia-400 hover:bg-fuchsia-500" },
     { letter: "q", color: "bg-sky-400 hover:bg-sky-500" },
@@ -354,6 +307,7 @@ const TrainingPage = () => {
     { letter: "z", color: "bg-purple-500 hover:bg-purple-600" },
   ];
 
+  // Números
   const numbers = [
     { letter: "0", color: "bg-slate-600 hover:bg-slate-700" },
     { letter: "1", color: "bg-slate-600 hover:bg-slate-700" },
@@ -367,7 +321,9 @@ const TrainingPage = () => {
     { letter: "9", color: "bg-slate-600 hover:bg-slate-700" },
   ];
 
+  // Símbolos matemáticos
   const mathSymbols = [
+    { letter: ".", color: "bg-orange-600 hover:bg-orange-700", displayName: "." },
     { letter: "/", color: "bg-orange-600 hover:bg-orange-700", displayName: "÷" },
     { letter: "*", color: "bg-orange-600 hover:bg-orange-700", displayName: "×" },
     { letter: "-", color: "bg-orange-600 hover:bg-orange-700", displayName: "−" },
@@ -375,39 +331,36 @@ const TrainingPage = () => {
     { letter: "=", color: "bg-orange-600 hover:bg-orange-700", displayName: "=" },
   ];
 
+  // Funciones especiales
   const specialFunctions = [
-    { letter: "espacio", color: "bg-gray-600 hover:bg-gray-700", displayName: "ESPACIO" },
-    { letter: "borrar", color: "bg-red-600 hover:bg-red-700", displayName: "BORRAR" },
-    { letter: "interCambiar", color: "bg-blue-600 hover:bg-blue-700", displayName: "INTER" }, // Usé INTER por brevedad, como en el JSX anterior
+    { letter: "espacio", color: "bg-gray-600 hover:bg-gray-700", displayName: "ESP" },
+    { letter: "borrar", color: "bg-red-600 hover:bg-red-700", displayName: "DEL" },
+    { letter: "interCambiar", color: "bg-blue-600 hover:bg-blue-700", displayName: "↔" },
   ];
-  // --- Fin de definición de datos ---
-
 
   return (
-    <section className="p-6 min-h-screen">
-      {/* HEADER / TITULO */}
+    <section className="p-6 w-full">
       <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6 mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800 font-montserrat">
+            <h1 className="global-title-dark font-montserrat">
               Entrenamiento de Gestos del Alfabeto
             </h1>
-            <p className="text-gray-600">
+            <p className="global-body-text-dark">
               Crea un nuevo modelo de gesto para cada letra del alfabeto usando tu mano DERECHA
             </p>
           </div>
         </div>
       </div>
-      
-      {/* GRID PRINCIPAL (WEBCAM + CONTROLES) */}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
-        {/* PANEL DE WEBCAM */}
+        {/* Webcam Preview */}
         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6">
           <h2 className="text-xl font-semibold mb-4 text-gray-800">
             Vista Previa
           </h2>
           
+          {/* Hand detection status */}
           <div className="mb-4 p-3 rounded-lg flex items-center">
             <div className={`w-3 h-3 rounded-full mr-3 ${isRightHandDetected ? 'bg-green-500' : 'bg-red-500'}`}></div>
             <span className={`font-medium ${isRightHandDetected ? 'text-green-700' : 'text-red-700'}`}>
@@ -445,104 +398,167 @@ const TrainingPage = () => {
           )}
         </div>
 
-        {/* PANEL DE CONTROL (BOTONES) */}
+        {/* Controls */}
         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6">
           <h2 className="text-xl font-semibold mb-4 text-gray-800">
             Panel de Control
           </h2>
           <div className="w-full">
             <h3 className="text-lg font-medium text-gray-700 mb-4">
-              Selecciona una opción para entrenar:
+              Selecciona una letra del alfabeto, número, símbolo o función especial:
             </h3>
-
-            {/* BOTONES DE TRANSICIÓN (TABS) */}
-            <div className="flex mb-6 p-1 rounded-xl bg-gray-100 border border-gray-200 shadow-inner">
-              <button
-                onClick={() => setActivePanel('letras')}
-                className={`flex-1 py-3 text-lg font-bold rounded-xl transition-all duration-300 ${
-                  activePanel === 'letras'
-                    ? 'bg-orange-600 text-white shadow-lg'
-                    : 'text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                LETRAS
-              </button>
-              <button
-                onClick={() => setActivePanel('numeros')}
-                className={`flex-1 py-3 text-lg font-bold rounded-xl transition-all duration-300 ${
-                  activePanel === 'numeros'
-                    ? 'bg-orange-600 text-white shadow-lg'
-                    : 'text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                NÚMEROS
-              </button>
-            </div>
             
-            {/* Contenedor con Scroll para el contenido de los paneles */}
-            <div className="max-h-[500px] overflow-y-auto p-2 border rounded-lg bg-gray-50/50">
-
-              {/* Pestaña: LETRAS */}
-              {activePanel === 'letras' && (
-                <div className="space-y-4">
-                  <h4 className="text-sm font-medium text-gray-600 mb-2 px-2">Alfabeto (A-Z, Ñ):</h4>
+            {/* Scrollable alphabet grid */}
+            <div className="max-h-96 overflow-y-auto mb-6 p-2 border rounded-lg">
+              <div className="space-y-4">
+                {/* Alphabet Letters */}
+                <div>
+                  <h4 className="text-sm font-medium text-gray-600 mb-2 px-2">Letras del Alfabeto:</h4>
                   <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-4 xl:grid-cols-5 gap-3">
                     {alphabet.map(({ letter, color }) => (
-                      <RenderButton key={letter} letter={letter} color={color} />
-                    ))}
-                  </div>
-
-                  <h4 className="text-sm font-medium text-gray-600 mb-2 px-2 pt-4">Funciones Especiales:</h4>
-                  <div className="grid grid-cols-2 gap-3">
-                    {/* ESPACIO y BORRAR */}
-                    {specialFunctions.filter(f => f.letter === 'espacio' || f.letter === 'borrar').map(({ letter, color, displayName }) => (
-                      <RenderButton key={letter} letter={letter} color={color} displayName={displayName} />
+                      <button
+                        key={letter}
+                        onClick={() => startCountdown(letter)}
+                        disabled={!!countdown || !isRightHandDetected}
+                        className={`relative flex items-center justify-center p-3 rounded-lg shadow-sm transition-all duration-300 ${
+                          selectedLetter === letter
+                            ? `${color.replace("hover:", "")} text-white scale-105 shadow-md`
+                            : `${color} text-white hover:shadow-md transform hover:scale-102`
+                        } ${countdown || !isRightHandDetected ? "opacity-50 cursor-not-allowed" : ""}`}
+                      >
+                        <span className="text-lg font-bold">
+                          {letter.toUpperCase()}
+                        </span>
+                        {selectedLetter === letter && countdown && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-60 rounded-lg">
+                            <span className="text-2xl font-bold text-white">
+                              {countdown}
+                            </span>
+                          </div>
+                        )}
+                      </button>
                     ))}
                   </div>
                 </div>
-              )}
-
-              {/* Pestaña: NÚMEROS Y SÍMBOLOS */}
-              {activePanel === 'numeros' && (
-                <div className="space-y-4">
-                  <h4 className="text-sm font-medium text-gray-600 mb-2 px-2">Números (0-9):</h4>
+                
+                {/* Numbers */}
+                <div>
+                  <h4 className="text-sm font-medium text-gray-600 mb-2 px-2">Números:</h4>
                   <div className="grid grid-cols-5 gap-3">
                     {numbers.map(({ letter, color }) => (
-                      <RenderButton key={letter} letter={letter} color={color} />
-                    ))}
-                  </div>
-
-                  <h4 className="text-sm font-medium text-gray-600 mb-2 px-2 pt-4">Símbolos y Funciones:</h4>
-                  <div className="grid grid-cols-3 gap-3">
-                    {/* Símbolos Matemáticos */}
-                    {mathSymbols.map(({ letter, color, displayName }) => (
-                      <RenderButton key={letter} letter={letter} color={color} displayName={displayName} />
-                    ))}
-                    {/* Funciones: INTERCAMBIAR y BORRAR */}
-                    {specialFunctions.filter(f => f.letter === 'interCambiar' || f.letter === 'borrar').map(({ letter, color, displayName }) => (
-                      <RenderButton key={letter} letter={letter} color={color} displayName={displayName} />
+                      <button
+                        key={letter}
+                        onClick={() => startCountdown(letter)}
+                        disabled={!!countdown || !isRightHandDetected}
+                        className={`relative flex items-center justify-center p-3 rounded-lg shadow-sm transition-all duration-300 ${
+                          selectedLetter === letter
+                            ? `${color.replace("hover:", "")} text-white scale-105 shadow-md`
+                            : `${color} text-white hover:shadow-md transform hover:scale-102`
+                        } ${countdown || !isRightHandDetected ? "opacity-50 cursor-not-allowed" : ""}`}
+                      >
+                        <span className="text-lg font-bold">
+                          {letter}
+                        </span>
+                        {selectedLetter === letter && countdown && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-60 rounded-lg">
+                            <span className="text-2xl font-bold text-white">
+                              {countdown}
+                            </span>
+                          </div>
+                        )}
+                      </button>
                     ))}
                   </div>
                 </div>
-              )}
+
+                {/* Math Symbols */}
+                <div>
+                  <h4 className="text-sm font-medium text-gray-600 mb-2 px-2">Símbolos Matemáticos:</h4>
+                  <div className="grid grid-cols-3 gap-3">
+                    {mathSymbols.map(({ letter, color, displayName }) => (
+                      <button
+                        key={letter}
+                        onClick={() => startCountdown(letter)}
+                        disabled={!!countdown || !isRightHandDetected}
+                        className={`relative flex items-center justify-center p-4 rounded-lg shadow-sm transition-all duration-300 ${
+                          selectedLetter === letter
+                            ? `${color.replace("hover:", "")} text-white scale-105 shadow-md`
+                            : `${color} text-white hover:shadow-md transform hover:scale-102`
+                        } ${countdown || !isRightHandDetected ? "opacity-50 cursor-not-allowed" : ""}`}
+                      >
+                        <div className="text-center">
+                          <span className="text-lg font-bold block">
+                            {displayName}
+                          </span>
+                          <span className="text-xs opacity-75">
+                            {letter}
+                          </span>
+                        </div>
+                        {selectedLetter === letter && countdown && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-60 rounded-lg">
+                            <span className="text-2xl font-bold text-white">
+                              {countdown}
+                            </span>
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Special Functions */}
+                <div>
+                  <h4 className="text-sm font-medium text-gray-600 mb-2 px-2">Funciones Especiales:</h4>
+                  <div className="grid grid-cols-3 gap-3">
+                    {specialFunctions.map(({ letter, color, displayName }) => (
+                      <button
+                        key={letter}
+                        onClick={() => startCountdown(letter)}
+                        disabled={!!countdown || !isRightHandDetected}
+                        className={`relative flex items-center justify-center p-4 rounded-lg shadow-sm transition-all duration-300 ${
+                          selectedLetter === letter
+                            ? `${color.replace("hover:", "")} text-white scale-105 shadow-md`
+                            : `${color} text-white hover:shadow-md transform hover:scale-102`
+                        } ${countdown || !isRightHandDetected ? "opacity-50 cursor-not-allowed" : ""}`}
+                      >
+                        <div className="text-center">
+                          <span className="text-lg font-bold block">
+                            {displayName}
+                          </span>
+                          <span className="text-xs opacity-75">
+                            {letter.toUpperCase()}
+                          </span>
+                        </div>
+                        {selectedLetter === letter && countdown && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-60 rounded-lg">
+                            <span className="text-2xl font-bold text-white">
+                              {countdown}
+                            </span>
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
             
             {countdown && (
               <button
                 onClick={cancelCountdown}
-                className="w-full py-3 px-4 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition-all duration-300 mt-4"
+                className="w-full py-3 px-4 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition-all duration-300 mb-4"
               >
                 Cancelar Entrenamiento
               </button>
             )}
             
-            <div className="text-center text-sm text-gray-600 mt-4">
+            {/* Progress indicator */}
+            <div className="text-center text-sm text-gray-600">
               <p>Entrena cada letra del alfabeto, números y símbolos para crear un modelo completo</p>
-              <p className="text-xs mt-1">46 gestos disponibles para entrenar (letras, números, símbolos y funciones)</p>
+              <p className="text-xs mt-1">27 letras + 10 números + 6 símbolos + 3 funciones especiales disponibles para entrenar</p>
             </div>
           </div>
           
-          {/* Mensajes de API */}
           {apiResponse && (
             <div
               className={`mt-4 w-full p-4 rounded-lg transform transition-all duration-300 ease-out animate-fadeInUp ${
@@ -555,32 +571,69 @@ const TrainingPage = () => {
             >
               <style>{`
                 @keyframes fadeInUp {
-                  from { opacity: 0; transform: translateY(10px); }
-                  to { opacity: 1; transform: translateY(0); }
+                  from {
+                    opacity: 0;
+                    transform: translateY(10px);
+                  }
+                  to {
+                    opacity: 1;
+                    transform: translateY(0);
+                  }
                 }
-                .animate-fadeInUp { animation: fadeInUp 0.3s ease-out forwards; }
+                .animate-fadeInUp {
+                  animation: fadeInUp 0.3s ease-out forwards;
+                }
                 @keyframes pulse-once {
                   0%, 100% { transform: scale(1); }
                   50% { transform: scale(1.02); }
                 }
-                .animate-pulse-once { animation: pulse-once 1s ease-in-out; }
+                .animate-pulse-once {
+                  animation: pulse-once 1s ease-in-out;
+                }
               `}</style>
               <div className="flex items-center">
                 {apiResponse.type === "success" ? (
                   <div className="relative w-5 h-5 mr-2">
                     <div className="absolute inset-0 bg-green-100 rounded-full animate-ping opacity-75"></div>
-                    <svg className="relative w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    <svg
+                      className="relative w-5 h-5"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                        clipRule="evenodd"
+                      />
                     </svg>
                   </div>
                 ) : apiResponse.type === "error" ? (
-                  <svg className="w-5 h-5 mr-2 text-red-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1-5h2v2h-2v-2zm0-8h2v6h-2V5z" clipRule="evenodd" />
+                  <svg
+                    className="w-5 h-5 mr-2 text-red-500"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1-5h2v2h-2v-2zm0-8h2v6h-2V5z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                 ) : (
-                  <svg className="w-5 h-5 mr-2 text-blue-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                  <svg
+                    className="w-5 h-5 mr-2 text-blue-500"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
                     <path d="M9 12h1V9H9v3zm0 4h1v-2H9v2z" />
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM2 10a8 8 0 1116 0A8 8 0 012 10z" clipRule="evenodd" />
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM2 10a8 8 0 1116 0A8 8 0 012 10z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                 )}
                 <span>{apiResponse.message}</span>
