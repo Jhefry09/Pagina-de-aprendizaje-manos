@@ -68,10 +68,10 @@ const MathCalculatorPage = () => {
     const previousLeftHandClosedRef = useRef<boolean>(false);
     const lastWriteTimeRef = useRef<number>(0);
 
-    // Mathematical symbols and numbers - removed interCambiar, added borrar
+    // Mathematical symbols and numbers
     const numbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
     const operators = ['+', '-', '*', '/', '=', '.'];
-    const specialFunctions = ['borrar']; // Removed interCambiar
+    const specialFunctions = ['borrar'];
     const allMathItems = [...numbers, ...operators, ...specialFunctions];
 
     const initialScores = allMathItems.reduce((acc, item) => {
@@ -86,24 +86,19 @@ const MathCalculatorPage = () => {
     const [result, setResult] = useState<string | null>(null);
     const [history, setHistory] = useState<string[]>([]);
     const [leftHandClosed, setLeftHandClosed] = useState(false);
-    // Remove this line that's causing the TypeScript error:
-    // const [showingFirstOperand, setShowingFirstOperand] = useState(true);
 
     // Function to safely evaluate mathematical expression
     const evaluateExpression = (expression: string): string => {
         try {
-            // Replace display symbols with JS operators
             let jsExpression = expression
                 .replace(/×/g, '*')
                 .replace(/÷/g, '/')
                 .replace(/−/g, '-');
 
-            // Basic validation - only allow numbers, operators, and decimal points
             if (!/^[\d+\-*/.() ]+$/.test(jsExpression)) {
                 return 'Error: Expresión inválida';
             }
 
-            // Evaluate using Function constructor for safety
             const evalResult = Function('"use strict"; return (' + jsExpression + ')')();
 
             if (typeof evalResult !== 'number' || !isFinite(evalResult)) {
@@ -151,7 +146,6 @@ const MathCalculatorPage = () => {
             }
         }
 
-        // Process right hand for symbol recognition
         if (rightHandLandmarks) {
             const normalizedHand = normalizeLandmarks(rightHandLandmarks);
 
@@ -185,7 +179,6 @@ const MathCalculatorPage = () => {
             detectedSymbolRef.current = '';
         }
 
-        // Process left hand for input trigger
         if (leftHandLandmarks) {
             const isLeftClosed = isHandClosed(leftHandLandmarks);
             setLeftHandClosed(isLeftClosed);
@@ -194,14 +187,12 @@ const MathCalculatorPage = () => {
             const timeSinceLastWrite = currentTime - lastWriteTimeRef.current;
             const minWriteInterval = 500;
 
-            // En el handleResults callback, dentro de la lógica de la mano izquierda:
             if (isLeftClosed && !previousLeftHandClosedRef.current && detectedSymbolRef.current && rightHandLandmarks && timeSinceLastWrite >= minWriteInterval) {
                 const detectedItem = detectedSymbolRef.current;
 
                 if (detectedItem === 'borrar') {
-                    // Borra el último carácter de la expresión (NO escribe "borrar")
                     setCurrentExpression(prev => prev.slice(0, -1));
-                    setResult(null); // Limpia el resultado cuando se modifica la expresión
+                    setResult(null);
                 } else if (detectedItem === '=') {
                     if (currentExpression.trim()) {
                         const calculatedResult = evaluateExpression(currentExpression);
@@ -209,14 +200,13 @@ const MathCalculatorPage = () => {
                         setHistory(prev => [...prev, `${currentExpression} = ${calculatedResult}`]);
                     }
                 } else {
-                    // Agregar número u operador a la expresión
                     let displaySymbol = detectedItem;
                     if (detectedItem === '*') displaySymbol = '×';
                     if (detectedItem === '/') displaySymbol = '÷';
                     if (detectedItem === '-') displaySymbol = '−';
 
                     setCurrentExpression(prev => prev + displaySymbol);
-                    setResult(null); // Limpiar resultado previo al agregar nueva entrada
+                    setResult(null);
                 }
 
                 lastWriteTimeRef.current = currentTime;
@@ -226,9 +216,8 @@ const MathCalculatorPage = () => {
             setLeftHandClosed(false);
             previousLeftHandClosedRef.current = false;
         }
-    }, [vocalModels, allMathItems, initialScores, currentExpression]); // Removed showingFirstOperand from dependencies
+    }, [vocalModels, allMathItems, initialScores, currentExpression]);
 
-// ... rest of existing code ...
     useEffect(() => {
         let setupComplete = false;
 
@@ -308,23 +297,6 @@ const MathCalculatorPage = () => {
         setResult(null);
     };
 
-    // Helper function to get item color and display name
-    const getItemColor = (item: string, isDetected: boolean = false) => {
-        if (numbers.includes(item)) {
-            return isDetected ? 'text-blue-600 font-bold' : 'text-blue-500';
-        }
-        if (['+', '-', '*', '/', '='].includes(item)) {
-            return isDetected ? 'text-orange-600 font-bold' : 'text-orange-500';
-        }
-        if (item === '.') {
-            return isDetected ? 'text-green-600 font-bold' : 'text-green-500';
-        }
-        if (item === 'borrar') {
-            return isDetected ? 'text-red-600 font-bold' : 'text-red-500';
-        }
-        return isDetected ? 'text-gray-800 font-bold' : 'text-gray-600';
-    };
-
     const getDisplayName = (item: string) => {
         if (item === '*') return '×';
         if (item === '/') return '÷';
@@ -334,217 +306,240 @@ const MathCalculatorPage = () => {
     };
 
     return (
-        <section className="p-6 min-h-screen">
-            <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6 mb-6">
+        <section className="p-4 min-h-screen bg-gray-800">
+            {/* Header */}
+            <div className="mb-4">
                 <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl font-bold text-gray-700 font-montserrat">
-                            Calculadora con <span className="text-[#f2994a]">Lenguaje de Señas</span>
-                        </h1>
-                        <p className="text-gray-600">
-                            Usa tu mano derecha para formar números y operadores, cierra la mano izquierda para ejecutar
-                        </p>
-                    </div>
+                    <h1 className="text-xl font-bold text-white">
+                        SECCION REALIZAR OPERACIONES
+                    </h1>
                     <Link
                         to="/"
-                        className="px-4 py-2 text-sm font-semibold text-[#f2994a] hover:text-white hover:bg-[#f2994a] rounded-lg transition-all duration-300 border border-[#f2994a]"
+                        className="px-3 py-1 text-sm text-blue-400 hover:text-blue-300 transition-colors"
                     >
-                        Volver al Inicio
+                        Volver
                     </Link>
                 </div>
+                <div className="flex items-center text-sm text-gray-300 mt-2">
+                    <span className="mr-4">Start</span>
+                    <span className="mr-4">Learn AI</span>
+                    <span className="mr-4">Inicio</span>
+                    <span className="mr-4">Clases</span>
+                    <span className="mr-4">Entrenar IA</span>
+                    <span className="mr-4">Usuarios</span>
+                    <span className="mr-4">Configuracion</span>
+                </div>
             </div>
 
-            {/* Calculator Display */}
-            <div className="mb-6 bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6">
-                <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-semibold text-gray-700">Calculadora</h3>
-                    <div className="flex gap-2">
-                        <button
-                            onClick={deleteLast}
-                            className="px-3 py-1 text-sm bg-yellow-500 text-white rounded hover:bg-yellow-600 transition-colors"
-                        >
-                            Borrar último
-                        </button>
-                        <button
-                            onClick={clearExpression}
-                            className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
-                        >
-                            Limpiar
-                        </button>
-                    </div>
-                </div>
-
-                {/* Expression Display */}
-                <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                    <div className="text-right">
-                        <div className="text-sm text-gray-600 mb-2">Expresión:</div>
-                        <div className="text-2xl font-mono tracking-wide text-gray-800 min-h-[2rem]">
-                            {currentExpression || '0'}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                {/* Columna izquierda - Cámara */}
+                <div className="lg:col-span-1">
+                    <div className="bg-gray-900 rounded-lg p-4">
+                        <h2 className="text-blue-400 text-sm mb-3 flex items-center">
+                            <span className="mr-2">📷</span> Camara
+                        </h2>
+                        <div className="relative bg-black rounded-lg overflow-hidden" style={{ aspectRatio: '4/3' }}>
+                            <video 
+                                ref={videoRef} 
+                                className="w-full h-full object-cover transform scale-x-[-1]" 
+                                autoPlay 
+                                playsInline 
+                                muted 
+                            />
+                            <canvas 
+                                ref={canvasRef} 
+                                className="absolute top-0 left-0 w-full h-full transform scale-x-[-1]" 
+                                width="640" 
+                                height="480" 
+                            />
                         </div>
-                    </div>
-                </div>
-
-                {/* Result Display */}
-                {result !== null && (
-                    <div className="bg-blue-50 p-4 rounded-lg border-2 border-blue-200">
-                        <div className="text-right">
-                            <div className="text-sm text-blue-600 mb-1">Resultado:</div>
-                            <div className="text-3xl font-bold text-blue-800">
-                                {result}
+                        
+                        {/* Progress bar */}
+                        <div className="mt-3">
+                            <div className="w-full bg-gray-700 rounded-full h-1">
+                                <div 
+                                    className="bg-blue-500 h-1 rounded-full transition-all duration-300" 
+                                    style={{ width: `${highestScore}%` }}
+                                ></div>
                             </div>
                         </div>
                     </div>
-                )}
-            </div>
-
-            {/* Hand Status Indicators */}
-            <div className="mb-6 grid grid-cols-2 gap-4">
-                <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6">
-                    <h3 className="font-medium text-gray-700 mb-2">Mano Derecha (Detección)</h3>
-                    <div className="flex items-center">
-                        <div className={`w-3 h-3 rounded-full mr-2 ${detectedSymbol ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                        <span className="text-sm">
-              {detectedSymbol ? `Detectando: ${getDisplayName(detectedSymbol)}` : 'No detectada'}
-            </span>
-                    </div>
                 </div>
-                <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6">
-                    <h3 className="font-medium text-gray-700 mb-2">Mano Izquierda (Ejecutar)</h3>
-                    <div className="flex items-center">
-                        <div className={`w-3 h-3 rounded-full mr-2 ${leftHandClosed ? 'bg-blue-500' : 'bg-gray-400'}`}></div>
-                        <span className="text-sm">{leftHandClosed ? 'Cerrada (Ejecutando)' : 'Abierta'}</span>
-                    </div>
-                </div>
-            </div>
 
-            {/* Precision Indicator */}
-            <div className="my-6 bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6">
-                <div className="flex justify-between items-center mb-2">
-                    <span className="font-medium text-gray-700">Precisión:</span>
-                    <span className="font-bold">{scores[detectedSymbol] || '0.0'}%</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
-                    <div
-                        className="h-full transition-all duration-300 bg-blue-500"
-                        style={{ width: `${highestScore}%` }}
-                    />
-                </div>
-            </div>
-
-            {/* Camera View */}
-            <div className="relative w-full aspect-video bg-gray-900 rounded-lg overflow-hidden mx-auto mb-6 shadow-lg" style={{ maxWidth: '640px' }}>
-                <video ref={videoRef} className="w-full h-full object-cover transform scale-x-[-1]" autoPlay playsInline muted />
-                <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full transform scale-x-[-1]" width="640" height="480" />
-            </div>
-
-            {/* Math Symbols Grid */}
-            <div className="mb-6 bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6">
-                <h3 className="text-lg font-semibold mb-3 text-gray-700">Precisión por Símbolo:</h3>
-                <div className="max-h-60 overflow-y-auto border rounded-lg p-2">
-                    <div className="space-y-4">
-                        {/* Numbers */}
-                        <div>
-                            <h4 className="text-sm font-medium text-gray-600 mb-2 px-1">Números:</h4>
-                            <div className="grid grid-cols-5 gap-2">
-                                {numbers.map((number) => (
-                                    <div key={number} className="text-center p-2 rounded border-2 border-transparent hover:border-gray-300 transition-all">
-                                        <div className={`text-lg font-medium ${getItemColor(number, number === detectedSymbol)}`}>
-                                            {number}
-                                        </div>
-                                        <div className={`text-xs font-bold ${getItemColor(number, number === detectedSymbol)}`}>
-                                            {scores[number] || '0.0'}%
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
+                {/* Columna central - Lenguaje de señas */}
+                <div className="lg:col-span-1">
+                    <div className="bg-gray-900 rounded-lg p-4">
+                        <h2 className="text-blue-400 text-sm mb-3">Lenguaje de señas</h2>
+                        
+                        {/* Grid de números 4x4 */}
+                        <div className="grid grid-cols-4 gap-1 mb-3">
+                            {numbers.map((num) => (
+                                <div 
+                                    key={num}
+                                    className={`bg-blue-600 rounded-lg p-3 flex flex-col items-center justify-center transition-all ${
+                                        detectedSymbol === num ? 'ring-2 ring-yellow-400 bg-blue-500' : 'hover:bg-blue-700'
+                                    }`}
+                                    style={{ minHeight: '60px' }}
+                                >
+                                    <img 
+                                        src={`/src/assets/numeros/${num}-sena.png`}
+                                        alt={`Señal ${num}`}
+                                        className="w-6 h-6 object-contain mb-1"
+                                        onError={(e) => {
+                                            e.target.style.display = 'none';
+                                        }}
+                                    />
+                                    <span className={`text-white text-xs font-bold ${detectedSymbol === num ? 'text-yellow-300' : ''}`}>
+                                        {num}
+                                    </span>
+                                    <span className="text-blue-200 text-xs">{scores[num]}%</span>
+                                </div>
+                            ))}
                         </div>
 
-                        {/* Operators */}
-                        <div>
-                            <h4 className="text-sm font-medium text-gray-600 mb-2 px-1">Operadores:</h4>
-                            <div className="grid grid-cols-3 gap-2">
-                                {operators.map((op) => (
-                                    <div key={op} className="text-center p-3 rounded border-2 border-transparent hover:border-gray-300 transition-all">
-                                        <div className={`text-lg font-medium ${getItemColor(op, op === detectedSymbol)}`}>
+                        {/* Operadores - grid 3x2 */}
+                        <div className="grid grid-cols-3 gap-1 mb-3">
+                            {['+', '-', '*', '/', '=', '.'].map((op) => {
+                                const getImageName = (operator) => {
+                                    const imageMap = {
+                                        '+': 'mas-sena.png',
+                                        '-': 'menos-sena.png', 
+                                        '*': 'mult-sena.png',
+                                        '/': 'div-sena.png',
+                                        '=': 'igual-sena.png',
+                                        '.': 'punto-sena.png'
+                                    };
+                                    return imageMap[operator];
+                                };
+
+                                return (
+                                    <div 
+                                        key={op}
+                                        className={`bg-orange-600 rounded-lg p-2 flex flex-col items-center justify-center transition-all ${
+                                            detectedSymbol === op ? 'ring-2 ring-yellow-400 bg-orange-500' : 'hover:bg-orange-700'
+                                        }`}
+                                        style={{ minHeight: '45px' }}
+                                    >
+                                        <img 
+                                            src={`/src/assets/numeros/${getImageName(op)}`}
+                                            alt={`Señal ${op}`}
+                                            className="w-5 h-5 object-contain mb-1"
+                                            onError={(e) => {
+                                                e.target.style.display = 'none';
+                                            }}
+                                        />
+                                        <span className={`text-white font-bold text-sm ${detectedSymbol === op ? 'text-yellow-300' : ''}`}>
                                             {getDisplayName(op)}
-                                        </div>
-                                        <div className={`text-xs font-bold ${getItemColor(op, op === detectedSymbol)}`}>
-                                            {scores[op] || '0.0'}%
-                                        </div>
+                                        </span>
+                                        <span className="text-orange-200 text-xs">{scores[op]}%</span>
                                     </div>
-                                ))}
+                                );
+                            })}
+                        </div>
+
+                        {/* Función especial - Borrar */}
+                        <div className="grid grid-cols-1 gap-1">
+                            <div 
+                                className={`bg-red-700 rounded-lg p-3 flex items-center justify-center transition-all ${
+                                    detectedSymbol === 'borrar' ? 'ring-2 ring-yellow-400 bg-red-600' : 'hover:bg-red-800'
+                                }`}
+                            >
+                                <img 
+                                    src="/src/assets/numeros/borrar-sena.png"
+                                    alt="Señal borrar"
+                                    className="w-6 h-6 object-contain mr-2"
+                                    onError={(e) => {
+                                        e.target.style.display = 'none';
+                                        e.target.nextElementSibling.style.display = 'inline';
+                                    }}
+                                />
+                                <span className="text-white text-lg mr-2" style={{ display: 'none' }}>🗑️</span>
+                                <span className={`text-white font-bold text-sm ${detectedSymbol === 'borrar' ? 'text-yellow-300' : ''}`}>
+                                    Borrar
+                                </span>
+                                <span className="text-red-200 text-xs ml-2">{scores.borrar}%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Columna derecha - Calculadora */}
+                <div className="lg:col-span-1">
+                    <div className="bg-gray-900 rounded-lg p-4">
+                        <h2 className="text-blue-400 text-sm mb-3">Calculadora</h2>
+                        
+                        {/* Display */}
+                        <div className="bg-black rounded-lg p-4 mb-4">
+                            <div className="text-right">
+                                <div className="text-gray-400 text-sm mb-1">Expresión:</div>
+                                <div className="text-white text-xl font-mono min-h-[1.5rem] break-words">
+                                    {currentExpression || '0'}
+                                </div>
+                                {result !== null && (
+                                    <>
+                                        <div className="text-blue-400 text-sm mt-2 mb-1">Resultado:</div>
+                                        <div className="text-green-400 text-2xl font-bold break-words">
+                                            {result}
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         </div>
 
-                        {/* Special Functions */}
-                        <div>
-                            <h4 className="text-sm font-medium text-gray-600 mb-2 px-1">Funciones Especiales:</h4>
-                            <div className="grid grid-cols-1 gap-2">
-                                {specialFunctions.map((func) => (
-                                    <div key={func} className="text-center p-3 rounded border-2 border-transparent hover:border-gray-300 transition-all">
-                                        <div className={`text-sm font-medium ${getItemColor(func, func === detectedSymbol)}`}>
-                                            {getDisplayName(func)} - Borrar último carácter
-                                        </div>
-                                        <div className={`text-xs font-bold ${getItemColor(func, func === detectedSymbol)}`}>
-                                            {scores[func] || '0.0'}%
-                                        </div>
-                                    </div>
-                                ))}
+                        {/* Controles */}
+                        <div className="space-y-2 mb-4">
+                            <div className="grid grid-cols-2 gap-2">
+                                <button
+                                    onClick={deleteLast}
+                                    className="bg-yellow-600 hover:bg-yellow-700 text-white text-xs py-2 px-3 rounded transition-colors"
+                                >
+                                    Borrar último
+                                </button>
+                                <button
+                                    onClick={clearExpression}
+                                    className="bg-red-600 hover:bg-red-700 text-white text-xs py-2 px-3 rounded transition-colors"
+                                >
+                                    Limpiar
+                                </button>
+                            </div>
+                            
+                            {/* Estado de manos */}
+                            <div className="text-xs text-gray-300 space-y-1 bg-gray-800 p-2 rounded">
+                                <div className="flex items-center">
+                                    <div className={`w-2 h-2 rounded-full mr-2 ${detectedSymbol ? 'bg-green-400' : 'bg-red-400'}`}></div>
+                                    <span>Derecha: {detectedSymbol ? getDisplayName(detectedSymbol) : 'Sin detectar'}</span>
+                                </div>
+                                <div className="flex items-center">
+                                    <div className={`w-2 h-2 rounded-full mr-2 ${leftHandClosed ? 'bg-blue-400' : 'bg-gray-500'}`}></div>
+                                    <span>Izquierda: {leftHandClosed ? 'Cerrada' : 'Abierta'}</span>
+                                </div>
+                                <div className="text-center text-yellow-300 font-bold">
+                                    Precisión: {scores[detectedSymbol] || '0.0'}%
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
 
-            {/* Current Detection Display */}
-            <div className="text-center mb-6">
-                <p className="text-lg font-medium text-gray-700 mb-1">Símbolo detectado:</p>
-                <div className={`text-4xl font-bold ${getItemColor(detectedSymbol, true)}`}>
-                    {detectedSymbol ? getDisplayName(detectedSymbol) : '—'}
-                </div>
-                {detectedSymbol && (
-                    <p className="text-sm text-gray-600 mt-2">
-                        Cierra la mano izquierda para añadir a la expresión
-                    </p>
-                )}
-            </div>
-
-            {/* History */}
-            {history.length > 0 && (
-                <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6">
-                    <div className="flex justify-between items-center mb-3">
-                        <h3 className="text-lg font-semibold text-gray-700">Historial de Cálculos</h3>
-                        <button
-                            onClick={clearHistory}
-                            className="px-3 py-1 text-sm bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
-                        >
-                            Limpiar Historial
-                        </button>
-                    </div>
-                    <div className="max-h-32 overflow-y-auto space-y-1">
-                        {history.slice(-5).map((calc, index) => (
-                            <div key={index} className="text-sm font-mono text-gray-700 p-2 bg-gray-50 rounded">
-                                {calc}
+                        {/* Historial */}
+                        {history.length > 0 && (
+                            <div>
+                                <div className="flex justify-between items-center mb-2">
+                                    <span className="text-gray-400 text-xs">Historial</span>
+                                    <button
+                                        onClick={clearHistory}
+                                        className="text-red-400 hover:text-red-300 text-xs"
+                                    >
+                                        Limpiar
+                                    </button>
+                                </div>
+                                <div className="max-h-24 overflow-y-auto space-y-1">
+                                    {history.slice(-3).map((calc, index) => (
+                                        <div key={index} className="text-xs font-mono text-gray-300 bg-gray-800 p-2 rounded">
+                                            {calc}
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {/* Quick Stats */}
-            <div className="mt-6 bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6">
-                <div className="grid grid-cols-3 gap-4 text-center">
-                    <div>
-                        <div className="text-2xl font-bold text-blue-600">{currentExpression.length}</div>
-                        <div className="text-sm text-gray-600">Caracteres</div>
-                    </div>
-                    <div>
-                        <div className="text-2xl font-bold text-green-600">{highestScore.toFixed(1)}%</div>
-                        <div className="text-sm text-gray-600">Precisión actual</div>
-                    </div>
-                    <div>
-                        <div className="text-2xl font-bold text-purple-600">{history.length}</div>
-                        <div className="text-sm text-gray-600">Cálculos realizados</div>
+                        )}
                     </div>
                 </div>
             </div>
