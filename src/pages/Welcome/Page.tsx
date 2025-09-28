@@ -11,19 +11,19 @@ export default function App() {
   return (
     <main className="w-full text-white antialiased">
       {/* HERO */}
-      <section className="min-h-screen flex items-center justify-center text-center p-8">
-        <div className="max-w-4xl mx-auto">
+      <section className="h-screen flex items-center justify-center text-center p-4">
+        <div className="max-w-3xl mx-auto">
           <img
             src={logo} 
             alt="Logo SeeTalk"
-            className="mx-auto w-[600px] max-w-[90%] drop-shadow-[0_8px_20px_RGBA(0,0,0,0.6)]"
+            className="mx-auto w-[280px] sm:w-[320px] md:w-[360px] max-w-[80%] drop-shadow-[0_6px_16px_RGBA(0,0,0,0.5)] animate-float"
           />
           {/*  MARCA ACTUALIZADA: SignLearn AI → SeeTalk */}
-          <h1 className="mt-8 font-extrabold text-6xl md:text-8xl">
+          <h1 className="mt-4 font-extrabold text-3xl sm:text-4xl md:text-5xl">
             <span className="text-amber-400">See</span>
             <span className="text-blue-400">Talk</span>
           </h1>
-          <p className="mt-6 global-large-text max-w-[800px] mx-auto">
+          <p className="mt-3 text-base sm:text-lg md:text-xl max-w-[600px] mx-auto text-gray-200 leading-relaxed">
             Nuestra aplicación de lengua de señas es un entrenador personal que se
             adapta a tu ritmo de aprendizaje. Aprende y practica de forma simple
             mientras la app se vuelve más inteligente y útil contigo.

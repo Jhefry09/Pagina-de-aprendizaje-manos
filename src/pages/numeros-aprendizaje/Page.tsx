@@ -52,11 +52,11 @@ export default function Page() {
         </div>
 
         {/* Grid de números */}
-        <div className="grid grid-cols-5 gap-6 justify-items-center">
+        <div className="grid grid-cols-5 gap-8 justify-items-center">
           {numbers.map((num) => (
             <div
               key={num}
-              className="bg-gradient-to-b from-[#DA8739] to-[#7A491B] rounded-lg p-4 w-32 h-40 flex flex-col items-center justify-between shadow-md hover:scale-105 transition cursor-pointer"
+              className="sign-card"
               onClick={() => setSelected(num)}
             >
               <img
@@ -64,7 +64,7 @@ export default function Page() {
                 alt={`Número ${num} en señas`}
                 className="w-20 h-20 object-contain"
               />
-              <span className="text-white font-bold text-xl">{num}</span>
+              <span className="sign-letter">{num}</span>
             </div>
           ))}
         </div>

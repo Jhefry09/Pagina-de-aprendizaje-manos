@@ -73,6 +73,62 @@ nav[class*="z-[9999]"] {
   isolation: isolate;
 }
 
+/* ===== CARDS DE MÓDULOS CON DISEÑO SUAVE ===== */
+
+/* Card de seña con colores suaves que armonizan con el fondo azul */
+.sign-card {
+  background: linear-gradient(145deg, #e2e8f0, #cbd5e1, #94a3b8);
+  border-radius: 12px;
+  padding: 16px;
+  width: 128px;
+  height: 160px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  
+  /* Sombra sutil para profundidad */
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.sign-card:hover {
+  transform: scale(1.05) translateY(-2px);
+  box-shadow: 
+    0 8px 20px rgba(0, 0, 0, 0.2),
+    0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Tipografía de la seña con contraste mejorado */
+.sign-letter {
+  color: #1e293b;
+  font-weight: 700;
+  font-size: 1.25rem;
+  text-shadow: 
+    1px 1px 2px rgba(255, 255, 255, 0.8);
+  letter-spacing: 0.5px;
+}
+
+/* ===== ANIMACIÓN PARA LOGO DE WELCOME ===== */
+
+/* Animación de flotación sutil para el logo */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
 .global-bg-static::before {
   content: '';
   position: absolute;

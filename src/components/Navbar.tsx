@@ -74,6 +74,7 @@ const Navbar = ({ activeLink = 'inicio' }: NavbarProps) => {
     const modules = [
         { id: 'vocales', title: 'Vocales', route: '/vocales' },
         { id: 'abecedario', title: 'Abecedario', route: '/abecedario' },
+        { id: 'numeros', title: 'Números', route: '/numeros-aprendizaje' },
         { id: 'formar-palabras', title: 'Formar Palabras', route: '/practice/palabras' },
         { id: 'operaciones-matematicas', title: 'Operaciones Matemáticas', route: '/numeros' },
     ];

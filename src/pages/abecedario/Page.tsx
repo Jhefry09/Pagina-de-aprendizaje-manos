@@ -49,11 +49,11 @@ export default function Abecedario() {
         </div>
 
         {/* Grid de letras */}
-        <div className="grid grid-cols-5 gap-6 justify-items-center">
+        <div className="grid grid-cols-5 gap-8 justify-items-center">
           {letters.map((letter) => (
             <div
               key={letter}
-              className="bg-gradient-to-b from-[#DA8739] to-[#7A491B] rounded-lg p-4 w-32 h-40 flex flex-col items-center justify-between shadow-md hover:scale-105 transition cursor-pointer"
+              className="sign-card"
               onClick={() => setSelected(letter)}
             >
               <img
@@ -61,7 +61,7 @@ export default function Abecedario() {
                 alt={`${letter} en señas`}
                 className="w-20 h-20 object-contain"
               />
-              <span className="text-white font-bold text-xl">{letter}</span>
+              <span className="sign-letter">{letter}</span>
             </div>
           ))}
         </div>

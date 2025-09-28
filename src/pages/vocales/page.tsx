@@ -32,18 +32,18 @@ export default function Vocales() {
         </button>
 
         {/* Tarjetas de vocales */}
-        <div className="flex justify-center gap-6">
+        <div className="flex justify-center gap-8">
           {vocales.map((v) => (
             <div
               key={v.letra}
-              className="bg-gradient-to-b from-[#DA8739] to-[#7A491B] rounded-lg p-4 w-32 h-40 flex flex-col items-center justify-between shadow-md hover:scale-105 transition"
+              className="sign-card"
             >
               <img
                 src={v.img}
                 alt={`${v.letra} en señas`}
                 className="w-20 h-20 object-contain"
               />
-              <span className="text-white font-bold text-xl">
+              <span className="sign-letter">
                 {v.letra}
               </span>
             </div>
