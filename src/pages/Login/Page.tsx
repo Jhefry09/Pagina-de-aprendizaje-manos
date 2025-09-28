@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CameraIcon, ArrowPathIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { FaceSmileIcon as FaceSmileSolid } from '@heroicons/react/24/solid';
-import mujerImage from '../../assets/mujer.png';
+import hombreGif from '../../assets/Hombre.gif';
 
 const LoginPage: React.FC = () => {
     // Usamos un tipo personalizado para el ref del video
@@ -337,18 +337,9 @@ const LoginPage: React.FC = () => {
                         transition={{ delay: 0.9, duration: 0.8 }}
                     >
                         <motion.img
-                            src={mujerImage}
+                            src={hombreGif}
                             alt="Lenguaje de Señas"
                             className="w-80 h-auto object-contain"
-                            animate={{
-                                y: [0, -10, 0],
-                                rotate: [0, 2, -2, 0]
-                            }}
-                            transition={{
-                                duration: 4,
-                                repeat: Infinity,
-                                ease: "easeInOut"
-                            }}
                         />
                     </motion.div>
                 </div>
