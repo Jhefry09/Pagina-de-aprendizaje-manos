@@ -146,9 +146,9 @@ const Page = () => {
         {/* Modules Section */}
         <section id="modulos" className="mb-12 sm:mb-16 px-2 sm:px-0">
           <div className="text-center mb-8 sm:mb-10">
-            <h2 className="global-title mb-2 drop-shadow-lg">Nuestros Módulos Educativos</h2>
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-2 drop-shadow-md">Nuestros Módulos Educativos</h2>
             <div className="w-16 sm:w-20 h-1 bg-amber-400 mx-auto rounded-full shadow-lg"></div>
-            <p className="mt-3 sm:mt-4 global-large-text text-gray-200 max-w-2xl mx-auto px-2 drop-shadow-md">
+            <p className="mt-3 sm:mt-4 text-lg text-gray-200 max-w-2xl mx-auto px-2">
               Selecciona un módulo para comenzar tu aprendizaje en lengua de señas de manera interactiva y divertida.
             </p>
           </div>
