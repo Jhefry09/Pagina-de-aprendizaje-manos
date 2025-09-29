@@ -5,9 +5,9 @@ import App from './App.tsx';
 import { VocalContextProvider } from './contexts/VocalContextProvider';
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <VocalContextProvider>
-      <App />
-    </VocalContextProvider>
-  </StrictMode>,
+    <StrictMode>
+        <VocalContextProvider>
+            <App />
+        </VocalContextProvider>
+    </StrictMode>,
 );

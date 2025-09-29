@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import mujerImage from '../../assets/mujer.png';
+import hombreGif from '../../assets/Hombre.gif';
 
 const RegistroPage: React.FC = () => {
     const webcamRef = useRef<HTMLVideoElement>(null);
@@ -337,18 +337,9 @@ const RegistroPage: React.FC = () => {
                         transition={{ delay: 0.9, duration: 0.8 }}
                     >
                         <motion.img
-                            src={mujerImage}
+                            src={hombreGif}
                             alt="Lenguaje de Señas"
                             className="w-80 h-auto object-contain"
-                            animate={{
-                                y: [0, -10, 0],
-                                rotate: [0, 2, -2, 0]
-                            }}
-                            transition={{
-                                duration: 4,
-                                repeat: Infinity,
-                                ease: "easeInOut"
-                            }}
                         />
                     </motion.div>
                 </div>

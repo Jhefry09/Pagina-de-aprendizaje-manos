@@ -19,22 +19,32 @@ import VocalesPage from "./pages/vocales/page";
 import AbecedarioPage from "./pages/abecedario/Page";
 import NumerosAprendizajePage from "./pages/numeros-aprendizaje/Page";
 import WelcomePage from "./pages/Welcome/Page";
+import UserManagementPage from "./pages/gestion-usuarios/page";
+import VocalStatistics from "./pages/estadisticas-entrenamiento/page";
 import { AnimatePresence } from "framer-motion";
+import VocalPracticePage from "./pages/ParcticeVocals/Page";
 
 const AppContent = () => {
     const location = useLocation();
-    const isTrainingPage = location.pathname.startsWith('/training');
-    const isPracticePage = location.pathname.startsWith('/practice');
-    const isNumerosPage = location.pathname.startsWith('/numeros');
-    const isVocalesPage = location.pathname.startsWith('/vocales');
+    
+    // Definir rutas y estados
     const isAuthPage = location.pathname === '/login' || location.pathname === '/registro';
     const isWelcomePage = location.pathname === '/welcome';
+    const isTrainingPage = location.pathname.startsWith('/training');
+    const isNumerosPage = location.pathname.startsWith('/numeros');
+    const isVocalesPage = location.pathname.startsWith('/vocales');
+    const isAbecedarioPage = location.pathname.startsWith('/abecedario');
+    const isGestionPage = location.pathname.startsWith('/gestion');
+    const isEstadisticasPage = location.pathname.startsWith('/estadisticas');
 
+    // Determinar enlace activo para navbar
     const activeLink = location.pathname === '/home' ? 'inicio' :
         isTrainingPage ? 'clases' :
-            isPracticePage ? 'practicar' :
-                isNumerosPage ? 'numeros' :
-                    isVocalesPage ? 'vocales' : '';
+            isNumerosPage ? 'numeros' :
+                isVocalesPage ? 'vocales' :
+                    isAbecedarioPage ? 'abecedario' :
+                        isGestionPage ? 'gestion' :
+                            isEstadisticasPage ? 'estadisticas' : '';
 
     // Rutas sin navbar (auth y welcome)
     if (isAuthPage || isWelcomePage) {
@@ -65,8 +75,11 @@ const AppContent = () => {
                         <Route path="/dashboard" element={<DashboardPage />} />
                         <Route path="/numeros" element={<NumerosPage />} />
                         <Route path="/vocales" element={<VocalesPage />} />
+                        <Route path="/vocales-practica/:vocal" element={<VocalPracticePage />} />
                         <Route path="/abecedario" element={<AbecedarioPage />} />
                         <Route path="/numeros-aprendizaje" element={<NumerosAprendizajePage />} />
+                        <Route path="/gestion" element={<UserManagementPage />} />
+                        <Route path="/estadisticas" element={<VocalStatistics />} />
                     </Routes>
                 </AnimatePresence>
             </main>

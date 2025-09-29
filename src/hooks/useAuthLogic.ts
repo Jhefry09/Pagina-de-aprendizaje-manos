@@ -14,8 +14,8 @@ interface UserProgressData {
         nombre: string;
         rol: string;
     };
-    progreso: any[];
-    letrasCompletadas: any[];
+    progreso: null[];
+    letrasCompletadas: null[];
     totalLetras: number;
     porcentajeCompletado: string;
     fechaUltimaActualizacion: string;

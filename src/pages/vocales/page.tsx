@@ -3,6 +3,7 @@ import eImg from "../../assets/e-sena.png";
 import iImg from "../../assets/i-sena.png";
 import oImg from "../../assets/o-sena.png";
 import uImg from "../../assets/u-sena.png";
+import { Link } from "react-router-dom";
 
 export default function Vocales() {
   const vocales = [
@@ -27,23 +28,25 @@ export default function Vocales() {
       {/* Caja inferior */}
       <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-8 w-[800px] text-center">
         {/* Botón principal */}
-        <button className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-semibold px-6 py-3 rounded-xl shadow-lg mb-8 global-body-text">
-          Seleccionar
-        </button>
+        <Link to="/vocales-practica/a">
+          <button className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-semibold px-6 py-3 rounded-xl shadow-lg mb-8 global-body-text">
+            Seleccionar
+          </button>
+        </Link>
 
         {/* Tarjetas de vocales */}
-        <div className="flex justify-center gap-6">
+        <div className="flex justify-center gap-8">
           {vocales.map((v) => (
             <div
               key={v.letra}
-              className="bg-gradient-to-b from-[#DA8739] to-[#7A491B] rounded-lg p-4 w-32 h-40 flex flex-col items-center justify-between shadow-md hover:scale-105 transition"
+              className="sign-card"
             >
               <img
                 src={v.img}
                 alt={`${v.letra} en señas`}
                 className="w-20 h-20 object-contain"
               />
-              <span className="text-white font-bold text-xl">
+              <span className="sign-letter">
                 {v.letra}
               </span>
             </div>
