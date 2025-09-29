@@ -143,14 +143,20 @@ const Page = () => {
           </div>
         </section>
 
-        {/* Modules Section */}
-        <section id="modulos" className="mb-12 sm:mb-16 px-2 sm:px-0">
-          <div className="text-center mb-8 sm:mb-10">
-            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-2 drop-shadow-md">Nuestros Módulos Educativos</h2>
-            <div className="w-16 sm:w-20 h-1 bg-amber-400 mx-auto rounded-full shadow-lg"></div>
-            <p className="mt-3 sm:mt-4 text-lg text-gray-200 max-w-2xl mx-auto px-2">
-              Selecciona un módulo para comenzar tu aprendizaje en lengua de señas de manera interactiva y divertida.
-            </p>
+        {/* Sección de Módulos - Optimizada para Linux */}
+        <section id="modulos" className="mb-12 sm:mb-16 px-2 sm:px-0 relative">
+          <div className="relative z-10">
+            <div className="text-center mb-8 sm:mb-10">
+              <h2 className="text-3xl sm:text-4xl font-bold text-white mb-2 relative z-10 
+                         font-sans antialiased linux-font-render">
+                Nuestros Módulos Educativos
+              </h2>
+              <div className="w-16 sm:w-20 h-1 bg-amber-400 mx-auto rounded-full shadow-lg"></div>
+              <p className="mt-3 sm:mt-4 text-lg text-gray-200 max-w-2xl mx-auto px-2 
+                         font-sans antialiased">
+                Selecciona un módulo para comenzar tu aprendizaje en lengua de señas de manera interactiva y divertida.
+              </p>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-5 md:gap-6 w-full">
