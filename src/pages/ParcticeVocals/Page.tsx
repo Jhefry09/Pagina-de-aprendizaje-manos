@@ -113,10 +113,53 @@ const VocalPracticePage = () => {
         const isUserRightHand = detectedHandedness === 'Left'; 
         
         if (isUserRightHand) {
-          // Dibujar solo la mano derecha (detección)
-          const color = '#f2994a'; 
-          window.drawConnectors(canvasCtx, handLandmarks, window.HAND_CONNECTIONS, { color: color, lineWidth: 2 });
-          window.drawLandmarks(canvasCtx, handLandmarks, { color: color, lineWidth: 1 });
+          // Configuración mejorada para visualización de la mano
+          const color = '#f2994a'; // Naranja para las conexiones
+          const landmarkColor = '#215c5c'; // Azul oscuro para los puntos
+          
+          // 1. Primero dibujamos las conexiones principales
+          window.drawConnectors(canvasCtx, handLandmarks, window.HAND_CONNECTIONS, { 
+            color: color, 
+            lineWidth: 3,
+            lineCap: 'round',
+            lineJoin: 'round'
+          });
+          
+          // 2. Luego dibujamos las líneas adicionales para los dedos
+          const fingerConnections = [
+            [0, 1, 2, 3, 4],       // Pulgar
+            [0, 5, 6, 7, 8],       // Índice
+            [0, 9, 10, 11, 12],    // Medio
+            [0, 13, 14, 15, 16],   // Anular
+            [0, 17, 18, 19, 20]    // Meñique
+          ];
+          
+          fingerConnections.forEach(finger => {
+            for (let i = 1; i < finger.length; i++) {
+              const start = handLandmarks[finger[i - 1]];
+              const end = handLandmarks[finger[i]];
+              if (start && end) {
+                canvasCtx.beginPath();
+                canvasCtx.moveTo(start.x * canvasRef.current!.width, start.y * canvasRef.current!.height);
+                canvasCtx.lineTo(end.x * canvasRef.current!.width, end.y * canvasRef.current!.height);
+                canvasCtx.strokeStyle = color;
+                canvasCtx.lineWidth = 3;
+                canvasCtx.stroke();
+              }
+            }
+          });
+          
+          // 3. Finalmente, dibujamos los puntos de referencia por encima de las líneas
+          window.drawLandmarks(canvasCtx, handLandmarks, { 
+            color: landmarkColor,
+            lineWidth: 7,
+            fillColor: landmarkColor,
+            // eslint-disable-next-line
+            radius: (data: { from: any; to: any }) => {
+              const isFingerTip = [4, 8, 12, 16, 20].includes(data.to);
+              return isFingerTip ? 6 : 5; // Puntos ligeramente más grandes en las puntas
+            }
+          });
           
           rightHandLandmarks = handLandmarks;
           // Si encontramos la mano derecha, podemos detener el bucle o seguir si es necesario, 

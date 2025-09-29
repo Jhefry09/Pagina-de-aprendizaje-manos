@@ -194,6 +194,7 @@ const DashboardPage: React.FC = () => {
         const url = endpoints.completar();
         const body = { usuarioId: usuarioId2, vocalId };
         try {
+            // eslint-disable-next-line
             const data = await makeRequest<any>(url, 'POST', body);
             setResp2(
                 <div>
@@ -302,6 +303,7 @@ const DashboardPage: React.FC = () => {
             setRespSim(html);
             for (let id = 1; id <= 3; id++) {
                 try {
+                    // eslint-disable-next-line
                     const resultado = await makeRequest<any>(endpoints.completar(), 'POST', { usuarioId: usuarioIdSim, vocalId: id });
                     html = <>{html}<p>✅ Letra {resultado.vocal} completada</p></>;
                     setRespSim(html);

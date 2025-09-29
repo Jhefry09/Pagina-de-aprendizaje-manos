@@ -53,8 +53,8 @@ export default function Abecedario() {
           {letters.map((letter) => (
             <div
               key={letter}
-              className="sign-card"
-              onClick={() => setSelected(letter)}
+              className="sign-card cursor-pointer transform transition-transform hover:scale-105"
+              onClick={() => navigate(`/letras-practica/${letter.toLowerCase()}`)}
             >
               <img
                 src={getImage(letter)}

@@ -62,6 +62,7 @@ const MathCalculatorPage = () => {
     const videoRef = useRef<HTMLVideoElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const handsRef = useRef<MediaPipeHandsInstance | null>(null);
+    // eslint-disable-next-line
     const cameraRef = useRef<any>(null);
     const detectedSymbolRef = useRef<string>('');
     const previousLeftHandClosedRef = useRef<boolean>(false);
@@ -89,7 +90,7 @@ const MathCalculatorPage = () => {
     // Function to safely evaluate mathematical expression
     const evaluateExpression = (expression: string): string => {
         try {
-            let jsExpression = expression
+            const jsExpression = expression
                 .replace(/×/g, '*')
                 .replace(/÷/g, '/')
                 .replace(/−/g, '-');

@@ -3,9 +3,10 @@ import eImg from "../../assets/e-sena.png";
 import iImg from "../../assets/i-sena.png";
 import oImg from "../../assets/o-sena.png";
 import uImg from "../../assets/u-sena.png";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 export default function Vocales() {
+  const navigate = useNavigate();
   const vocales = [
     { letra: "A", img: aImg },
     { letra: "E", img: eImg },
@@ -27,19 +28,15 @@ export default function Vocales() {
 
       {/* Caja inferior */}
       <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-8 w-[800px] text-center">
-        {/* Botón principal */}
-        <Link to="/vocales-practica/a">
-          <button className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-semibold px-6 py-3 rounded-xl shadow-lg mb-8 global-body-text">
-            Seleccionar
-          </button>
-        </Link>
-
+        <h3 className="text-xl font-semibold mb-6 text-gray-800">Selecciona una vocal para practicar</h3>
+        
         {/* Tarjetas de vocales */}
         <div className="flex justify-center gap-8">
           {vocales.map((v) => (
             <div
               key={v.letra}
-              className="sign-card"
+              className="sign-card cursor-pointer transform transition-transform hover:scale-105"
+              onClick={() => navigate(`/vocales-practica/${v.letra.toLowerCase()}`)}
             >
               <img
                 src={v.img}

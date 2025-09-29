@@ -178,9 +178,11 @@ const LoginPage: React.FC = () => {
                                 rol: data.rol
                             },
                             progreso: progresoData,
+                            // eslint-disable-next-line
                             letrasCompletadas: progresoData.filter((letra: any) => letra.completado === true),
                             totalLetras: progresoData.length,
                             porcentajeCompletado: progresoData.length > 0
+                            // eslint-disable-next-line
                                 ? ((progresoData.filter((letra: any) => letra.completado === true).length / progresoData.length) * 100).toFixed(1)
                                 : '0.0',
                             fechaUltimaActualizacion: new Date().toISOString()
