@@ -212,7 +212,7 @@ const UserManagement = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gradient-to-br flex items-center justify-center">
+            <div className="min-h-screen flex items-center justify-center">
                 <div className="text-white text-xl">Cargando usuarios...</div>
             </div>
         );
@@ -243,7 +243,7 @@ const UserManagement = () => {
                 )}
 
                 {/* Header de la tabla */}
-                <div className="bg-gradient-to-r from-orange-600 to-orange-500 rounded-2xl p-6 mb-4 shadow-lg">
+                <div className="bg-gradient-to-r from-amber-600 to-amber-700 rounded-2xl p-6 mb-4 shadow-lg">
                     <div className="grid grid-cols-4 gap-4">
                         <div className="text-white font-bold text-xl">ID</div>
                         <div className="text-white font-bold text-xl">Nombre</div>
