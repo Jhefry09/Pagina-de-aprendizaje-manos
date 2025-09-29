@@ -154,6 +154,10 @@ const Navbar = ({ activeLink = 'inicio' }: NavbarProps) => {
                         <NavLink href="/training">
                             Entrenar IA
                         </NavLink>
+                        
+                        <NavLink href="/gestion" isActive={activeLink === 'gestion'}>
+                            Gestión de usuarios
+                        </NavLink>
                     </div>
 
                     {/* User Profile */}
@@ -284,6 +288,13 @@ const Navbar = ({ activeLink = 'inicio' }: NavbarProps) => {
                             className="block px-4 py-3 rounded-lg text-base font-medium text-gray-200 hover:bg-gray-700/50 transition-colors"
                         >
                             Entrenar IA
+                        </a>
+                        <a
+                            href="/gestion"
+                            className="block px-4 py-3 rounded-lg text-base font-medium text-gray-200 hover:bg-gray-700/50 transition-colors"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                            Gestión
                         </a>
                     </div>
 
