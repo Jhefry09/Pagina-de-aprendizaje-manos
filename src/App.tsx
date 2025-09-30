@@ -21,6 +21,7 @@ import NumerosAprendizajePage from "./pages/numeros-aprendizaje/Page";
 import WelcomePage from "./pages/Welcome/Page";
 import UserManagementPage from "./pages/gestion-usuarios/page";
 import VocalStatistics from "./pages/estadisticas-entrenamiento/page";
+import UserSettingsPage from "./pages/configuracion-usuario/page";
 import { AnimatePresence } from "framer-motion";
 import VocalPracticePage from "./pages/ParcticeVocals/Page";
 
@@ -36,6 +37,7 @@ const AppContent = () => {
     const isAbecedarioPage = location.pathname.startsWith('/abecedario');
     const isGestionPage = location.pathname.startsWith('/gestion');
     const isEstadisticasPage = location.pathname.startsWith('/estadisticas');
+    const isConfiguracionPage = location.pathname.startsWith('/configuracion');
 
     // Determinar enlace activo para navbar
     const activeLink = location.pathname === '/home' ? 'inicio' :
@@ -44,7 +46,8 @@ const AppContent = () => {
                 isVocalesPage ? 'vocales' :
                     isAbecedarioPage ? 'abecedario' :
                         isGestionPage ? 'gestion' :
-                            isEstadisticasPage ? 'estadisticas' : '';
+                            isEstadisticasPage ? 'estadisticas' :
+                                isConfiguracionPage ? 'configuracion' : '';
 
     // Rutas sin navbar (auth y welcome)
     if (isAuthPage || isWelcomePage) {
@@ -80,6 +83,7 @@ const AppContent = () => {
                         <Route path="/numeros-aprendizaje" element={<NumerosAprendizajePage />} />
                         <Route path="/gestion" element={<UserManagementPage />} />
                         <Route path="/estadisticas" element={<VocalStatistics />} />
+                        <Route path="/configuracion" element={<UserSettingsPage />} />
                     </Routes>
                 </AnimatePresence>
             </main>

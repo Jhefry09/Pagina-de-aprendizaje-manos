@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import {  Link } from 'react-router-dom';
 import { useVocalContext } from '../../hooks/useVocalContext';
 import { type VocalModel, type NormalizedLandmark, type Results, type MediaPipeHandsInstance } from '../../types';
 
@@ -116,8 +116,6 @@ const PracticePage = () => {
   }, {} as Record<string, string>);
 
   const [scores, setScores] = useState<Record<string, string>>(initialScores);
-  const { vocal: selectedLetterParam } = useParams();
-  const selectedLetter = selectedLetterParam || 'a';
   const [detectedLetter, setDetectedLetter] = useState('');
   const [writtenText, setWrittenText] = useState('');
   const [leftHandClosed, setLeftHandClosed] = useState(false);
@@ -320,18 +318,6 @@ const PracticePage = () => {
     setWrittenText('');
   };
 
-  // Helper function to get item color and display name
-  const getItemColor = (item: string, isDetected: boolean = false, isSelected: boolean = false) => {
-    if (specialFunctions.includes(item)) {
-      if (isDetected) return 'text-white';
-      if (item === 'espacio') return 'text-blue-600';
-      if (item === 'borrar') return 'text-red-600';
-      return 'text-gray-400';
-    }
-    
-    if (isDetected) return 'text-amber-700';
-    return 'text-gray-700';
-  };
 
   const getDisplayName = (item: string) => {
     if (item === 'espacio') return 'ESPACIO';
