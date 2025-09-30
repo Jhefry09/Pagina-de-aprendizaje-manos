@@ -195,7 +195,7 @@ export default function SignLanguageProgress() {
             <div className="min-h-screen  p-8 flex items-center justify-center">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-indigo-600 mx-auto mb-4"></div>
-                    <p className="text-xl text-white font-medium">Cargando progreso...</p>
+                    <p className="text-xl text-white font-medium">Cargando Datos ...</p>
                 </div>
             </div>
         );

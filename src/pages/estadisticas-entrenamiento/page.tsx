@@ -88,16 +88,10 @@ const VocalStatistics = () => {
 
     if (loading && vocalesData.length === 0) {
         return (
-            <div className="min-h-screen">
-                <div className="max-w-7xl mx-auto">
-                    <div className="bg-gray-200 bg-opacity-70 backdrop-blur-sm rounded-3xl border border-gray-300 shadow-lg overflow-hidden">
-                        <div className="flex items-center justify-center h-96">
-                            <div className="text-center">
-                                <div className="inline-block animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-800 mb-4"></div>
-                                <p className="text-blue-800 text-xl font-semibold">Cargando datos de entrenamientos...</p>
-                            </div>
-                        </div>
-                    </div>
+            <div className="min-h-screen  p-8 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-indigo-600 mx-auto mb-4"></div>
+                    <p className="text-xl text-white font-medium">Cargando datos...</p>
                 </div>
             </div>
         );
