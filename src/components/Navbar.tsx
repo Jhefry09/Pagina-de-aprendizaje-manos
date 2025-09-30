@@ -70,6 +70,7 @@ const Navbar = ({ activeLink = 'inicio' }: NavbarProps) => {
     const userName = user?.usuario || 'Usuario';
     const userRole = user?.rol || 'Invitado';
     const userInitial = userName.charAt(0).toUpperCase();
+    const isAdmin = userRole === 'administrador' || userRole === 'ADMIN';
 
     const modules = [
         { id: 'vocales', title: 'Vocales', route: '/vocales' },
@@ -151,21 +152,25 @@ const Navbar = ({ activeLink = 'inicio' }: NavbarProps) => {
                             </div>
                         </div>
 
-                        <NavLink href="/training">
-                            Entrenar IA
-                        </NavLink>
-                        
-                        <NavLink href="/estadisticas" isActive={activeLink === 'estadisticas'}>
-                            Estadísticas
-                        </NavLink>
-                        
-                        <NavLink href="/gestion" isActive={activeLink === 'gestion'}>
-                            Gestión de usuarios
-                        </NavLink>
+                        {isAdmin && (
+                            <>
+                                <NavLink href="/training">
+                                    Entrenar IA
+                                </NavLink>
+                                
+                                <NavLink href="/estadisticas" isActive={activeLink === 'estadisticas'}>
+                                    Estadísticas
+                                </NavLink>
+                                
+                                <NavLink href="/gestion" isActive={activeLink === 'gestion'}>
+                                    Gestión de usuarios
+                                </NavLink>
+                            </>
+                        )}
                     </div>
 
                     {/* User Profile */}
-                    <div className="flex items-center">
+                    <div className="hidden md:flex items-center">
                         <div className="relative">
                             <button
                                 onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
@@ -262,7 +267,7 @@ const Navbar = ({ activeLink = 'inicio' }: NavbarProps) => {
             </div>
 
             {/* Mobile menu */}
-            <div className={`md:hidden transition-all duration-300 ease-in-out overflow-hidden ${isMobileMenuOpen ? 'max-h-96' : 'max-h-0'}`}>
+            <div className={`md:hidden transition-all duration-300 ease-in-out ${isMobileMenuOpen ? 'max-h-screen overflow-y-auto' : 'max-h-0 overflow-hidden'}`}>
                 <div className="mx-4 mt-2 bg-slate-900/95 backdrop-blur-md rounded-2xl border border-white/10 shadow-2xl">
                     <div className="px-4 pt-2 pb-3 space-y-1">
                         <a
@@ -287,27 +292,32 @@ const Navbar = ({ activeLink = 'inicio' }: NavbarProps) => {
                                 </button>
                             ))}
                         </div>
-                        <div className="border-t border-gray-700 my-1"></div>
-                        <a
-                            href="#entrenar-ia"
-                            className="block px-4 py-3 rounded-lg text-base font-medium text-gray-200 hover:bg-gray-700/50 transition-colors"
-                        >
-                            Entrenar IA
-                        </a>
-                        <a
-                            href="/estadisticas"
-                            className="block px-4 py-3 rounded-lg text-base font-medium text-gray-200 hover:bg-gray-700/50 transition-colors"
-                            onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                            Estadísticas
-                        </a>
-                        <a
-                            href="/gestion"
-                            className="block px-4 py-3 rounded-lg text-base font-medium text-gray-200 hover:bg-gray-700/50 transition-colors"
-                            onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                            Gestión
-                        </a>
+                        {isAdmin && (
+                            <>
+                                <div className="border-t border-gray-700 my-1"></div>
+                                <a
+                                    href="/training"
+                                    className="block px-4 py-3 rounded-lg text-base font-medium text-gray-200 hover:bg-gray-700/50 transition-colors"
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                >
+                                    Entrenar IA
+                                </a>
+                                <a
+                                    href="/estadisticas"
+                                    className="block px-4 py-3 rounded-lg text-base font-medium text-gray-200 hover:bg-gray-700/50 transition-colors"
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                >
+                                    Estadísticas
+                                </a>
+                                <a
+                                    href="/gestion"
+                                    className="block px-4 py-3 rounded-lg text-base font-medium text-gray-200 hover:bg-gray-700/50 transition-colors"
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                >
+                                    Gestión
+                                </a>
+                            </>
+                        )}
                     </div>
 
                     {/* Mobile user menu */}
