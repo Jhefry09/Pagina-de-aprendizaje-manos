@@ -167,7 +167,24 @@ const LoginPage: React.FC = () => {
 
                     if (progresoRes.ok) {
                         const progresoData = await progresoRes.json();
-                        console.log('Progreso de letras:', progresoData);
+                        console.log('Progreso de letras RAW:', progresoData);
+
+                        // TRANSFORMAR: Convertir array de strings a array de objetos
+                        const progresoFormateado = Array.isArray(progresoData) 
+                            ? progresoData.map((item: any) => {
+                                // Si ya es un objeto con letra y completado, dejarlo igual
+                                if (typeof item === 'object' && item !== null && 'letra' in item) {
+                                    return item;
+                                }
+                                // Si es un string simple, convertir a objeto con completado: true
+                                if (typeof item === 'string') {
+                                    return { letra: item, completado: true };
+                                }
+                                return item;
+                            })
+                            : [];
+
+                        console.log('Progreso FORMATEADO:', progresoFormateado);
 
                         // Crear objeto completo con información del usuario y progreso
                         const userProgressData = {
@@ -176,11 +193,11 @@ const LoginPage: React.FC = () => {
                                 nombre: data.usuario,
                                 rol: data.rol
                             },
-                            progreso: progresoData,
-                            letrasCompletadas: progresoData.filter((letra: any) => letra.completado === true),
-                            totalLetras: progresoData.length,
-                            porcentajeCompletado: progresoData.length > 0
-                                ? ((progresoData.filter((letra: any) => letra.completado === true).length / progresoData.length) * 100).toFixed(1)
+                            progreso: progresoFormateado,
+                            letrasCompletadas: progresoFormateado.filter((letra: any) => letra.completado === true),
+                            totalLetras: progresoFormateado.length,
+                            porcentajeCompletado: progresoFormateado.length > 0
+                                ? ((progresoFormateado.filter((letra: any) => letra.completado === true).length / progresoFormateado.length) * 100).toFixed(1)
                                 : '0.0',
                             fechaUltimaActualizacion: new Date().toISOString()
                         };
@@ -232,12 +249,46 @@ const LoginPage: React.FC = () => {
                     localStorage.setItem('userProgress', JSON.stringify(userProgressData));
                 }
 
-                // Guardar datos del usuario para el modal
+                // CAMBIO CRÍTICO: Agregar logs ANTES de setUserData
+                const userProgressData = JSON.parse(localStorage.getItem('userProgress') || '{}');
+                const progresoLetras = JSON.parse(localStorage.getItem('progresoLetras') || '[]');
+
+                // LOGS DE DEBUG - CRÍTICOS
+                console.log('=== DEBUG LOGIN MODAL ===');
+                console.log('1. userProgressData completo:', userProgressData);
+                console.log('2. userProgressData.progreso:', userProgressData.progreso);
+                console.log('3. Es array?:', Array.isArray(userProgressData.progreso));
+                console.log('4. Longitud:', userProgressData.progreso?.length);
+                console.log('5. Primer elemento:', userProgressData.progreso?.[0]);
+
+                // Verificar si hay datos completados
+                if (Array.isArray(userProgressData.progreso)) {
+                    const completados = userProgressData.progreso.filter((item: any) => item.completado === true);
+                    console.log('6. Items completados:', completados.length);
+                    console.log('7. Letras completadas:', completados.map((item: any) => item.letra));
+                } else {
+                    console.error('❌ progreso NO es un array!');
+                }
+
+                console.log('=== VERIFICANDO AMBAS FUENTES ===');
+                console.log('userProgress.progreso:', userProgressData.progreso);
+                console.log('progresoLetras directo:', progresoLetras);
+
+                // Usar progresoLetras como fallback
+                const progresoFinal = userProgressData.progreso || [];
+
                 setUserData({
                     usuario: data.usuario,
                     id: data.id,
                     rol: data.rol,
-                    progreso: JSON.parse(localStorage.getItem('userProgress') || '{}')
+                    progreso: progresoFinal
+                });
+
+                console.log('8. userData que se guardó:', {
+                    usuario: data.usuario,
+                    id: data.id,
+                    rol: data.rol,
+                    progreso: progresoFinal
                 });
 
                 // Mostrar modal de bienvenida
@@ -662,35 +713,141 @@ const LoginPage: React.FC = () => {
                                     </div>
                                 </div>
 
-                                {/* Progreso */}
-                                {userData.progreso?.porcentajeCompletado && (
-                                    <div className="bg-gradient-to-r from-green-900/30 to-emerald-900/30 rounded-xl p-4 border border-green-600/30">
-                                        <div className="flex items-center mb-2">
-                                            <div className="w-10 h-10 bg-green-600/30 rounded-lg flex items-center justify-center mr-3">
-                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                                                    <path fillRule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clipRule="evenodd" />
-                                                </svg>
+                                {/* Progreso Unificado */}
+                                {userData.progreso && Array.isArray(userData.progreso) && (() => {
+                                    // Definir arrays como en el dashboard
+                                    const vowels = ['a', 'e', 'i', 'o', 'u'];
+                                    const alphabet = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'];
+                                    const numbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+                                    const allItems = [...vowels, ...alphabet, ...numbers];
+
+                                    // CLAVE: Filtrar solo los items con completado === true
+                                    const completedLetters = userData.progreso
+                                        .filter((item: any) => item.completado === true)
+                                        .map((item: any) => item.letra?.toLowerCase())
+                                        .filter(Boolean);
+
+                                    console.log('Completed letters:', completedLetters);
+                                    console.log('Full progress:', userData.progreso);
+
+                                    // Calcular progreso por categoría
+                                    const isCompleted = (letter: string) => completedLetters.includes(letter.toLowerCase());
+                                    const calculateProgress = (items: string[]) => {
+                                        const completed = items.filter(item => isCompleted(item)).length;
+                                        return Math.round((completed / items.length) * 100);
+                                    };
+                                    
+                                    const vowelsProgress = calculateProgress(vowels);
+                                    const alphabetProgress = calculateProgress(alphabet);
+                                    const numbersProgress = calculateProgress(numbers);
+                                    const totalProgress = calculateProgress(allItems);
+                                    const totalCompleted = allItems.filter(item => isCompleted(item)).length;
+                                    
+                                    return (
+                                        <div className="bg-gradient-to-r from-green-900/30 to-emerald-900/30 rounded-xl p-4 border border-green-600/30">
+                                            {/* Encabezado del progreso */}
+                                            <div className="flex items-center mb-4">
+                                                <div className="w-10 h-10 bg-green-600/30 rounded-lg flex items-center justify-center mr-3">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                                                        <path fillRule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clipRule="evenodd" />
+                                                    </svg>
+                                                </div>
+                                                <div className="flex-1">
+                                                    <p className="text-gray-300 text-xs">Progreso Total</p>
+                                                    <p className="text-white font-semibold">Vocales, Alfabeto y Números</p>
+                                                </div>
                                             </div>
-                                            <div className="flex-1">
-                                                <p className="text-gray-300 text-xs">Tu Progreso</p>
-                                                <p className="text-white font-semibold">
-                                                    {userData.progreso.letrasCompletadas?.length || 0} de {userData.progreso.totalLetras || 27} letras
-                                                </p>
+
+                                            {/* Círculo de progreso compacto */}
+                                            <div className="flex items-center justify-between mb-4">
+                                                <div className="flex items-center space-x-4">
+                                                    <div className="relative w-16 h-16">
+                                                        <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                                                            <circle
+                                                                cx="50"
+                                                                cy="50"
+                                                                r="40"
+                                                                stroke="#374151"
+                                                                strokeWidth="8"
+                                                                fill="none"
+                                                            />
+                                                            <motion.circle
+                                                                cx="50"
+                                                                cy="50"
+                                                                r="40"
+                                                                stroke="#10b981"
+                                                                strokeWidth="8"
+                                                                fill="none"
+                                                                strokeLinecap="round"
+                                                                strokeDasharray={`${2 * Math.PI * 40}`}
+                                                                initial={{ strokeDashoffset: `${2 * Math.PI * 40}` }}
+                                                                animate={{ 
+                                                                    strokeDashoffset: `${2 * Math.PI * 40 * (1 - totalProgress / 100)}`
+                                                                }}
+                                                                transition={{ delay: 0.8, duration: 1, ease: "easeOut" }}
+                                                            />
+                                                        </svg>
+                                                        <div className="absolute inset-0 flex items-center justify-center">
+                                                            <span className="text-white text-sm font-bold">
+                                                                {totalProgress}%
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-left">
+                                                        <p className="text-green-400 text-lg font-bold">
+                                                            {totalCompleted} / 41
+                                                        </p>
+                                                        <p className="text-gray-300 text-xs">elementos completados</p>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div className="text-green-400 text-2xl font-bold">
-                                                {userData.progreso.porcentajeCompletado}%
+
+                                            {/* Desglose por categorías */}
+                                            <div className="grid grid-cols-3 gap-2 mb-3">
+                                                <div className="bg-blue-900/30 rounded-lg p-2 text-center border border-blue-600/20">
+                                                    <div className="text-lg mb-1">🔤</div>
+                                                    <p className="text-blue-300 text-xs font-medium">Vocales</p>
+                                                    <p className="text-white text-sm font-bold">{vowelsProgress}%</p>
+                                                </div>
+                                                <div className="bg-amber-900/30 rounded-lg p-2 text-center border border-amber-600/20">
+                                                    <div className="text-lg mb-1">🔡</div>
+                                                    <p className="text-amber-300 text-xs font-medium">Alfabeto</p>
+                                                    <p className="text-white text-sm font-bold">{alphabetProgress}%</p>
+                                                </div>
+                                                <div className="bg-slate-700/30 rounded-lg p-2 text-center border border-slate-500/20">
+                                                    <div className="text-lg mb-1">🔢</div>
+                                                    <p className="text-slate-300 text-xs font-medium">Números</p>
+                                                    <p className="text-white text-sm font-bold">{numbersProgress}%</p>
+                                                </div>
+                                            </div>
+
+                                            {/* Barra de progreso general */}
+                                            <div className="w-full bg-slate-700 rounded-full h-2">
+                                                <motion.div
+                                                    className="bg-gradient-to-r from-green-500 to-emerald-400 h-2 rounded-full"
+                                                    initial={{ width: 0 }}
+                                                    animate={{ width: `${totalProgress}%` }}
+                                                    transition={{ delay: 0.9, duration: 1, ease: "easeOut" }}
+                                                />
+                                            </div>
+
+                                            {/* Mensaje motivacional compacto */}
+                                            <div className="mt-3 text-center">
+                                                {totalProgress === 100 ? (
+                                                    <p className="text-green-300 text-xs">🎉 ¡Contenido completado!</p>
+                                                ) : totalProgress >= 75 ? (
+                                                    <p className="text-blue-300 text-xs">🚀 ¡Excelente progreso!</p>
+                                                ) : totalProgress >= 50 ? (
+                                                    <p className="text-amber-300 text-xs">💪 ¡Vas por buen camino!</p>
+                                                ) : totalProgress >= 25 ? (
+                                                    <p className="text-orange-300 text-xs">🌟 ¡Buen comienzo!</p>
+                                                ) : (
+                                                    <p className="text-gray-300 text-xs">🎯 ¡Comienza tu aventura!</p>
+                                                )}
                                             </div>
                                         </div>
-                                        <div className="w-full bg-slate-700 rounded-full h-2.5">
-                                            <motion.div
-                                                className="bg-gradient-to-r from-green-500 to-emerald-400 h-2.5 rounded-full"
-                                                initial={{ width: 0 }}
-                                                animate={{ width: `${userData.progreso.porcentajeCompletado}%` }}
-                                                transition={{ delay: 0.8, duration: 1, ease: "easeOut" }}
-                                            />
-                                        </div>
-                                    </div>
-                                )}
+                                    );
+                                })()}
                             </motion.div>
 
                             {/* Mensaje de éxito */}
