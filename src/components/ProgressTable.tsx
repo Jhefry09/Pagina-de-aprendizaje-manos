@@ -19,9 +19,13 @@ interface ProgressTableProps {
     title: string;
     icon: string;
     type: 'vocales' | 'abecedario' | 'numeros';
+    actionButton?: {
+        label: string;
+        onClick: () => void;
+    };
 }
 
-export default function ProgressTable({ items, icon, type }: ProgressTableProps) {
+export default function ProgressTable({ items, icon, type, actionButton }: ProgressTableProps) {
     const [user, setUser] = useState<User | null>(null);
     const [completedLetters, setCompletedLetters] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
@@ -216,6 +220,18 @@ export default function ProgressTable({ items, icon, type }: ProgressTableProps)
                     })}
                 </div>
             </div>
+
+            {/* Action Button */}
+            {actionButton && (
+                <div className="mt-6 pt-4 border-t border-gray-200">
+                    <button
+                        onClick={actionButton.onClick}
+                        className="w-full bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-semibold px-6 py-3 rounded-xl shadow-lg transition-all duration-300 hover:scale-105"
+                    >
+                        {actionButton.label}
+                    </button>
+                </div>
+            )}
         </div>
     );
 }

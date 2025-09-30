@@ -3,7 +3,6 @@ import eImg from "../../assets/e-sena.png";
 import iImg from "../../assets/i-sena.png";
 import oImg from "../../assets/o-sena.png";
 import uImg from "../../assets/u-sena.png";
-import { Link } from "react-router-dom";
 import ProgressTable from "../../components/ProgressTable";
 import { vowelsData } from "../../data/progressData";
 
@@ -23,23 +22,13 @@ export default function Vocales() {
         
         {/* Left Column - Main Content */}
         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-8">
-          {/* Header with Title and Button */}
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8 gap-4">
-            {/* Title aligned to left */}
+          {/* Header with Title */}
+          <div className="mb-12">
             <div className="text-left">
               <h2 className="global-title-dark mb-2 text-3xl font-bold">Vocales</h2>
               <p className="global-body-text-dark text-lg">
                 Domina las vocales en lengua de señas con ejercicios interactivos y prácticos.
               </p>
-            </div>
-            
-            {/* Button aligned to right */}
-            <div className="flex-shrink-0">
-              <Link to="/vocales-practica/a">
-                <button className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-semibold px-8 py-3 rounded-xl shadow-lg global-body-text transition-all duration-300 hover:scale-105">
-                  Comenzar Práctica
-                </button>
-              </Link>
             </div>
           </div>
 
