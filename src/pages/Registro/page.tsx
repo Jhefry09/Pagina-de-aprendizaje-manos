@@ -186,7 +186,7 @@ const RegistroPage: React.FC = () => {
         setDuplicateUserInfo(null);
 
         // Iniciar cuenta regresiva de 5 segundos
-        for (let i = 5; i > 0; i--) {
+        for (let i = 3; i > 0; i--) {
             setCountdown(i);
             await new Promise(resolve => setTimeout(resolve, 1000));
         }
