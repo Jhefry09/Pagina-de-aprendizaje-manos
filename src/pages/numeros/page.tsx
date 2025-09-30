@@ -1,7 +1,8 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useRef, useEffect, useCallback } from "react";
+import { Link } from "react-router-dom";
+import type { NormalizedLandmark, Results, MediaPipeHandsInstance, VocalModel } from "../../types";
+import "./numeros.css";
 import { useVocalContext } from '../../hooks/useVocalContext';
-import { type VocalModel, type NormalizedLandmark, type Results, type MediaPipeHandsInstance } from '../../types';
 
 // Cargar todas las imágenes de números
 const images = import.meta.glob("../../assets/numeros/*-sena.png", { eager: true }) as Record<

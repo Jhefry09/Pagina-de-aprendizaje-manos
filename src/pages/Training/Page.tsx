@@ -408,14 +408,6 @@ const TrainingPage = () => {
 
     return (
         <section className="p-5 w-full ">
-            <div className="bg-gray-200 bg-opacity-70 backdrop-blur-sm rounded-2xl shadow-xl border border-black-200 p-5 mb-5">
-                <h1 className="text-2xl font-bold text-gray-800 mb-2">
-                    Entrenamiento de Gestos
-                </h1>
-                <p className="text-gray-600">
-                    Crea un nuevo modelo de gesto para cada letra del alfabeto usando tu mano DERECHA
-                </p>
-            </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                 {/* Left: Camera */}
