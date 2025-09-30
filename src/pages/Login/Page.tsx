@@ -40,6 +40,8 @@ const LoginPage: React.FC = () => {
     const [cameraReady, setCameraReady] = useState<boolean>(false);
     const [countdown, setCountdown] = useState<number>(0);
     const [isCapturing, setIsCapturing] = useState<boolean>(false);
+    const [showWelcomeModal, setShowWelcomeModal] = useState<boolean>(false);
+    const [userData, setUserData] = useState<any>(null);
     const navigate = useNavigate();
 
     // Inicializar cámara
@@ -154,9 +156,6 @@ const LoginPage: React.FC = () => {
                 // Disparar evento personalizado para notificar cambios en localStorage
                 window.dispatchEvent(new CustomEvent('userDataUpdated'));
 
-                // Mostrar mensaje de bienvenida
-                alert(`Bienvenido ${data.usuario} (rol: ${data.rol}) id:${data.id}`);
-
                 // Segunda petición: Obtener progreso de letras
                 try {
                     const progresoRes = await fetch(`/api/progreso/letras/${data.id}`, {
@@ -233,8 +232,16 @@ const LoginPage: React.FC = () => {
                     localStorage.setItem('userProgress', JSON.stringify(userProgressData));
                 }
 
-                // Redirigir a la página Home (ruta raíz)
-                navigate('/home');
+                // Guardar datos del usuario para el modal
+                setUserData({
+                    usuario: data.usuario,
+                    id: data.id,
+                    rol: data.rol,
+                    progreso: JSON.parse(localStorage.getItem('userProgress') || '{}')
+                });
+
+                // Mostrar modal de bienvenida
+                setShowWelcomeModal(true);
             } else {
                 setError(`Error: ${JSON.stringify(data)}`);
             }
@@ -245,6 +252,12 @@ const LoginPage: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    // Función para continuar después del modal de bienvenida
+    const handleContinueToApp = () => {
+        setShowWelcomeModal(false);
+        navigate('/home');
     };
 
     // Volver a tomar foto
@@ -554,6 +567,162 @@ const LoginPage: React.FC = () => {
                     </motion.div>
                 </div>
             </motion.div>
+
+            {/* Modal de Bienvenida */}
+            <AnimatePresence>
+                {showWelcomeModal && userData && (
+                    <motion.div
+                        className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                    >
+                        <motion.div
+                            className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-3xl p-8 max-w-md w-full border border-slate-700 shadow-2xl relative"
+                            initial={{ scale: 0.8, opacity: 0, y: 50 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.8, opacity: 0, y: 50 }}
+                            transition={{ type: "spring", duration: 0.5 }}
+                        >
+                            {/* Botón de cerrar */}
+                            <button
+                                onClick={handleContinueToApp}
+                                className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+
+                            {/* Avatar */}
+                            <motion.div
+                                className="flex justify-center mb-6"
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                transition={{ delay: 0.2, type: "spring" }}
+                            >
+                                <div className="w-20 h-20 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-white" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                                    </svg>
+                                </div>
+                            </motion.div>
+
+                            {/* Mensaje de bienvenida */}
+                            <motion.h2
+                                className="text-white text-2xl font-bold text-center mb-2 flex items-center justify-center gap-2"
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.3 }}
+                            >
+                                ¡Bienvenido de vuelta! 
+                                <span className="text-3xl">👋</span>
+                            </motion.h2>
+
+                            {/* Nombre del usuario */}
+                            <motion.p
+                                className="text-amber-400 text-xl font-semibold text-center mb-6"
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.4 }}
+                            >
+                                {userData.usuario}
+                            </motion.p>
+
+                            {/* Información del usuario */}
+                            <motion.div
+                                className="space-y-3 mb-6"
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.5 }}
+                            >
+                                {/* Rol */}
+                                <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50 flex items-center">
+                                    <div className="w-10 h-10 bg-blue-600/20 rounded-lg flex items-center justify-center mr-3">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                                        </svg>
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="text-gray-400 text-xs">Rol</p>
+                                        <p className="text-white font-semibold">{userData.rol}</p>
+                                    </div>
+                                </div>
+
+                                {/* ID de Usuario */}
+                                <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50 flex items-center">
+                                    <div className="w-10 h-10 bg-purple-600/20 rounded-lg flex items-center justify-center mr-3">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-purple-400" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd" />
+                                        </svg>
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="text-gray-400 text-xs">ID de Usuario</p>
+                                        <p className="text-white font-semibold">#{userData.id}</p>
+                                    </div>
+                                </div>
+
+                                {/* Progreso */}
+                                {userData.progreso?.porcentajeCompletado && (
+                                    <div className="bg-gradient-to-r from-green-900/30 to-emerald-900/30 rounded-xl p-4 border border-green-600/30">
+                                        <div className="flex items-center mb-2">
+                                            <div className="w-10 h-10 bg-green-600/30 rounded-lg flex items-center justify-center mr-3">
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fillRule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clipRule="evenodd" />
+                                                </svg>
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className="text-gray-300 text-xs">Tu Progreso</p>
+                                                <p className="text-white font-semibold">
+                                                    {userData.progreso.letrasCompletadas?.length || 0} de {userData.progreso.totalLetras || 27} letras
+                                                </p>
+                                            </div>
+                                            <div className="text-green-400 text-2xl font-bold">
+                                                {userData.progreso.porcentajeCompletado}%
+                                            </div>
+                                        </div>
+                                        <div className="w-full bg-slate-700 rounded-full h-2.5">
+                                            <motion.div
+                                                className="bg-gradient-to-r from-green-500 to-emerald-400 h-2.5 rounded-full"
+                                                initial={{ width: 0 }}
+                                                animate={{ width: `${userData.progreso.porcentajeCompletado}%` }}
+                                                transition={{ delay: 0.8, duration: 1, ease: "easeOut" }}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                            </motion.div>
+
+                            {/* Mensaje de éxito */}
+                            <motion.div
+                                className="bg-amber-900/20 border border-amber-600/30 rounded-xl p-4 mb-6"
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.6 }}
+                            >
+                                <p className="text-amber-200 text-sm text-center flex items-center justify-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                    </svg>
+                                    Autenticación exitosa. Estás listo para continuar aprendiendo lenguaje de señas con <span className="font-semibold text-amber-400">SeeTalk</span>.
+                                </p>
+                            </motion.div>
+
+                            {/* Botón de continuar */}
+                            <motion.button
+                                onClick={handleContinueToApp}
+                                className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-[1.02] shadow-lg"
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.7 }}
+                                whileTap={{ scale: 0.98 }}
+                            >
+                                Continuar a SeeTalk
+                            </motion.button>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };
