@@ -1,8 +1,37 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
-import { Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useVocalContext } from '../../hooks/useVocalContext';
 import { type VocalModel, type NormalizedLandmark, type Results, type MediaPipeHandsInstance } from '../../types';
+
+// Cargar todas las imágenes de src/assets/abecedario
+const images = import.meta.glob("../../assets/abecedario/*-sena.png", { eager: true }) as Record<
+  string,
+  { default: string }
+>;
+
+// Cargar imágenes de acciones especiales
+const actionImages = import.meta.glob("../../assets/abecedario/{Espacio,Borrar}.png", { eager: true }) as Record<
+  string,
+  { default: string }
+>;
+
+// Función para obtener la imagen de una letra
+function getImage(letter: string) {
+  const entry = Object.entries(images).find(([path]) =>
+    path.toLowerCase().includes(`${letter.toLowerCase()}-sena.png`)
+  );
+  return entry ? entry[1].default : "";
+}
+
+// Función para obtener la imagen de una acción especial
+function getActionImage(action: string) {
+  const actionName = action === 'espacio' ? 'Espacio' : 'Borrar';
+  const entry = Object.entries(actionImages).find(([path]) =>
+    path.includes(`${actionName}.png`)
+  );
+  return entry ? entry[1].default : "";
+}
+
 
 // Helper functions translated from the HTML file
 const normalizeLandmarks = (landmarks: NormalizedLandmark[]) => {
@@ -90,9 +119,12 @@ const PracticePage = () => {
   const { vocal: selectedLetterParam } = useParams();
   const selectedLetter = selectedLetterParam || 'a';
   const [detectedLetter, setDetectedLetter] = useState('');
-  const [highestScore, setHighestScore] = useState(0);
   const [writtenText, setWrittenText] = useState('');
   const [leftHandClosed, setLeftHandClosed] = useState(false);
+  
+  // Estado para el feedback visual de las cards
+  const [highlightedLetter, setHighlightedLetter] = useState<string>('');
+  const highlightTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Memoize the results handler to prevent recreation on every render
   const handleResults = useCallback((results: Results) => {
@@ -157,14 +189,28 @@ const PracticePage = () => {
 
       setScores(newScores);
       setDetectedLetter(detected);
-      setHighestScore(maxScore);
       detectedLetterRef.current = detected;
+      
+      // Implementar feedback visual como en numeros/page.tsx
+      if (detected && maxScore > 60) {
+        setHighlightedLetter(detected);
+        
+        // Limpiar timeout anterior si existe
+        if (highlightTimeoutRef.current) {
+          clearTimeout(highlightTimeoutRef.current);
+        }
+        
+        // Establecer nuevo timeout para quitar el highlight
+        highlightTimeoutRef.current = setTimeout(() => {
+          setHighlightedLetter('');
+        }, 800); // 800ms de duración del highlight
+      }
     } else {
       // Reset scores when no right hand is detected
       setScores(initialScores);
       setDetectedLetter('');
-      setHighestScore(0);
       detectedLetterRef.current = '';
+      setHighlightedLetter(''); // Limpiar highlight cuando no hay mano
     }
 
     // Process left hand for writing trigger
@@ -255,6 +301,10 @@ const PracticePage = () => {
         handsRef.current.close();
         handsRef.current = null;
       }
+      // Limpiar timeout del highlight
+      if (highlightTimeoutRef.current) {
+        clearTimeout(highlightTimeoutRef.current);
+      }
       setupComplete = false;
     };
   }, []); // Empty dependency array - setup only once
@@ -273,187 +323,206 @@ const PracticePage = () => {
   // Helper function to get item color and display name
   const getItemColor = (item: string, isDetected: boolean = false, isSelected: boolean = false) => {
     if (specialFunctions.includes(item)) {
-      if (isDetected && isSelected) return 'text-green-600';
-      if (isDetected) return 'text-black';
-      if (item === 'espacio') return 'text-gray-600';
+      if (isDetected) return 'text-white';
+      if (item === 'espacio') return 'text-blue-600';
       if (item === 'borrar') return 'text-red-600';
       return 'text-gray-400';
     }
     
-    const colors = [
-      'text-red-500', 'text-blue-500', 'text-green-500', 'text-yellow-500', 'text-purple-500',
-      'text-pink-500', 'text-indigo-500', 'text-orange-500', 'text-teal-500', 'text-cyan-500',
-      'text-emerald-500', 'text-lime-500', 'text-amber-500', 'text-rose-500', 'text-violet-500',
-      'text-fuchsia-500', 'text-sky-500', 'text-stone-500', 'text-neutral-500', 'text-zinc-500',
-      'text-slate-500', 'text-gray-500', 'text-red-600', 'text-blue-600', 'text-green-600', 'text-purple-600'
-    ];
-    
-    const index = item.charCodeAt(0) - 'a'.charCodeAt(0);
-    
-    if (isDetected && isSelected) return 'text-green-600';
-    if (isDetected) return 'text-black';
-    if (isSelected) return colors[index % colors.length];
-    return 'text-gray-400';
+    if (isDetected) return 'text-amber-700';
+    return 'text-gray-700';
   };
 
   const getDisplayName = (item: string) => {
-    if (item === 'espacio') return 'ESP';
-    if (item === 'borrar') return 'DEL';
+    if (item === 'espacio') return 'ESPACIO';
+    if (item === 'borrar') return 'BORRAR';
     return item.toUpperCase();
   };
 
   return (
-    <section className="p-6 min-h-screen">
-      <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6 mb-6">
-        <div className="flex items-center justify-between">
-          <div>
-          <h1 className="text-2xl font-bold text-gray-700 font-montserrat">
-            Entrenando letra <span className="text-[#f2994a]">{selectedLetter.toUpperCase()}</span>
-          </h1>
-          <p className="text-gray-600">Usa tu mano derecha (lado derecho de la pantalla) para formar letras/funciones y cierra la mano izquierda (lado izquierdo) para ejecutar la acción</p>
-        </div>
-        <Link
-          to="/"
-          className="px-4 py-2 text-sm font-semibold text-[#f2994a] hover:text-white hover:bg-[#f2994a] rounded-lg transition-all duration-300 border border-[#f2994a]"
-        >
-          Volver al Inicio
-        </Link>
-        </div>
-      </div>
+    <section className="p-5 w-full">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* Left: Camera and Text Display */}
+        <div className="bg-gray-200 bg-opacity-70 backdrop-blur-sm rounded-2xl shadow-xl border border-black-200 p-4">
+          <h2 className="text-xl font-semibold mb-3 text-gray-800">
+            Vista Previa
+          </h2>
 
-      {/* Text Box for Written Letters */}
-      <div className="mb-6 bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6">
-        <div className="flex justify-between items-center mb-2">
-          <span className="font-medium text-gray-700">Texto escrito:</span>
-          <button
-            onClick={clearText}
-            className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
-          >
-            Limpiar
-          </button>
-        </div>
-        <div className="min-h-[50px] p-3 border-2 border-gray-200 rounded-lg bg-gray-50">
-          <span className="text-xl font-mono tracking-wider">
-            {writtenText || 'El texto aparecerá aquí cuando cierres la mano izquierda...'}
-          </span>
-        </div>
-      </div>
-
-      {/* Hand Status Indicators */}
-      <div className="mb-6 grid grid-cols-2 gap-4">
-        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6">
-          <h3 className="font-medium text-gray-700 mb-2">Mano Derecha (Lado derecho - Detección)</h3>
-          <div className="flex items-center">
-            <div className={`w-3 h-3 rounded-full mr-2 ${detectedLetter ? 'bg-green-500' : 'bg-red-500'}`}></div>
-            <span className="text-sm">{detectedLetter ? `Detectando: ${getDisplayName(detectedLetter)}` : 'No detectada'}</span>
-          </div>
-        </div>
-        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6">
-          <h3 className="font-medium text-gray-700 mb-2">Mano Izquierda (Lado izquierdo - Ejecutar)</h3>
-          <div className="flex items-center">
-            <div className={`w-3 h-3 rounded-full mr-2 ${leftHandClosed ? 'bg-blue-500' : 'bg-gray-400'}`}></div>
-            <span className="text-sm">{leftHandClosed ? 'Cerrada (Ejecutando)' : 'Abierta'}</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="my-6 bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6">
-        <div className="flex justify-between items-center mb-2">
-          <span className="font-medium text-gray-700">Precisión (Mano Derecha):</span>
-          <span className="font-bold">{scores[detectedLetter] || '0.0'}%</span>
-        </div>
-        <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
-          <div
-            className={`h-full transition-all duration-300 ${detectedLetter === selectedLetter ? 'bg-green-500' : 'bg-red-500'}`}
-            style={{ width: `${highestScore}%` }}
-          />
-        </div>
-      </div>
-
-      <div className="relative w-full aspect-video bg-gray-900 rounded-lg overflow-hidden mx-auto mb-6 shadow-lg" style={{ maxWidth: '640px' }}>
-        <video ref={videoRef} className="w-full h-full object-cover transform scale-x-[-1]" autoPlay playsInline muted />
-        <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full transform scale-x-[-1]" width="640" height="480" />
-      </div>
-
-      <div className="text-center">
-        {/* Alphabet and Special Functions Grid - Scrollable */}
-        <div className="mb-6 bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6">
-          <h3 className="text-lg font-semibold mb-3 text-gray-700">Precisión por Elemento:</h3>
-          <div className="max-h-60 overflow-y-auto border rounded-lg p-2">
-            <div className="space-y-4">
-              {/* Alphabet Letters */}
-              <div>
-                <h4 className="text-sm font-medium text-gray-600 mb-2 px-1">Letras del Alfabeto:</h4>
-                <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-13 gap-2">
-                  {alphabet.map((letter) => (
-                    <div key={letter} className="text-center p-2 rounded border-2 border-transparent hover:border-gray-300 transition-all">
-                      <div className={`text-lg font-medium ${getItemColor(letter, letter === detectedLetter, letter === selectedLetter)}`}>
-                        {letter.toUpperCase()}
-                      </div>
-                      <div className={`text-xs font-bold ${getItemColor(letter, letter === detectedLetter, letter === selectedLetter)}`}>
-                        {scores[letter] || '0.0'}%
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              
-              {/* Special Functions */}
-              <div>
-                <h4 className="text-sm font-medium text-gray-600 mb-2 px-1">Funciones Especiales:</h4>
-                <div className="grid grid-cols-2 gap-2">
-                  {specialFunctions.map((func) => (
-                    <div key={func} className="text-center p-3 rounded border-2 border-transparent hover:border-gray-300 transition-all">
-                      <div className={`text-sm font-medium ${getItemColor(func, func === detectedLetter, func === selectedLetter)}`}>
-                        {getDisplayName(func)}
-                      </div>
-                      <div className={`text-xs font-bold ${getItemColor(func, func === detectedLetter, func === selectedLetter)}`}>
-                        {scores[func] || '0.0'}%
-                      </div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        {func.toUpperCase()}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+          {/* Hand Detection Status */}
+          <div className="mb-3 flex gap-2">
+            <div className={`p-3 rounded-lg flex items-center flex-1 ${
+              detectedLetter ? 'bg-green-50 border-2 border-green-300' : 'bg-red-50 border-2 border-red-300'
+            }`}>
+              <div className={`w-3 h-3 rounded-full mr-2 ${
+                detectedLetter ? 'bg-green-500 animate-pulse' : 'bg-red-500'
+              }`}></div>
+              <span className={`font-semibold text-sm ${
+                detectedLetter ? 'text-green-700' : 'text-red-700'
+              }`}>
+                {detectedLetter ? `✋ Detectado: ${getDisplayName(detectedLetter)}` : '⚠️ Mano derecha NO detectada'}
+              </span>
+            </div>
+            <div className={`p-3 rounded-lg flex items-center flex-1 ${
+              leftHandClosed ? 'bg-blue-50 border-2 border-blue-300' : 'bg-yellow-50 border-2 border-yellow-300'
+            }`}>
+              <div className={`w-3 h-3 rounded-full mr-2 ${
+                leftHandClosed ? 'bg-blue-500 animate-pulse' : 'bg-yellow-500'
+              }`}></div>
+              <span className={`font-semibold text-sm ${
+                leftHandClosed ? 'text-blue-700' : 'text-yellow-700'
+              }`}>
+                {leftHandClosed ? '✊ Listo para escribir' : '✋ Esperando acción'}
+              </span>
             </div>
           </div>
-        </div>
 
-        <div className="mt-4">
-          <p className="text-lg font-medium text-gray-700 mb-1">Elemento detectado (Mano Derecha):</p>
-          <div className={`text-4xl font-bold ${detectedLetter === selectedLetter ? 'text-green-600' : 'text-black'}`}>
-            {detectedLetter ? getDisplayName(detectedLetter) : '—'}
+          {/* Camera Feed */}
+          <div className="relative w-full aspect-video bg-gray-900 rounded-xl overflow-hidden shadow-lg mb-4">
+            <video
+              ref={videoRef}
+              className="w-full h-full object-cover transform scale-x-[-1]"
+              autoPlay
+              playsInline
+              muted
+            />
+            <canvas
+              ref={canvasRef}
+              className="absolute top-0 left-0 w-full h-full transform scale-x-[-1]"
+              width="576"
+              height="432"
+            />
           </div>
-          {detectedLetter && (
-            <div className="mt-2">
-              <p className={`font-medium ${detectedLetter === selectedLetter ? 'text-green-600' : 'text-red-600'}`}>
-                {detectedLetter === selectedLetter ? '¡Correcto! Cierra la mano izquierda para ejecutar.' : 'Intenta hacer el elemento seleccionado'}
-              </p>
-              {specialFunctions.includes(detectedLetter) && (
-                <p className="text-sm text-gray-600 mt-1">
-                  {detectedLetter === 'espacio' ? 'Agregará un espacio al texto' : 'Borrará el último carácter'}
+
+          {/* Text Display con Botones - Sin Espacio Vertical Sobrante */}
+          <div className="bg-white/90 backdrop-blur-sm rounded-xl border border-gray-200">
+            {/* Título y Botones en la misma línea */}
+            <div className="flex justify-between items-center p-2 pb-1">
+              <h3 className="text-base font-semibold text-gray-700">Texto Formado</h3>
+              <div className="flex gap-1.5">
+                <Link
+                  to="/home"
+                  className="px-2 py-1 text-xs font-medium text-amber-600 hover:text-white hover:bg-amber-600 rounded transition-all duration-200 border border-amber-600 flex items-center gap-1"
+                >
+                  <span>←</span> Volver
+                </Link>
+                <button
+                  onClick={clearText}
+                  className="px-2 py-1 text-xs font-medium text-red-600 hover:text-white hover:bg-red-600 rounded transition-all duration-200 border border-red-600 flex items-center gap-1"
+                >
+                  🗑️ Limpiar
+                </button>
+              </div>
+            </div>
+            
+            {/* Campo de Texto - Altura exacta sin espacio sobrante */}
+            <div className="px-2 pb-2">
+              <div className="p-2 border-2 border-dashed border-gray-300 rounded-lg bg-white/80">
+                <p className={`text-base font-mono break-words leading-normal ${
+                  !writtenText ? 'text-gray-400 italic' : 'text-gray-800'
+                }`}>
+                  {writtenText || 'El texto aparecerá aquí cuando cierres la mano izquierda...'}
                 </p>
-              )}
+              </div>
             </div>
-          )}
+          </div>
         </div>
 
-        {/* Quick Stats */}
-        <div className="mt-6 bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6">
-          <div className="grid grid-cols-3 gap-4 text-center">
-            <div>
-              <div className="text-2xl font-bold text-blue-600">{writtenText.length}</div>
-              <div className="text-sm text-gray-600">Caracteres escritos</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-green-600">{highestScore.toFixed(1)}%</div>
-              <div className="text-sm text-gray-600">Precisión actual</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-purple-600">{allItems.filter(item => parseFloat(scores[item] || '0') > 50).length}</div>
-              <div className="text-sm text-gray-600">Elementos mayor 50%</div>
+        {/* Right: Alphabet Cards - Contenedor Expandido con Espaciado Correcto */}
+        <div className="bg-gray-200 bg-opacity-70 backdrop-blur-sm rounded-2xl shadow-xl border border-black-200 p-3">
+          <h2 className="text-lg font-semibold mb-2 text-gray-800">
+            Letras del Alfabeto
+          </h2>
+
+          {/* Alphabet Cards - Espaciado visible entre cards manteniendo tamaño original */}
+          <div className="grid grid-cols-6 gap-4 mb-4">
+            {alphabet.map((letter) => {
+              const isDetected = letter === detectedLetter;
+              const isHighlighted = letter === highlightedLetter;
+              const score = parseFloat(scores[letter] || '0');
+              const imageUrl = getImage(letter);
+              return (
+                <div 
+                  key={letter}
+                  className={`sign-card !w-auto !h-auto min-w-[60px] min-h-[80px] transition-all duration-300 ${
+                    isDetected ? 'ring-2 ring-amber-400 ring-offset-2 scale-105' : ''
+                  } ${
+                    isHighlighted ? 'bg-gradient-to-br from-green-200 to-green-300 shadow-lg scale-110 ring-2 ring-green-400' : ''
+                  }`}
+                  style={{ width: 'auto', height: 'auto' }}
+                >
+                  {imageUrl ? (
+                    <img
+                      src={imageUrl}
+                      alt={`${letter} en señas`}
+                      className="w-10 h-10 object-contain mb-1"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center mb-1">
+                      <span className="text-base font-bold text-gray-400">{letter.toUpperCase()}</span>
+                    </div>
+                  )}
+                  <span className="sign-letter text-xs">{letter.toUpperCase()}</span>
+                  {score > 0 && (
+                    <div className={`text-xs font-bold mt-1 ${
+                      score > 70 ? 'text-green-600' : 
+                      score > 40 ? 'text-yellow-600' : 'text-red-500'
+                    }`}>
+                      {score.toFixed(0)}%
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Special Actions Cards - Con imágenes coherentes con el abecedario */}
+          <div className="border-t border-gray-300 pt-3">
+            <h3 className="text-base font-semibold text-gray-700 mb-2">Acciones Especiales</h3>
+            <div className="grid grid-cols-2 gap-4">
+              {specialFunctions.map((func) => {
+                const isDetected = func === detectedLetter;
+                const isHighlighted = func === highlightedLetter;
+                const score = parseFloat(scores[func] || '0');
+                const actionImageUrl = getActionImage(func);
+                return (
+                  <div 
+                    key={func}
+                    className={`sign-card !w-auto !h-auto min-w-[60px] min-h-[80px] transition-all duration-300 ${
+                      isDetected 
+                        ? 'ring-2 ring-amber-400 ring-offset-2 scale-105' 
+                        : ''
+                    } ${
+                      isHighlighted ? 'bg-gradient-to-br from-green-200 to-green-300 shadow-lg scale-110 ring-2 ring-green-400' : ''
+                    }`}
+                    style={{ width: 'auto', height: 'auto' }}
+                  >
+                    {actionImageUrl ? (
+                      <img
+                        src={actionImageUrl}
+                        alt={`${func} en señas`}
+                        className="w-10 h-10 object-contain mb-1"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center mb-1">
+                        <span className="text-base font-bold text-gray-400">
+                          {func === 'espacio' ? '␣' : '⌫'}
+                        </span>
+                      </div>
+                    )}
+                    <span className="sign-letter text-xs">
+                      {func === 'espacio' ? 'ESPACIO' : 'BORRAR'}
+                    </span>
+                    {score > 0 && (
+                      <div className={`text-xs font-bold mt-1 ${
+                        score > 70 ? 'text-green-600' : 
+                        score > 40 ? 'text-yellow-600' : 'text-red-500'
+                      }`}>
+                        {score.toFixed(0)}%
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
