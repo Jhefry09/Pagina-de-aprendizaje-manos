@@ -338,16 +338,16 @@ const MathCalculatorPage = () => {
     };
 
     return (
-        <section className="p-4 min-h-screen bg-gray-800">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <section className="p-4 h-screen bg-gray-800 overflow-hidden">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full">
                 {/* Columna izquierda - Cámara y Calculadora */}
                 <div className="lg:col-span-1 space-y-4">
                     {/* Cámara */}
-                    <div className="bg-gray-900 rounded-lg p-4">
-                        <h2 className="text-blue-400 text-sm mb-3 flex items-center">
+                    <div className="bg-gray-900 rounded-lg p-3">
+                        <h2 className="text-blue-400 text-xs mb-2 flex items-center">
                             <span className="mr-2">📷</span> Camara
                         </h2>
-                        <div className="relative bg-black rounded-lg overflow-hidden" style={{ aspectRatio: '4/3' }}>
+                        <div className="relative bg-black rounded-lg overflow-hidden" style={{ aspectRatio: '16/9' }}>
                             <video 
                                 ref={videoRef} 
                                 className="w-full h-full object-cover transform scale-x-[-1]" 
@@ -364,7 +364,7 @@ const MathCalculatorPage = () => {
                         </div>
                         
                         {/* Progress bar */}
-                        <div className="mt-3">
+                        <div className="mt-2">
                             <div className="w-full bg-gray-700 rounded-full h-1">
                                 <div 
                                     className="bg-blue-500 h-1 rounded-full transition-all duration-300" 
@@ -375,20 +375,20 @@ const MathCalculatorPage = () => {
                     </div>
 
                     {/* Calculadora */}
-                    <div className="bg-gray-900 rounded-lg p-4">
-                        <h2 className="text-blue-400 text-sm mb-3">Calculadora</h2>
+                    <div className="bg-gray-900 rounded-lg p-3">
+                        <h2 className="text-blue-400 text-xs mb-2">Calculadora</h2>
                         
                         {/* Display */}
-                        <div className="bg-black rounded-lg p-4 mb-4">
+                        <div className="bg-black rounded-lg p-3 mb-3">
                             <div className="text-right">
-                                <div className="text-gray-400 text-sm mb-1">Expresión:</div>
-                                <div className="text-white text-xl font-mono min-h-[1.5rem] break-words">
+                                <div className="text-gray-400 text-xs mb-1">Expresión:</div>
+                                <div className="text-white text-lg font-mono min-h-[1.2rem] break-words">
                                     {currentExpression || '0'}
                                 </div>
                                 {result !== null && (
                                     <>
-                                        <div className="text-blue-400 text-sm mt-2 mb-1">Resultado:</div>
-                                        <div className="text-green-400 text-2xl font-bold break-words">
+                                        <div className="text-blue-400 text-xs mt-1 mb-1">Resultado:</div>
+                                        <div className="text-green-400 text-xl font-bold break-words">
                                             {result}
                                         </div>
                                     </>
@@ -397,24 +397,24 @@ const MathCalculatorPage = () => {
                         </div>
 
                         {/* Controles */}
-                        <div className="space-y-2 mb-4">
+                        <div className="space-y-2 mb-3">
                             <div className="grid grid-cols-2 gap-2">
                                 <button
                                     onClick={deleteLast}
-                                    className="bg-yellow-600 hover:bg-yellow-700 text-white text-xs py-2 px-3 rounded transition-colors"
+                                    className="bg-yellow-600 hover:bg-yellow-700 text-white text-xs py-1.5 px-2 rounded transition-colors"
                                 >
                                     Borrar último
                                 </button>
                                 <button
                                     onClick={clearExpression}
-                                    className="bg-red-600 hover:bg-red-700 text-white text-xs py-2 px-3 rounded transition-colors"
+                                    className="bg-red-600 hover:bg-red-700 text-white text-xs py-1.5 px-2 rounded transition-colors"
                                 >
                                     Limpiar
                                 </button>
                             </div>
 
                             {/* Estado de manos */}
-                            <div className="text-xs text-gray-300 space-y-1 bg-gray-800 p-2 rounded">
+                            <div className="text-xs text-gray-300 space-y-0.5 bg-gray-800 p-2 rounded">
                                 <div className="flex items-center">
                                     <div className={`w-2 h-2 rounded-full mr-2 ${detectedSymbol ? 'bg-green-400' : 'bg-red-400'}`}></div>
                                     <span>Derecha: {detectedSymbol ? getDisplayName(detectedSymbol) : 'Sin detectar'}</span>
@@ -432,7 +432,7 @@ const MathCalculatorPage = () => {
                         {/* Historial */}
                         {history.length > 0 && (
                             <div>
-                                <div className="flex justify-between items-center mb-2">
+                                <div className="flex justify-between items-center mb-1">
                                     <span className="text-gray-400 text-xs">Historial</span>
                                     <button
                                         onClick={clearHistory}
@@ -441,9 +441,9 @@ const MathCalculatorPage = () => {
                                         Limpiar
                                     </button>
                                 </div>
-                                <div className="max-h-24 overflow-y-auto space-y-1">
-                                    {history.slice(-3).map((calc, index) => (
-                                        <div key={index} className="text-xs font-mono text-gray-300 bg-gray-800 p-2 rounded">
+                                <div className="max-h-16 overflow-y-auto space-y-1">
+                                    {history.slice(-2).map((calc, index) => (
+                                        <div key={index} className="text-xs font-mono text-gray-300 bg-gray-800 p-1.5 rounded">
                                             {calc}
                                         </div>
                                     ))}
@@ -455,26 +455,26 @@ const MathCalculatorPage = () => {
 
                 {/* Columna derecha - Lenguaje de señas */}
                 <div className="lg:col-span-1">
-                    <div className="bg-gray-900 rounded-lg p-4 h-full">
-                        <h2 className="text-blue-400 text-sm mb-3">Lenguaje de señas</h2>
+                    <div className="bg-gray-900 rounded-lg p-3 h-full flex flex-col">
+                        <h2 className="text-blue-400 text-xs mb-2">Lenguaje de señas</h2>
                         
                         {/* Grid de números 4x4 */}
-                        <div className="grid grid-cols-4 gap-1 mb-3">
+                        <div className="grid grid-cols-4 gap-1.5 mb-2">
                             {numbers.map((num) => (
                                 <div 
                                     key={num}
-                                    className={`bg-blue-600 rounded-lg p-3 flex flex-col items-center justify-center transition-all ${
+                                    className={`bg-blue-600 rounded-lg p-2 flex flex-col items-center justify-center transition-all ${
                                         detectedSymbol === num ? 'ring-2 ring-yellow-400 bg-blue-500' : 'hover:bg-blue-700'
                                     }`}
-                                    style={{ minHeight: '60px' }}
+                                    style={{ minHeight: '65px' }}
                                 >
                                     <img 
                                         src={`/assets/numeros/${num}-sena.png`}
                                         alt={`Señal ${num}`}
-                                        className="w-6 h-6 object-contain mb-1"
+                                        className="w-8 h-8 object-contain mb-0.5"
                                         onError={handleImageError}
                                     />
-                                    <span className={`text-white text-xs font-bold ${detectedSymbol === num ? 'text-yellow-300' : ''}`}>
+                                    <span className={`text-white text-sm font-bold ${detectedSymbol === num ? 'text-yellow-300' : ''}`}>
                                         {num}
                                     </span>
                                     <span className="text-blue-200 text-xs">{scores[num]}%</span>
@@ -483,19 +483,19 @@ const MathCalculatorPage = () => {
                         </div>
 
                         {/* Operadores - grid 3x2 */}
-                        <div className="grid grid-cols-3 gap-1 mb-3">
+                        <div className="grid grid-cols-3 gap-1.5 mb-2">
                             {['+', '-', '*', '/', '=', '.'].map((op) => (
                                 <div 
                                     key={op}
                                     className={`bg-orange-600 rounded-lg p-2 flex flex-col items-center justify-center transition-all ${
                                         detectedSymbol === op ? 'ring-2 ring-yellow-400 bg-orange-500' : 'hover:bg-orange-700'
                                     }`}
-                                    style={{ minHeight: '45px' }}
+                                    style={{ minHeight: '55px' }}
                                 >
                                     <img 
                                         src={`/assets/numeros/${getImageName(op)}`}
                                         alt={`Señal ${op}`}
-                                        className="w-5 h-5 object-contain mb-1"
+                                        className="w-10 h-10 object-contain mb-0.5"
                                         onError={handleImageError}
                                     />
                                     <span className={`text-white font-bold text-sm ${detectedSymbol === op ? 'text-yellow-300' : ''}`}>
@@ -516,7 +516,7 @@ const MathCalculatorPage = () => {
                                 <img 
                                     src="/assets/numeros/borrar-sena.png"
                                     alt="Señal borrar"
-                                    className="w-6 h-6 object-contain mr-2"
+                                    className="w-10 h-10 object-contain mr-2"
                                     onError={handleDeleteImageError}
                                 />
                                 <span className="text-white text-lg mr-2" style={{ display: 'none' }}>🗑️</span>
