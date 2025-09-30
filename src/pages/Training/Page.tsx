@@ -378,8 +378,8 @@ const TrainingPage = () => {
                 <div className="min-h-[400px] flex items-center justify-center bg-gray-100 bg-opacity-20 rounded-xl p-8">
             <div className="text-center space-y-4">
                 <div className="animate-spin rounded-full h-16 w-16 border-4 border-indigo-500 border-t-transparent mx-auto"></div>
-                <p className="text-xl text-white font-medium">Cargando cámara y modelos de detección...</p>
-                <p className="text-sm text-gray-300">Por favor, permite el acceso a la cámara si se solicita</p>
+                <p className="text-xl text-black font-medium">Cargando cámara y modelos de detección...</p>
+                <p className="text-sm text-black">Por favor, permite el acceso a la cámara si se solicita</p>
             </div>
         </div>
             );
