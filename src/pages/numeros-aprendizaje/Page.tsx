@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import ProgressTable from "../../components/ProgressTable";
+import { numbersData } from "../../data/progressData";
 
 // Cargar todas las imágenes de src/assets/numeros
 const images = import.meta.glob("../../assets/numeros/*-sena.png", { eager: true }) as Record<
@@ -25,82 +28,130 @@ const operations = ["div", "mas", "mult", "menos"];
 
 export default function Page() {
   const [selected, setSelected] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gradient-to-b from-[#0b3c5d] to-[#0b2345] gap-6">
-      
-      {/* Caja superior */}
-      <div className="bg-white/95 rounded-lg shadow-xl p-8 w-[900px] text-center">
-        <h2 className="text-2xl font-bold mb-2">Sección de Números</h2>
-        <p className="text-gray-700">
-          Aprende todos los números del 0 al 9 con tutoriales paso a paso y prácticas guiadas.
-        </p>
-      </div>
-
-      {/* Caja inferior */}
-      <div className="bg-white/95 rounded-lg shadow-xl p-8 w-[900px] text-center">
-        {/* Botón principal */}
-        <button className="bg-gradient-to-b from-[#125C7C] to-[#071939] hover:opacity-90 text-white font-semibold px-6 py-2 rounded-md shadow mb-8">
-          Seleccionar
-        </button>
-
-        {/* Grid de números */}
-        <div className="grid grid-cols-5 gap-6 justify-items-center mb-8">
-          {numbers.map((num) => (
-            <div
-              key={num}
-              className="bg-gradient-to-b from-[#DA8739] to-[#7A491B] rounded-lg p-4 w-32 h-40 flex flex-col items-center justify-between shadow-md hover:scale-105 transition cursor-pointer"
-              onClick={() => setSelected(num)}
-            >
-              <img
-                src={numberImages[num]}
-                alt={`Número ${num} en señas`}
-                className="w-20 h-20 object-contain"
-              />
-              <span className="text-white font-bold text-xl">{num}</span>
+    <div className="w-full pt-20 pb-6 px-6">
+      {/* Two Column Layout */}
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[70%_30%] gap-6">
+        
+        {/* Left Column - Main Content */}
+        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-8">
+          {/* Header with Title and Buttons */}
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between mb-8 gap-4">
+            {/* Title aligned to left */}
+            <div className="text-left">
+              <h2 className="global-title-dark mb-2 text-3xl font-bold">Números</h2>
+              <p className="global-body-text-dark text-lg">
+                Aprende todos los números del 0 al 9 con tutoriales paso a paso y prácticas guiadas.
+              </p>
             </div>
-          ))}
-        </div>
-
-        {/* Grid de operaciones (solo imágenes, sin texto) */}
-        <div className="grid grid-cols-4 gap-6 justify-items-center">
-          {operations.map((op) => (
-            <div
-              key={op}
-              className="bg-gradient-to-b from-[#DA8739] to-[#7A491B] rounded-lg p-4 w-32 h-32 flex items-center justify-center shadow-md hover:scale-105 transition cursor-pointer"
-              onClick={() => setSelected(op)}
-            >
-              <img
-                src={numberImages[op]}
-                alt={`${op} en señas`}
-                className="w-20 h-20 object-contain"
-              />
+            
+            {/* Buttons aligned to right */}
+            <div className="flex flex-col sm:flex-row gap-3 flex-shrink-0">
+              <button className="bg-gradient-to-b from-[#125C7C] to-[#071939] hover:opacity-90 text-white font-semibold px-6 py-3 rounded-xl shadow-lg global-body-text transition-all duration-300 hover:scale-105">
+                Seleccionar
+              </button>
+              <button 
+                onClick={() => navigate('/numeros')}
+                className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-semibold px-6 py-3 rounded-xl shadow-lg global-body-text transition-all duration-300 hover:scale-105"
+              >
+                Realizar Operaciones
+              </button>
             </div>
-          ))}
-        </div>
-      </div>
+          </div>
 
-      {/* Modal */}
-      {selected && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-xl text-center max-w-sm">
-            <h2 className="text-xl font-bold mb-4">
-              {isNaN(Number(selected)) ? `Operación` : `Número ${selected}`}
-            </h2>
-            <img
-              src={numberImages[selected]}
-              alt={`${selected} en señas`}
-              className="w-32 h-32 mx-auto mb-4"
-            />
-            <button
-              className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition"
-              onClick={() => setSelected(null)}
-            >
-              Cerrar
-            </button>
+          {/* Sección de Números */}
+          <div className="mb-8">
+            <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+              <span className="text-2xl">🔢</span>
+              Números (0-9)
+            </h3>
+            <div className="grid grid-cols-5 gap-4">
+              {numbers.map((number) => {
+                const imageUrl = numberImages[number];
+                return (
+                  <div
+                    key={number}
+                    className={`sign-card cursor-pointer transition-all duration-300 hover:scale-110 ${
+                      selected === number ? 'ring-4 ring-emerald-500 ring-offset-2 scale-105' : ''
+                    }`}
+                    onClick={() => setSelected(number)}
+                  >
+                    {imageUrl ? (
+                      <img
+                        src={imageUrl}
+                        alt={`${number} en señas`}
+                        className="w-16 h-16 object-contain"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
+                        <span className="text-gray-400 text-sm">No img</span>
+                      </div>
+                    )}
+                    <span className="sign-letter">
+                      {number}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Sección de Operaciones */}
+          <div>
+            <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+              <span className="text-2xl">➕</span>
+              Operaciones Matemáticas
+            </h3>
+            <div className="grid grid-cols-4 gap-4">
+              {operations.map((operation) => {
+                const imageUrl = numberImages[operation];
+                const operationLabels: Record<string, string> = {
+                  'mas': '+',
+                  'menos': '-',
+                  'mult': '×',
+                  'div': '÷'
+                };
+                return (
+                  <div
+                    key={operation}
+                    className={`sign-card cursor-pointer transition-all duration-300 hover:scale-110 ${
+                      selected === operation ? 'ring-4 ring-emerald-500 ring-offset-2 scale-105' : ''
+                    }`}
+                    onClick={() => setSelected(operation)}
+                  >
+                    {imageUrl ? (
+                      <img
+                        src={imageUrl}
+                        alt={`${operation} en señas`}
+                        className="w-16 h-16 object-contain"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
+                        <span className="text-gray-400 text-sm">No img</span>
+                      </div>
+                    )}
+                    <span className="sign-letter">
+                      {operationLabels[operation] || operation}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
-      )}
+
+        {/* Right Column - Progress Panel */}
+        <div className="lg:sticky lg:top-6 lg:self-start">
+          <ProgressTable 
+            items={numbersData}
+            title="Progreso de Números"
+            icon="🔢"
+            type="numeros"
+          />
+        </div>
+      </div>
     </div>
   );
 }

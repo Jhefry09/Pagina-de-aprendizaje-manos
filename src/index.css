@@ -73,43 +73,21 @@ nav[class*="z-[9999]"] {
   isolation: isolate;
 }
 
-/* ===== CARDS DE MÓDULOS CON DISEÑO SUAVE ===== */
+/* ===== CONTENEDORES Y CARDS NORMALIZADOS ===== */
 
-/* Card de seña con colores suaves que armonizan con el fondo azul */
-.sign-card {
-  background: linear-gradient(145deg, #e2e8f0, #cbd5e1, #94a3b8);
-  border-radius: 12px;
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  position: relative;
-  
-  /* Sombra sutil para profundidad */
+/* Contenedor principal gris claro normalizado */
+.normalized-container {
+  background: rgba(229, 231, 235, 0.85); /* bg-gray-200/85 */
+  backdrop-filter: blur(4px);
+  border-radius: 24px;
   box-shadow: 
-    0 4px 12px rgba(0, 0, 0, 0.15),
-    0 2px 4px rgba(0, 0, 0, 0.1);
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(209, 213, 219, 0.3);
+  padding: 32px;
+  text-align: center;
 }
 
-.sign-card:hover {
-  transform: scale(1.05) translateY(-2px);
-  box-shadow: 
-    0 8px 20px rgba(0, 0, 0, 0.2),
-    0 4px 8px rgba(0, 0, 0, 0.15);
-}
-
-/* Tipografía de la seña con contraste mejorado */
-.sign-letter {
-  color: #1e293b;
-  font-weight: 700;
-  font-size: 1.25rem;
-  text-shadow: 
-    1px 1px 2px rgba(255, 255, 255, 0.8);
-  letter-spacing: 0.5px;
-}
 
 /* ===== ANIMACIÓN PARA LOGO DE WELCOME ===== */
 

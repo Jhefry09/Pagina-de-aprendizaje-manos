@@ -1,7 +1,8 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useRef, useEffect, useCallback } from "react";
+import { Link } from "react-router-dom";
+import type { NormalizedLandmark, Results, MediaPipeHandsInstance, VocalModel } from "../../types";
+import "./numeros.css";
 import { useVocalContext } from '../../hooks/useVocalContext';
-import { type VocalModel, type NormalizedLandmark, type Results, type MediaPipeHandsInstance } from '../../types';
 
 // Cargar todas las imágenes de números
 const images = import.meta.glob("../../assets/numeros/*-sena.png", { eager: true }) as Record<
@@ -95,7 +96,6 @@ const NumbersPage = () => {
 
     const [scores, setScores] = useState<Record<string, string>>(initialScores);
     const [detectedSymbol, setDetectedSymbol] = useState('');
-    const [highestScore, setHighestScore] = useState(0);
     const [currentExpression, setCurrentExpression] = useState('');
     const [result, setResult] = useState<string | null>(null);
     const [history, setHistory] = useState<string[]>([]);
@@ -163,14 +163,6 @@ const NumbersPage = () => {
         setResult(null);
     };
 
-    const clearHistory = () => {
-        setHistory([]);
-    };
-
-    const deleteLast = () => {
-        setCurrentExpression(prev => prev.slice(0, -1));
-        setResult(null);
-    };
 
     const getDisplayName = (item: string) => {
         if (item === '*') return '×';
@@ -239,12 +231,10 @@ const NumbersPage = () => {
 
             setScores(newScores);
             setDetectedSymbol(detected);
-            setHighestScore(maxScore);
             detectedSymbolRef.current = detected;
         } else {
             setScores(initialScores);
             setDetectedSymbol('');
-            setHighestScore(0);
             detectedSymbolRef.current = '';
         }
 
