@@ -331,7 +331,7 @@ const PracticePage = () => {
         {/* Left: Camera and Text Display */}
         <div className="bg-gray-200 bg-opacity-70 backdrop-blur-sm rounded-2xl shadow-xl border border-black-200 p-4">
           <h2 className="text-xl font-semibold mb-3 text-gray-800">
-            Vista Previa
+            Formar Palabras
           </h2>
 
           {/* Hand Detection Status */}
