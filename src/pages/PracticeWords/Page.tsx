@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Link } from "react-router-dom";
 import type { NormalizedLandmark, Results, MediaPipeHandsInstance, VocalModel } from "../../types";
 import "./PracticeWords.css";
 import { useVocalContext } from '../../hooks/useVocalContext';
@@ -386,12 +385,6 @@ const PracticePage = () => {
             <div className="flex justify-between items-center p-2 pb-1">
               <h3 className="text-base font-semibold text-gray-700">Texto Formado</h3>
               <div className="flex gap-1.5">
-                <Link
-                  to="/home"
-                  className="px-2 py-1 text-xs font-medium text-amber-600 hover:text-white hover:bg-amber-600 rounded transition-all duration-200 border border-amber-600 flex items-center gap-1"
-                >
-                  <span>←</span> Volver
-                </Link>
                 <button
                   onClick={clearText}
                   className="px-2 py-1 text-xs font-medium text-red-600 hover:text-white hover:bg-red-600 rounded transition-all duration-200 border border-red-600 flex items-center gap-1"

@@ -1,21 +1,13 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Link } from "react-router-dom";
 import type { NormalizedLandmark, Results, MediaPipeHandsInstance, VocalModel } from "../../types";
 import "./numeros.css";
 import { useVocalContext } from '../../hooks/useVocalContext';
-
-// Cargar todas las imágenes de números
-const images = import.meta.glob("../../assets/numeros/*-sena.png", { eager: true }) as Record<
-  string,
-  { default: string }
->;
+import manitoBorrarImg from '../../assets/numeros/manito-borrar.png';
 
 // Función para obtener la imagen de un número
 function getImage(number: string) {
-  const entry = Object.entries(images).find(([path]) =>
-    path.toLowerCase().includes(`${number}-sena.png`)
-  );
-  return entry ? entry[1].default : "";
+  // Todas las imágenes están en public/assets/numeros/ con el patrón {number}-sena.png
+  return `/assets/numeros/${number}-sena.png`;
 }
 
 // Helper functions for hand recognition
@@ -402,12 +394,6 @@ const NumbersPage = () => {
                 <div className="flex justify-between items-center p-2 pb-1">
                   <h3 className="text-base font-semibold text-gray-700">Expresión Matemática</h3>
                   <div className="flex gap-1.5">
-                    <Link
-                      to="/home"
-                      className="px-2 py-1 text-xs font-medium text-amber-600 hover:text-white hover:bg-amber-600 rounded transition-all duration-200 border border-amber-600 flex items-center gap-1"
-                    >
-                      <span>←</span> Volver
-                    </Link>
                     <button
                       onClick={clearExpression}
                       className="px-2 py-1 text-xs font-medium text-red-600 hover:text-white hover:bg-red-600 rounded transition-all duration-200 border border-red-600 flex items-center gap-1"
@@ -550,7 +536,7 @@ const NumbersPage = () => {
                         style={{ width: 'auto', height: 'auto' }}
                       >
                         <img 
-                          src="/assets/numeros/borrar-sena.png"
+                          src={manitoBorrarImg}
                           alt="Señal borrar"
                           className="w-10 h-10 object-contain mb-1"
                           onError={handleDeleteImageError}
