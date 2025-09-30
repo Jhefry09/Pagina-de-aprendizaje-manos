@@ -37,27 +37,13 @@ export default function Page() {
         
         {/* Left Column - Main Content */}
         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-8">
-          {/* Header with Title and Buttons */}
-          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between mb-8 gap-4">
-            {/* Title aligned to left */}
+          {/* Header with Title */}
+          <div className="mb-12">
             <div className="text-left">
               <h2 className="global-title-dark mb-2 text-3xl font-bold">Números</h2>
               <p className="global-body-text-dark text-lg">
                 Aprende todos los números del 0 al 9 con tutoriales paso a paso y prácticas guiadas.
               </p>
-            </div>
-            
-            {/* Buttons aligned to right */}
-            <div className="flex flex-col sm:flex-row gap-3 flex-shrink-0">
-              <button className="bg-gradient-to-b from-[#125C7C] to-[#071939] hover:opacity-90 text-white font-semibold px-6 py-3 rounded-xl shadow-lg global-body-text transition-all duration-300 hover:scale-105">
-                Seleccionar
-              </button>
-              <button 
-                onClick={() => navigate('/numeros')}
-                className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-semibold px-6 py-3 rounded-xl shadow-lg global-body-text transition-all duration-300 hover:scale-105"
-              >
-                Realizar Operaciones
-              </button>
             </div>
           </div>
 
@@ -149,6 +135,10 @@ export default function Page() {
             title="Progreso de Números"
             icon="🔢"
             type="numeros"
+            actionButton={{
+              label: "Realizar Operaciones",
+              onClick: () => navigate('/numeros')
+            }}
           />
         </div>
       </div>
