@@ -40,6 +40,8 @@ const LoginPage: React.FC = () => {
     const [cameraReady, setCameraReady] = useState<boolean>(false);
     const [countdown, setCountdown] = useState<number>(0);
     const [isCapturing, setIsCapturing] = useState<boolean>(false);
+    const [showWelcomeModal, setShowWelcomeModal] = useState<boolean>(false);
+    const [userData, setUserData] = useState<any>(null);
     const navigate = useNavigate();
 
     // Inicializar cámara
@@ -154,9 +156,6 @@ const LoginPage: React.FC = () => {
                 // Disparar evento personalizado para notificar cambios en localStorage
                 window.dispatchEvent(new CustomEvent('userDataUpdated'));
 
-                // Mostrar mensaje de bienvenida
-                alert(`Bienvenido ${data.usuario} (rol: ${data.rol}) id:${data.id}`);
-
                 // Segunda petición: Obtener progreso de letras
                 try {
                     const progresoRes = await fetch(`/api/progreso/letras/${data.id}`, {
@@ -168,7 +167,24 @@ const LoginPage: React.FC = () => {
 
                     if (progresoRes.ok) {
                         const progresoData = await progresoRes.json();
-                        console.log('Progreso de letras:', progresoData);
+                        console.log('Progreso de letras RAW:', progresoData);
+
+                        // TRANSFORMAR: Convertir array de strings a array de objetos
+                        const progresoFormateado = Array.isArray(progresoData) 
+                            ? progresoData.map((item: any) => {
+                                // Si ya es un objeto con letra y completado, dejarlo igual
+                                if (typeof item === 'object' && item !== null && 'letra' in item) {
+                                    return item;
+                                }
+                                // Si es un string simple, convertir a objeto con completado: true
+                                if (typeof item === 'string') {
+                                    return { letra: item, completado: true };
+                                }
+                                return item;
+                            })
+                            : [];
+
+                        console.log('Progreso FORMATEADO:', progresoFormateado);
 
                         // Crear objeto completo con información del usuario y progreso
                         const userProgressData = {
@@ -177,11 +193,11 @@ const LoginPage: React.FC = () => {
                                 nombre: data.usuario,
                                 rol: data.rol
                             },
-                            progreso: progresoData,
-                            letrasCompletadas: progresoData.filter((letra: any) => letra.completado === true),
-                            totalLetras: progresoData.length,
-                            porcentajeCompletado: progresoData.length > 0
-                                ? ((progresoData.filter((letra: any) => letra.completado === true).length / progresoData.length) * 100).toFixed(1)
+                            progreso: progresoFormateado,
+                            letrasCompletadas: progresoFormateado.filter((letra: any) => letra.completado === true),
+                            totalLetras: progresoFormateado.length,
+                            porcentajeCompletado: progresoFormateado.length > 0
+                                ? ((progresoFormateado.filter((letra: any) => letra.completado === true).length / progresoFormateado.length) * 100).toFixed(1)
                                 : '0.0',
                             fechaUltimaActualizacion: new Date().toISOString()
                         };
@@ -233,8 +249,50 @@ const LoginPage: React.FC = () => {
                     localStorage.setItem('userProgress', JSON.stringify(userProgressData));
                 }
 
-                // Redirigir a la página Home (ruta raíz)
-                navigate('/home');
+                // CAMBIO CRÍTICO: Agregar logs ANTES de setUserData
+                const userProgressData = JSON.parse(localStorage.getItem('userProgress') || '{}');
+                const progresoLetras = JSON.parse(localStorage.getItem('progresoLetras') || '[]');
+
+                // LOGS DE DEBUG - CRÍTICOS
+                console.log('=== DEBUG LOGIN MODAL ===');
+                console.log('1. userProgressData completo:', userProgressData);
+                console.log('2. userProgressData.progreso:', userProgressData.progreso);
+                console.log('3. Es array?:', Array.isArray(userProgressData.progreso));
+                console.log('4. Longitud:', userProgressData.progreso?.length);
+                console.log('5. Primer elemento:', userProgressData.progreso?.[0]);
+
+                // Verificar si hay datos completados
+                if (Array.isArray(userProgressData.progreso)) {
+                    const completados = userProgressData.progreso.filter((item: any) => item.completado === true);
+                    console.log('6. Items completados:', completados.length);
+                    console.log('7. Letras completadas:', completados.map((item: any) => item.letra));
+                } else {
+                    console.error('❌ progreso NO es un array!');
+                }
+
+                console.log('=== VERIFICANDO AMBAS FUENTES ===');
+                console.log('userProgress.progreso:', userProgressData.progreso);
+                console.log('progresoLetras directo:', progresoLetras);
+
+                // Usar progresoLetras como fallback
+                const progresoFinal = userProgressData.progreso || [];
+
+                setUserData({
+                    usuario: data.usuario,
+                    id: data.id,
+                    rol: data.rol,
+                    progreso: progresoFinal
+                });
+
+                console.log('8. userData que se guardó:', {
+                    usuario: data.usuario,
+                    id: data.id,
+                    rol: data.rol,
+                    progreso: progresoFinal
+                });
+
+                // Mostrar modal de bienvenida
+                setShowWelcomeModal(true);
             } else {
                 setError(`Error: ${JSON.stringify(data)}`);
             }
@@ -245,6 +303,12 @@ const LoginPage: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    // Función para continuar después del modal de bienvenida
+    const handleContinueToApp = () => {
+        setShowWelcomeModal(false);
+        navigate('/home');
     };
 
     // Volver a tomar foto
@@ -554,6 +618,268 @@ const LoginPage: React.FC = () => {
                     </motion.div>
                 </div>
             </motion.div>
+
+            {/* Modal de Bienvenida */}
+            <AnimatePresence>
+                {showWelcomeModal && userData && (
+                    <motion.div
+                        className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                    >
+                        <motion.div
+                            className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-3xl p-8 max-w-md w-full border border-slate-700 shadow-2xl relative"
+                            initial={{ scale: 0.8, opacity: 0, y: 50 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.8, opacity: 0, y: 50 }}
+                            transition={{ type: "spring", duration: 0.5 }}
+                        >
+                            {/* Botón de cerrar */}
+                            <button
+                                onClick={handleContinueToApp}
+                                className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+
+                            {/* Avatar */}
+                            <motion.div
+                                className="flex justify-center mb-6"
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                transition={{ delay: 0.2, type: "spring" }}
+                            >
+                                <div className="w-20 h-20 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-white" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                                    </svg>
+                                </div>
+                            </motion.div>
+
+                            {/* Mensaje de bienvenida */}
+                            <motion.h2
+                                className="text-white text-2xl font-bold text-center mb-2 flex items-center justify-center gap-2"
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.3 }}
+                            >
+                                ¡Bienvenido de vuelta! 
+                                <span className="text-3xl">👋</span>
+                            </motion.h2>
+
+                            {/* Nombre del usuario */}
+                            <motion.p
+                                className="text-amber-400 text-xl font-semibold text-center mb-6"
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.4 }}
+                            >
+                                {userData.usuario}
+                            </motion.p>
+
+                            {/* Información del usuario */}
+                            <motion.div
+                                className="space-y-3 mb-6"
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.5 }}
+                            >
+                                {/* Rol */}
+                                <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50 flex items-center">
+                                    <div className="w-10 h-10 bg-blue-600/20 rounded-lg flex items-center justify-center mr-3">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                                        </svg>
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="text-gray-400 text-xs">Rol</p>
+                                        <p className="text-white font-semibold">{userData.rol}</p>
+                                    </div>
+                                </div>
+
+                                {/* ID de Usuario */}
+                                <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50 flex items-center">
+                                    <div className="w-10 h-10 bg-purple-600/20 rounded-lg flex items-center justify-center mr-3">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-purple-400" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd" />
+                                        </svg>
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="text-gray-400 text-xs">ID de Usuario</p>
+                                        <p className="text-white font-semibold">#{userData.id}</p>
+                                    </div>
+                                </div>
+
+                                {/* Progreso Unificado */}
+                                {userData.progreso && Array.isArray(userData.progreso) && (() => {
+                                    // Definir arrays como en el dashboard
+                                    const vowels = ['a', 'e', 'i', 'o', 'u'];
+                                    const alphabet = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'];
+                                    const numbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+                                    const allItems = [...vowels, ...alphabet, ...numbers];
+
+                                    // CLAVE: Filtrar solo los items con completado === true
+                                    const completedLetters = userData.progreso
+                                        .filter((item: any) => item.completado === true)
+                                        .map((item: any) => item.letra?.toLowerCase())
+                                        .filter(Boolean);
+
+                                    console.log('Completed letters:', completedLetters);
+                                    console.log('Full progress:', userData.progreso);
+
+                                    // Calcular progreso por categoría
+                                    const isCompleted = (letter: string) => completedLetters.includes(letter.toLowerCase());
+                                    const calculateProgress = (items: string[]) => {
+                                        const completed = items.filter(item => isCompleted(item)).length;
+                                        return Math.round((completed / items.length) * 100);
+                                    };
+                                    
+                                    const vowelsProgress = calculateProgress(vowels);
+                                    const alphabetProgress = calculateProgress(alphabet);
+                                    const numbersProgress = calculateProgress(numbers);
+                                    const totalProgress = calculateProgress(allItems);
+                                    const totalCompleted = allItems.filter(item => isCompleted(item)).length;
+                                    
+                                    return (
+                                        <div className="bg-gradient-to-r from-green-900/30 to-emerald-900/30 rounded-xl p-4 border border-green-600/30">
+                                            {/* Encabezado del progreso */}
+                                            <div className="flex items-center mb-4">
+                                                <div className="w-10 h-10 bg-green-600/30 rounded-lg flex items-center justify-center mr-3">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                                                        <path fillRule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clipRule="evenodd" />
+                                                    </svg>
+                                                </div>
+                                                <div className="flex-1">
+                                                    <p className="text-gray-300 text-xs">Progreso Total</p>
+                                                    <p className="text-white font-semibold">Vocales, Alfabeto y Números</p>
+                                                </div>
+                                            </div>
+
+                                            {/* Círculo de progreso compacto */}
+                                            <div className="flex items-center justify-between mb-4">
+                                                <div className="flex items-center space-x-4">
+                                                    <div className="relative w-16 h-16">
+                                                        <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                                                            <circle
+                                                                cx="50"
+                                                                cy="50"
+                                                                r="40"
+                                                                stroke="#374151"
+                                                                strokeWidth="8"
+                                                                fill="none"
+                                                            />
+                                                            <motion.circle
+                                                                cx="50"
+                                                                cy="50"
+                                                                r="40"
+                                                                stroke="#10b981"
+                                                                strokeWidth="8"
+                                                                fill="none"
+                                                                strokeLinecap="round"
+                                                                strokeDasharray={`${2 * Math.PI * 40}`}
+                                                                initial={{ strokeDashoffset: `${2 * Math.PI * 40}` }}
+                                                                animate={{ 
+                                                                    strokeDashoffset: `${2 * Math.PI * 40 * (1 - totalProgress / 100)}`
+                                                                }}
+                                                                transition={{ delay: 0.8, duration: 1, ease: "easeOut" }}
+                                                            />
+                                                        </svg>
+                                                        <div className="absolute inset-0 flex items-center justify-center">
+                                                            <span className="text-white text-sm font-bold">
+                                                                {totalProgress}%
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-left">
+                                                        <p className="text-green-400 text-lg font-bold">
+                                                            {totalCompleted} / 41
+                                                        </p>
+                                                        <p className="text-gray-300 text-xs">elementos completados</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Desglose por categorías */}
+                                            <div className="grid grid-cols-3 gap-2 mb-3">
+                                                <div className="bg-blue-900/30 rounded-lg p-2 text-center border border-blue-600/20">
+                                                    <div className="text-lg mb-1">🔤</div>
+                                                    <p className="text-blue-300 text-xs font-medium">Vocales</p>
+                                                    <p className="text-white text-sm font-bold">{vowelsProgress}%</p>
+                                                </div>
+                                                <div className="bg-amber-900/30 rounded-lg p-2 text-center border border-amber-600/20">
+                                                    <div className="text-lg mb-1">🔡</div>
+                                                    <p className="text-amber-300 text-xs font-medium">Alfabeto</p>
+                                                    <p className="text-white text-sm font-bold">{alphabetProgress}%</p>
+                                                </div>
+                                                <div className="bg-slate-700/30 rounded-lg p-2 text-center border border-slate-500/20">
+                                                    <div className="text-lg mb-1">🔢</div>
+                                                    <p className="text-slate-300 text-xs font-medium">Números</p>
+                                                    <p className="text-white text-sm font-bold">{numbersProgress}%</p>
+                                                </div>
+                                            </div>
+
+                                            {/* Barra de progreso general */}
+                                            <div className="w-full bg-slate-700 rounded-full h-2">
+                                                <motion.div
+                                                    className="bg-gradient-to-r from-green-500 to-emerald-400 h-2 rounded-full"
+                                                    initial={{ width: 0 }}
+                                                    animate={{ width: `${totalProgress}%` }}
+                                                    transition={{ delay: 0.9, duration: 1, ease: "easeOut" }}
+                                                />
+                                            </div>
+
+                                            {/* Mensaje motivacional compacto */}
+                                            <div className="mt-3 text-center">
+                                                {totalProgress === 100 ? (
+                                                    <p className="text-green-300 text-xs">🎉 ¡Contenido completado!</p>
+                                                ) : totalProgress >= 75 ? (
+                                                    <p className="text-blue-300 text-xs">🚀 ¡Excelente progreso!</p>
+                                                ) : totalProgress >= 50 ? (
+                                                    <p className="text-amber-300 text-xs">💪 ¡Vas por buen camino!</p>
+                                                ) : totalProgress >= 25 ? (
+                                                    <p className="text-orange-300 text-xs">🌟 ¡Buen comienzo!</p>
+                                                ) : (
+                                                    <p className="text-gray-300 text-xs">🎯 ¡Comienza tu aventura!</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
+                            </motion.div>
+
+                            {/* Mensaje de éxito */}
+                            <motion.div
+                                className="bg-amber-900/20 border border-amber-600/30 rounded-xl p-4 mb-6"
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.6 }}
+                            >
+                                <p className="text-amber-200 text-sm text-center flex items-center justify-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                    </svg>
+                                    Autenticación exitosa. Estás listo para continuar aprendiendo lenguaje de señas con <span className="font-semibold text-amber-400">SeeTalk</span>.
+                                </p>
+                            </motion.div>
+
+                            {/* Botón de continuar */}
+                            <motion.button
+                                onClick={handleContinueToApp}
+                                className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-[1.02] shadow-lg"
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.7 }}
+                                whileTap={{ scale: 0.98 }}
+                            >
+                                Continuar a SeeTalk
+                            </motion.button>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };
