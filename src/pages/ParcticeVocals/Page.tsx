@@ -389,7 +389,7 @@ const VocalPracticePage = () => {
         // 5. Si es la última vocal ('u'), el temporizador debe activarse para "completar" la práctica.
         const shouldBeActive =
             isTargetDetected &&
-            currentScore >= 88 &&
+            currentScore >= 85 &&
             !justUnlockedVowel &&
             (isLastVowel || !isNextVowelAlreadyUnlocked); // Modificación aquí para incluir la última vocal
 
@@ -531,7 +531,7 @@ const VocalPracticePage = () => {
                                         const success = await completarLetra(user.id, selectedLetter, vocales);
 
                                         if (success) {
-                                            navigate(`/practice/${justUnlockedVowel.toLowerCase()}`);
+                                            navigate(`/vocales-practica/${justUnlockedVowel.toLowerCase()}`);
                                         } else {
                                             console.error("No se pudo completar la letra");
                                         }

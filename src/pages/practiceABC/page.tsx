@@ -399,7 +399,7 @@ const AlphabetPracticePage = () => {
 
         const shouldBeActive =
             isTargetDetected &&
-            currentScore >= 88 &&
+            currentScore >= 85 &&
             !justUnlockedLetter &&
             (isLastLetter || !isNextLetterAlreadyUnlocked);
 
