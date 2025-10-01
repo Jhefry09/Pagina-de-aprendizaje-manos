@@ -450,9 +450,13 @@ const VocalPracticePage = () => {
                             <div className="flex flex-col gap-3">
                                 <button
                                     onClick={() => {
-                                        navigate(`/vocales-practica/${justUnlockedVowel.toLowerCase()}`)
-                                        window.location.href = `/vocales-practica/${justUnlockedVowel}`;
+                                        // Usamos navigate para una navegación de cliente más suave.
+                                        // Esto cambiará la URL y el parámetro 'vocal'.
+                                        navigate(`/vocales-practica/${justUnlockedVowel.toLowerCase()}`);
                                         closePopup();
+                                        // La línea window.location.href ha sido eliminada
+                                        // porque causaba una recarga completa de la página,
+                                        // anulando la navegación de React Router.
                                     }}
                                     className="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300 text-center"
                                 >
