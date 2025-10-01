@@ -107,8 +107,13 @@ const Navbar = ({ activeLink = "inicio" }: NavbarProps) => {
         speak(VoiceMessages.NAVIGATION_ABECEDARIO);
         break;
       case "/numeros-aprendizaje":
-      case "/numeros":
         speak(VoiceMessages.NAVIGATION_NUMEROS);
+        break;
+      case "/numeros":
+        speak(VoiceMessages.NAVIGATION_OPERACIONES);
+        break;
+      case "/practice/palabras":
+        speak(VoiceMessages.NAVIGATION_PRACTICA);
         break;
       default:
         speak(VoiceMessages.NAVIGATION_HOME);

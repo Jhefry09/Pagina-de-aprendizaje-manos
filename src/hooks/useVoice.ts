@@ -279,6 +279,8 @@ export const VoiceMessages = {
   NAVIGATION_ABECEDARIO: 'Módulo de abecedario',
   NAVIGATION_ESTADISTICAS: 'Ver estadísticas de progreso',
   NAVIGATION_CONFIGURACION: 'Configuración de usuario',
+  NAVIGATION_PRACTICA: 'Práctica de palabras',
+  NAVIGATION_OPERACIONES: 'Práctica de operaciones matemáticas',
 
   // Detección de señas - General
   VOCAL_DETECTED: 'Vocal detectada correctamente',
