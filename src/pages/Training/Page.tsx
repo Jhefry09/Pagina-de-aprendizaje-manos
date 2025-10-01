@@ -31,6 +31,7 @@ const TrainingPage = () => {
     const [activeTab, setActiveTab] = useState<string>("alphabet");
     const [loading, setLoading] = useState<boolean>(true);
     const countdownRef = useRef<number | null>(null);
+    const animationFrameRef = useRef<number | null>(null);
 
     const loadScript = (src: string) => {
         return new Promise((resolve, reject) => {
@@ -52,6 +53,7 @@ const TrainingPage = () => {
         let hands: MediaPipeHandsInstance | null = null;
         let camera: any = null;
         let isMounted = true;
+        let isProcessing = false;
 
         const initializeMediaPipe = async () => {
             try {
@@ -72,6 +74,7 @@ const TrainingPage = () => {
                         `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
                 });
 
+                // Configuración optimizada
                 hands.setOptions({
                     maxNumHands: 2,
                     modelComplexity: 1,
@@ -80,46 +83,89 @@ const TrainingPage = () => {
                     selfieMode: false,
                     staticImageMode: false,
                     smoothLandmarks: true,
-                    refineLandmarks: true,
+                    refineLandmarks: false, // Desactivado para mejor rendimiento
                 });
+
+                console.log("MediaPipe Hands initialized with optimized settings");
 
                 hands.onResults((results: Results) => {
                     if (!isMounted) return;
-                    const canvasCtx = canvasRef.current?.getContext("2d");
-                    if (canvasCtx && canvasRef.current) {
-                        canvasCtx.clearRect(
-                            0,
-                            0,
-                            canvasRef.current.width,
-                            canvasRef.current.height,
-                        );
+
+                    // Usar requestAnimationFrame para suavizar el renderizado
+                    if (animationFrameRef.current) {
+                        cancelAnimationFrame(animationFrameRef.current);
+                    }
+
+                    animationFrameRef.current = requestAnimationFrame(() => {
+                        const canvas = canvasRef.current;
+                        const video = videoRef.current;
+                        if (!canvas || !video) return;
+
+                        const ctx = canvas.getContext('2d');
+                        if (!ctx) return;
+
+                        // Ajustar dimensiones del canvas al video
+                        canvas.width = video.videoWidth || 640;
+                        canvas.height = video.videoHeight || 480;
+
+                        // Limpiar canvas
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                        // Dibujar video con efecto espejo
+                        ctx.save();
+                        ctx.scale(-1, 1);
+                        ctx.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
+                        ctx.restore();
 
                         let rightHandLandmarks = null;
                         let foundRightHand = false;
 
+                        // Detectar manos y dibujar
                         if (results.multiHandLandmarks && results.multiHandedness) {
-                            for (let i = 0; i < results.multiHandLandmarks.length; i++) {
-                                const handLandmarks = results.multiHandLandmarks[i];
-                                const detectedHandedness = results.multiHandedness[i]?.label || 'Right';
+                            // Definir conexiones de la mano
+                            const HAND_CONNECTIONS = [
+                                [0, 1], [1, 2], [2, 3], [3, 4], // Pulgar
+                                [0, 5], [5, 6], [6, 7], [7, 8], // Índice
+                                [0, 9], [9, 10], [10, 11], [11, 12], // Medio
+                                [0, 13], [13, 14], [14, 15], [15, 16], // Anular
+                                [0, 17], [17, 18], [18, 19], [19, 20], // Meñique
+                                [5, 9], [9, 13], [13, 17] // Conexiones entre dedos
+                            ];
 
+                            for (let i = 0; i < results.multiHandLandmarks.length; i++) {
+                                const landmarks = results.multiHandLandmarks[i];
+                                const detectedHandedness = results.multiHandedness[i]?.label || 'Right';
                                 const isUserRightHand = detectedHandedness === 'Left';
 
-                                window.drawConnectors(
-                                    canvasCtx,
-                                    handLandmarks,
-                                    window.HAND_CONNECTIONS,
-                                    {
-                                        color: isUserRightHand ? "#f2994a" : "#cccccc",
-                                        lineWidth: 2
-                                    },
-                                );
-                                window.drawLandmarks(canvasCtx, handLandmarks, {
-                                    color: isUserRightHand ? "#215c5c" : "#999999",
-                                    lineWidth: 1,
-                                });
+                                // Dibujar conexiones
+                                ctx.strokeStyle = isUserRightHand ? '#f2994a' : '#cccccc';
+                                ctx.lineWidth = isUserRightHand ? 2 : 1;
+
+                                for (const [start, end] of HAND_CONNECTIONS) {
+                                    const startPoint = landmarks[start];
+                                    const endPoint = landmarks[end];
+                                    ctx.beginPath();
+                                    // Invertir X para que coincida con el espejo del video
+                                    ctx.moveTo((1 - startPoint.x) * canvas.width, startPoint.y * canvas.height);
+                                    ctx.lineTo((1 - endPoint.x) * canvas.width, endPoint.y * canvas.height);
+                                    ctx.stroke();
+                                }
+
+                                // Dibujar puntos de landmarks
+                                ctx.fillStyle = isUserRightHand ? '#215c5c' : '#999999';
+                                for (const landmark of landmarks) {
+                                    ctx.beginPath();
+                                    // Invertir X para que coincida con el espejo del video
+                                    ctx.arc(
+                                        (1 - landmark.x) * canvas.width,
+                                        landmark.y * canvas.height,
+                                        3, 0, 2 * Math.PI
+                                    );
+                                    ctx.fill();
+                                }
 
                                 if (isUserRightHand) {
-                                    rightHandLandmarks = handLandmarks;
+                                    rightHandLandmarks = landmarks;
                                     foundRightHand = true;
                                 }
                             }
@@ -131,22 +177,27 @@ const TrainingPage = () => {
                         } else {
                             setLandmarks([]);
                         }
-                    }
+
+                        isProcessing = false;
+                    });
                 });
 
                 if (videoRef.current) {
                     camera = new window.Camera(videoRef.current, {
                         onFrame: async () => {
-                            if (videoRef.current && hands) {
+                            // Evitar procesar frames si ya hay uno en proceso
+                            if (videoRef.current && hands && !isProcessing) {
+                                isProcessing = true;
                                 try {
                                     await hands.send({ image: videoRef.current });
                                 } catch (error) {
                                     console.error("Error sending frame to MediaPipe:", error);
+                                    isProcessing = false;
                                 }
                             }
                         },
-                        width: 320,
-                        height: 240,
+                        width: 640, // Aumentado para mejor calidad
+                        height: 480, // Aumentado para mejor calidad
                     });
                     await camera.start();
                     console.log("Camera started successfully");
@@ -160,12 +211,15 @@ const TrainingPage = () => {
             await initializeMediaPipe();
             setLoading(false);
         };
-        
+
         init();
 
         const videoElement = videoRef.current;
         return () => {
             isMounted = false;
+            if (animationFrameRef.current) {
+                cancelAnimationFrame(animationFrameRef.current);
+            }
             if (countdownRef.current) {
                 clearInterval(countdownRef.current);
                 countdownRef.current = null;
@@ -376,12 +430,12 @@ const TrainingPage = () => {
         if (loading) {
             return (
                 <div className="min-h-[400px] flex items-center justify-center bg-gray-100 bg-opacity-20 rounded-xl p-8">
-            <div className="text-center space-y-4">
-                <div className="animate-spin rounded-full h-16 w-16 border-4 border-indigo-500 border-t-transparent mx-auto"></div>
-                <p className="text-xl text-black font-medium">Cargando cámara y modelos de detección...</p>
-                <p className="text-sm text-black">Por favor, permite el acceso a la cámara si se solicita</p>
-            </div>
-        </div>
+                    <div className="text-center space-y-4">
+                        <div className="animate-spin rounded-full h-16 w-16 border-4 border-indigo-500 border-t-transparent mx-auto"></div>
+                        <p className="text-xl text-black font-medium">Cargando cámara y modelos de detección...</p>
+                        <p className="text-sm text-black">Por favor, permite el acceso a la cámara si se solicita</p>
+                    </div>
+                </div>
             );
         }
 
@@ -401,20 +455,20 @@ const TrainingPage = () => {
                             } ${countdown || !isRightHandDetected ? "opacity-50 cursor-not-allowed" : ""}`}
                         >
                             <div className="text-center">
-                <span className="text-xl font-bold block">
-                  {displayText}
-                </span>
+                                <span className="text-xl font-bold block">
+                                    {displayText}
+                                </span>
                                 {item.displayName && (
                                     <span className="text-xs opacity-75 mt-1 block">
-                    {item.letter}
-                  </span>
+                                        {item.letter}
+                                    </span>
                                 )}
                             </div>
                             {selectedLetter === item.letter && countdown && (
                                 <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-60 rounded-lg">
-                  <span className="text-2xl font-bold text-white">
-                    {countdown}
-                  </span>
+                                    <span className="text-2xl font-bold text-white">
+                                        {countdown}
+                                    </span>
                                 </div>
                             )}
                         </button>
@@ -426,7 +480,6 @@ const TrainingPage = () => {
 
     return (
         <section className="p-5 w-full ">
-
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                 {/* Left: Camera */}
                 <div className="bg-gray-200 bg-opacity-70 backdrop-blur-sm rounded-2xl shadow-xl border border-black-200 p-5">
@@ -437,23 +490,23 @@ const TrainingPage = () => {
                     <div className={`mb-3 p-3 rounded-lg flex items-center ${isRightHandDetected ? 'bg-green-50 border-2 border-green-300' : 'bg-red-50 border-2 border-red-300'}`}>
                         <div className={`w-3 h-3 rounded-full mr-2 ${isRightHandDetected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
                         <span className={`font-semibold ${isRightHandDetected ? 'text-green-700' : 'text-red-700'}`}>
-              {isRightHandDetected ? '✋ Mano derecha detectada' : '⚠️ Mano derecha NO detectada'}
-            </span>
+                            {isRightHandDetected ? '✋ Mano derecha detectada' : '⚠️ Mano derecha NO detectada'}
+                        </span>
                     </div>
 
                     <div className="relative w-full aspect-video bg-gray-900 rounded-xl overflow-hidden shadow-lg mb-4">
                         <video
                             ref={videoRef}
-                            className="w-full h-full object-cover transform scale-x-[-1]"
+                            className="hidden"
                             autoPlay
                             playsInline
                             muted
                         />
                         <canvas
                             ref={canvasRef}
-                            className="absolute top-0 left-0 w-full h-full transform scale-x-[-1]"
-                            width="576"
-                            height="432"
+                            className="w-full h-full object-cover"
+                            width="640"
+                            height="480"
                         />
                     </div>
 
@@ -505,8 +558,8 @@ const TrainingPage = () => {
                                 <span className={`ml-1 px-1 py-0.5 text-xs rounded-full ${
                                     activeTab === tab.id ? "bg-blue-100 text-blue-600" : "bg-gray-100 text-gray-600"
                                 }`}>
-                  {tab.count}
-                </span>
+                                    {tab.count}
+                                </span>
                             </button>
                         ))}
                     </div>

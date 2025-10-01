@@ -6,8 +6,8 @@ import manitoBorrarImg from '../../assets/numeros/manito-borrar.png';
 
 // Función para obtener la imagen de un número
 function getImage(number: string) {
-  // Todas las imágenes están en public/assets/numeros/ con el patrón {number}-sena.png
-  return `/assets/numeros/${number}-sena.png`;
+    // Todas las imágenes están en public/assets/numeros/ con el patrón {number}-sena.png
+    return `/assets/numeros/${number}-sena.png`;
 }
 
 // Helper functions for hand recognition
@@ -122,7 +122,7 @@ const NumbersPage = () => {
     const getImageName = (operator: string): string => {
         const imageMap: Record<string, string> = {
             '+': 'mas-sena.png',
-            '-': 'menos-sena.png', 
+            '-': 'menos-sena.png',
             '*': 'mult-sena.png',
             '/': 'div-sena.png',
             '=': 'igual-sena.png',
@@ -156,7 +156,6 @@ const NumbersPage = () => {
         setResult(null);
     };
 
-
     const getDisplayName = (item: string) => {
         if (item === '*') return '×';
         if (item === '/') return '÷';
@@ -167,14 +166,45 @@ const NumbersPage = () => {
 
     // Memoize the results handler
     const handleResults = useCallback((results: Results) => {
-        const canvasCtx = canvasRef.current?.getContext('2d');
-        if (!canvasCtx || !canvasRef.current) return;
+        const canvas = canvasRef.current;
+        const video = videoRef.current;
+        if (!canvas || !video) return;
 
-        canvasCtx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        // Mantener dimensiones fijas para el canvas
+        const canvasWidth = 640;
+        const canvasHeight = 480;
+
+        if (canvas.width !== canvasWidth || canvas.height !== canvasHeight) {
+            canvas.width = canvasWidth;
+            canvas.height = canvasHeight;
+        }
+
+        // Limpiar canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Dibujar video con efecto espejo
+        ctx.save();
+        ctx.scale(-1, 1);
+        ctx.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
+        ctx.restore();
 
         let rightHandLandmarks = null;
         let leftHandLandmarks = null;
 
+        // Definir conexiones de la mano
+        const HAND_CONNECTIONS = [
+            [0, 1], [1, 2], [2, 3], [3, 4], // Pulgar
+            [0, 5], [5, 6], [6, 7], [7, 8], // Índice
+            [0, 9], [9, 10], [10, 11], [11, 12], // Medio
+            [0, 13], [13, 14], [14, 15], [15, 16], // Anular
+            [0, 17], [17, 18], [18, 19], [19, 20], // Meñique
+            [5, 9], [9, 13], [13, 17] // Conexiones entre dedos
+        ];
+
+        // Separate right and left hands
         if (results.multiHandLandmarks && results.multiHandedness) {
             for (let i = 0; i < results.multiHandLandmarks.length; i++) {
                 const handLandmarks = results.multiHandLandmarks[i];
@@ -183,14 +213,32 @@ const NumbersPage = () => {
                 const isUserRightHand = detectedHandedness === 'Left';
                 const isUserLeftHand = detectedHandedness === 'Right';
 
-                window.drawConnectors(canvasCtx, handLandmarks, window.HAND_CONNECTIONS, {
-                    color: isUserRightHand ? '#f2994a' : '#2196f3',
-                    lineWidth: 2
-                });
-                window.drawLandmarks(canvasCtx, handLandmarks, {
-                    color: isUserRightHand ? '#215c5c' : '#1565c0',
-                    lineWidth: 1
-                });
+                // Dibujar conexiones
+                ctx.strokeStyle = isUserRightHand ? '#f2994a' : '#2196f3';
+                ctx.lineWidth = isUserRightHand ? 2 : 1;
+
+                for (const [start, end] of HAND_CONNECTIONS) {
+                    const startPoint = handLandmarks[start];
+                    const endPoint = handLandmarks[end];
+                    ctx.beginPath();
+                    // Invertir X para que coincida con el espejo del video
+                    ctx.moveTo((1 - startPoint.x) * canvas.width, startPoint.y * canvas.height);
+                    ctx.lineTo((1 - endPoint.x) * canvas.width, endPoint.y * canvas.height);
+                    ctx.stroke();
+                }
+
+                // Dibujar puntos de landmarks
+                ctx.fillStyle = isUserRightHand ? '#215c5c' : '#1565c0';
+                for (const landmark of handLandmarks) {
+                    ctx.beginPath();
+                    // Invertir X para que coincida con el espejo del video
+                    ctx.arc(
+                        (1 - landmark.x) * canvas.width,
+                        landmark.y * canvas.height,
+                        3, 0, 2 * Math.PI
+                    );
+                    ctx.fill();
+                }
 
                 if (isUserRightHand) {
                     rightHandLandmarks = handLandmarks;
@@ -337,227 +385,224 @@ const NumbersPage = () => {
 
     return (
         <section className="p-5 w-full">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            {/* Left: Camera and Text Display */}
-            <div className="bg-gray-200 bg-opacity-70 backdrop-blur-sm rounded-2xl shadow-xl border border-black-200 p-4">
-              <h2 className="text-xl font-semibold mb-3 text-gray-800">
-                Operaciones Matematicas
-              </h2>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                {/* Left: Camera and Text Display */}
+                <div className="bg-gray-200 bg-opacity-70 backdrop-blur-sm rounded-2xl shadow-xl border border-black-200 p-4">
+                    <h2 className="text-xl font-semibold mb-3 text-gray-800">
+                        Operaciones Matemáticas
+                    </h2>
 
-              {/* Hand Detection Status */}
-              <div className="mb-3 flex gap-2">
-                <div className={`p-3 rounded-lg flex items-center flex-1 ${
-                  detectedSymbol ? 'bg-green-50 border-2 border-green-300' : 'bg-red-50 border-2 border-red-300'
-                }`}>
-                  <div className={`w-3 h-3 rounded-full mr-2 ${
-                    detectedSymbol ? 'bg-green-500 animate-pulse' : 'bg-red-500'
-                  }`}></div>
-                  <span className={`font-semibold text-sm ${
-                    detectedSymbol ? 'text-green-700' : 'text-red-700'
-                  }`}>
+                    {/* Hand Detection Status */}
+                    <div className="mb-3 flex gap-2">
+                        <div className={`p-3 rounded-lg flex items-center flex-1 ${
+                            detectedSymbol ? 'bg-green-50 border-2 border-green-300' : 'bg-red-50 border-2 border-red-300'
+                        }`}>
+                            <div className={`w-3 h-3 rounded-full mr-2 ${
+                                detectedSymbol ? 'bg-green-500 animate-pulse' : 'bg-red-500'
+                            }`}></div>
+                            <span className={`font-semibold text-sm ${
+                                detectedSymbol ? 'text-green-700' : 'text-red-700'
+                            }`}>
                     {detectedSymbol ? `✋ Detectado: ${getDisplayName(detectedSymbol)}` : '⚠️ Mano derecha NO detectada'}
                   </span>
-                </div>
-                <div className={`p-3 rounded-lg flex items-center flex-1 ${
-                  leftHandClosed ? 'bg-blue-50 border-2 border-blue-300' : 'bg-yellow-50 border-2 border-yellow-300'
-                }`}>
-                  <div className={`w-3 h-3 rounded-full mr-2 ${
-                    leftHandClosed ? 'bg-blue-500 animate-pulse' : 'bg-yellow-500'
-                  }`}></div>
-                  <span className={`font-semibold text-sm ${
-                    leftHandClosed ? 'text-blue-700' : 'text-yellow-700'
-                  }`}>
+                        </div>
+                        <div className={`p-3 rounded-lg flex items-center flex-1 ${
+                            leftHandClosed ? 'bg-blue-50 border-2 border-blue-300' : 'bg-yellow-50 border-2 border-yellow-300'
+                        }`}>
+                            <div className={`w-3 h-3 rounded-full mr-2 ${
+                                leftHandClosed ? 'bg-blue-500 animate-pulse' : 'bg-yellow-500'
+                            }`}></div>
+                            <span className={`font-semibold text-sm ${
+                                leftHandClosed ? 'text-blue-700' : 'text-yellow-700'
+                            }`}>
                     {leftHandClosed ? '✊ Listo para escribir' : '✋ Esperando acción'}
                   </span>
-                </div>
-              </div>
-
-              {/* Camera Feed */}
-              <div className="relative w-full aspect-video bg-gray-900 rounded-xl overflow-hidden shadow-lg mb-4">
-                <video
-                  ref={videoRef}
-                  className="w-full h-full object-cover transform scale-x-[-1]"
-                  autoPlay
-                  playsInline
-                  muted
-                />
-                <canvas
-                  ref={canvasRef}
-                  className="absolute top-0 left-0 w-full h-full transform scale-x-[-1]"
-                  width="576"
-                  height="432"
-                />
-              </div>
-
-              {/* Text Display con Botones - Sin Espacio Vertical Sobrante */}
-              <div className="bg-white/90 backdrop-blur-sm rounded-xl border border-gray-200">
-                {/* Título y Botones en la misma línea */}
-                <div className="flex justify-between items-center p-2 pb-1">
-                  <h3 className="text-base font-semibold text-gray-700">Expresión Matemática</h3>
-                  <div className="flex gap-1.5">
-                    <button
-                      onClick={clearExpression}
-                      className="px-2 py-1 text-xs font-medium text-red-600 hover:text-white hover:bg-red-600 rounded transition-all duration-200 border border-red-600 flex items-center gap-1"
-                    >
-                      🗑️ Limpiar
-                    </button>
-                  </div>
-                </div>
-                
-                {/* Campo de Texto - Altura exacta sin espacio sobrante */}
-                <div className="px-2 pb-2">
-                  <div className="p-2 border-2 border-dashed border-gray-300 rounded-lg bg-white/80">
-                    <p className={`text-base font-mono break-words leading-normal ${
-                      !currentExpression ? 'text-gray-400 italic' : 'text-gray-800'
-                    }`}>
-                      {currentExpression || 'La expresión aparecerá aquí cuando cierres la mano izquierda...'}
-                    </p>
-                    {result !== null && (
-                      <div className="mt-2 pt-2 border-t border-gray-200">
-                        <p className="text-green-600 font-bold text-lg">
-                          = {result}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* History - Compacto */}
-                  {history.length > 0 && (
-                    <div className="mt-2">
-                      <div className="text-gray-600 text-xs mb-1">Historial reciente:</div>
-                      <div className="max-h-12 overflow-y-auto space-y-1">
-                        {history.slice(-2).map((calc, index) => (
-                          <div key={index} className="text-xs font-mono text-gray-600 bg-gray-50 p-1 rounded">
-                            {calc}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-        {/* Right: Mathematical Signs - Contenedor Expandido con Espaciado Correcto */}
-        <div className="bg-gray-200 bg-opacity-70 backdrop-blur-sm rounded-2xl shadow-xl border border-black-200 p-3">
-          <h2 className="text-lg font-semibold mb-2 text-gray-800">
-            Lenguaje de Señas Matemático
-          </h2>
-
-          {/* Number Cards - Espaciado visible entre cards manteniendo tamaño original */}
-          <div className="grid grid-cols-5 gap-4 mb-4">
-                {numbers.map((number) => {
-                  const isDetected = number === detectedSymbol;
-                  const score = parseFloat(scores[number] || '0');
-                  const imageUrl = getImage(number);
-                  return (
-                    <div 
-                      key={number}
-                      className={`sign-card !w-auto !h-auto min-w-[60px] min-h-[80px] transition-all duration-300 ${
-                        isDetected ? 'ring-2 ring-amber-400 ring-offset-2 scale-105' : ''
-                      }`}
-                      style={{ width: 'auto', height: 'auto' }}
-                    >
-                      {imageUrl ? (
-                        <img
-                          src={imageUrl}
-                          alt={`${number} en señas`}
-                          className="w-10 h-10 object-contain mb-1"
-                        />
-                      ) : (
-                        <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center mb-1">
-                          <span className="text-base font-bold text-gray-400">{number}</span>
                         </div>
-                      )}
-                      <span className="sign-letter text-xs">{number}</span>
-                      {score > 0 && (
-                        <div className={`text-xs font-bold mt-1 ${
-                          score > 70 ? 'text-green-600' : 
-                          score > 40 ? 'text-yellow-600' : 'text-red-500'
-                        }`}>
-                          {score.toFixed(0)}%
-                        </div>
-                      )}
                     </div>
-                  );
-                })}
-              </div>
 
-          {/* Operator Cards */}
-          <div className="border-t border-gray-300 pt-3 mb-4">
-            <h3 className="text-base font-semibold text-gray-700 mb-2">Operadores</h3>
-            <div className="grid grid-cols-3 gap-4">
-                  {operators.map((operator) => {
-                    const isDetected = operator === detectedSymbol;
-                    const score = parseFloat(scores[operator] || '0');
-                    return (
-                      <div 
-                        key={operator}
-                        className={`sign-card !w-auto !h-auto min-w-[60px] min-h-[80px] transition-all duration-300 ${
-                          isDetected ? 'ring-2 ring-amber-400 ring-offset-2 scale-105' : ''
-                        }`}
-                        style={{ width: 'auto', height: 'auto' }}
-                      >
-                        <img 
-                          src={`/assets/numeros/${getImageName(operator)}`}
-                          alt={`Señal ${operator}`}
-                          className="w-10 h-10 object-contain mb-1"
-                          onError={handleImageError}
+                    {/* Camera Feed */}
+                    <div className="relative w-full aspect-video bg-gray-900 rounded-xl overflow-hidden shadow-lg mb-4">
+                        <video
+                            ref={videoRef}
+                            className="hidden"
+                            autoPlay
+                            playsInline
+                            muted
                         />
-                        <span className="sign-letter text-xs">
+                        <canvas
+                            ref={canvasRef}
+                            className="w-full h-full object-cover"
+                            width="640"
+                            height="480"
+                        />
+                    </div>
+
+                    {/* Text Display */}
+                    <div className="bg-white/90 backdrop-blur-sm rounded-xl border border-gray-200">
+                        <div className="flex justify-between items-center p-2 pb-1">
+                            <h3 className="text-base font-semibold text-gray-700">Expresión Matemática</h3>
+                            <div className="flex gap-1.5">
+                                <button
+                                    onClick={clearExpression}
+                                    className="px-2 py-1 text-xs font-medium text-red-600 hover:text-white hover:bg-red-600 rounded transition-all duration-200 border border-red-600 flex items-center gap-1"
+                                >
+                                    🗑️ Limpiar
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="px-2 pb-2">
+                            <div className="p-2 border-2 border-dashed border-gray-300 rounded-lg bg-white/80">
+                                <p className={`text-base font-mono break-words leading-normal ${
+                                    !currentExpression ? 'text-gray-400 italic' : 'text-gray-800'
+                                }`}>
+                                    {currentExpression || 'La expresión aparecerá aquí cuando cierres la mano izquierda...'}
+                                </p>
+                                {result !== null && (
+                                    <div className="mt-2 pt-2 border-t border-gray-200">
+                                        <p className="text-green-600 font-bold text-lg">
+                                            = {result}
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+
+                            {history.length > 0 && (
+                                <div className="mt-2">
+                                    <div className="text-gray-600 text-xs mb-1">Historial reciente:</div>
+                                    <div className="max-h-12 overflow-y-auto space-y-1">
+                                        {history.slice(-2).map((calc, index) => (
+                                            <div key={index} className="text-xs font-mono text-gray-600 bg-gray-50 p-1 rounded">
+                                                {calc}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Right: Mathematical Signs */}
+                <div className="bg-gray-200 bg-opacity-70 backdrop-blur-sm rounded-2xl shadow-xl border border-black-200 p-3">
+                    <h2 className="text-lg font-semibold mb-2 text-gray-800">
+                        Lenguaje de Señas Matemático
+                    </h2>
+
+                    {/* Number Cards */}
+                    <div className="grid grid-cols-5 gap-4 mb-4">
+                        {numbers.map((number) => {
+                            const isDetected = number === detectedSymbol;
+                            const score = parseFloat(scores[number] || '0');
+                            const imageUrl = getImage(number);
+                            return (
+                                <div
+                                    key={number}
+                                    className={`sign-card !w-auto !h-auto min-w-[60px] min-h-[80px] transition-all duration-300 ${
+                                        isDetected ? 'ring-2 ring-amber-400 ring-offset-2 scale-105' : ''
+                                    }`}
+                                    style={{ width: 'auto', height: 'auto' }}
+                                >
+                                    {imageUrl ? (
+                                        <img
+                                            src={imageUrl}
+                                            alt={`${number} en señas`}
+                                            className="w-10 h-10 object-contain mb-1"
+                                        />
+                                    ) : (
+                                        <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center mb-1">
+                                            <span className="text-base font-bold text-gray-400">{number}</span>
+                                        </div>
+                                    )}
+                                    <span className="sign-letter text-xs">{number}</span>
+                                    {score > 0 && (
+                                        <div className={`text-xs font-bold mt-1 ${
+                                            score > 70 ? 'text-green-600' :
+                                                score > 40 ? 'text-yellow-600' : 'text-red-500'
+                                        }`}>
+                                            {score.toFixed(0)}%
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    {/* Operator Cards */}
+                    <div className="border-t border-gray-300 pt-3 mb-4">
+                        <h3 className="text-base font-semibold text-gray-700 mb-2">Operadores</h3>
+                        <div className="grid grid-cols-3 gap-4">
+                            {operators.map((operator) => {
+                                const isDetected = operator === detectedSymbol;
+                                const score = parseFloat(scores[operator] || '0');
+                                return (
+                                    <div
+                                        key={operator}
+                                        className={`sign-card !w-auto !h-auto min-w-[60px] min-h-[80px] transition-all duration-300 ${
+                                            isDetected ? 'ring-2 ring-amber-400 ring-offset-2 scale-105' : ''
+                                        }`}
+                                        style={{ width: 'auto', height: 'auto' }}
+                                    >
+                                        <img
+                                            src={`/assets/numeros/${getImageName(operator)}`}
+                                            alt={`Señal ${operator}`}
+                                            className="w-10 h-10 object-contain mb-1"
+                                            onError={handleImageError}
+                                        />
+                                        <span className="sign-letter text-xs">
                           {getDisplayName(operator)}
                         </span>
-                        {score > 0 && (
-                          <div className={`text-xs font-bold mt-1 ${
-                            score > 70 ? 'text-green-600' : 
-                            score > 40 ? 'text-yellow-600' : 'text-red-500'
-                          }`}>
-                            {score.toFixed(0)}%
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+                                        {score > 0 && (
+                                            <div className={`text-xs font-bold mt-1 ${
+                                                score > 70 ? 'text-green-600' :
+                                                    score > 40 ? 'text-yellow-600' : 'text-red-500'
+                                            }`}>
+                                                {score.toFixed(0)}%
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
 
-          {/* Special Function - Delete */}
-          <div className="border-t border-gray-300 pt-3">
-            <h3 className="text-base font-semibold text-gray-700 mb-2">Función Especial</h3>
-            <div className="grid grid-cols-1 gap-4">
-                  {specialFunctions.map((func) => {
-                    const isDetected = func === detectedSymbol;
-                    const score = parseFloat(scores[func] || '0');
-                    return (
-                      <div 
-                        key={func}
-                        className={`sign-card !w-auto !h-auto min-w-[60px] min-h-[80px] transition-all duration-300 ${
-                          isDetected ? 'ring-2 ring-amber-400 ring-offset-2 scale-105' : ''
-                        }`}
-                        style={{ width: 'auto', height: 'auto' }}
-                      >
-                        <img 
-                          src={manitoBorrarImg}
-                          alt="Señal borrar"
-                          className="w-10 h-10 object-contain mb-1"
-                          onError={handleDeleteImageError}
-                        />
-                        <span className="sign-letter text-xs">BORRAR</span>
-                        {score > 0 && (
-                          <div className={`text-xs font-bold mt-1 ${
-                            score > 70 ? 'text-green-600' : 
-                            score > 40 ? 'text-yellow-600' : 'text-red-500'
-                          }`}>
-                            {score.toFixed(0)}%
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                    {/* Special Function - Delete */}
+                    <div className="border-t border-gray-300 pt-3">
+                        <h3 className="text-base font-semibold text-gray-700 mb-2">Función Especial</h3>
+                        <div className="grid grid-cols-1 gap-4">
+                            {specialFunctions.map((func) => {
+                                const isDetected = func === detectedSymbol;
+                                const score = parseFloat(scores[func] || '0');
+                                return (
+                                    <div
+                                        key={func}
+                                        className={`sign-card !w-auto !h-auto min-w-[60px] min-h-[80px] transition-all duration-300 ${
+                                            isDetected ? 'ring-2 ring-amber-400 ring-offset-2 scale-105' : ''
+                                        }`}
+                                        style={{ width: 'auto', height: 'auto' }}
+                                    >
+                                        <img
+                                            src={manitoBorrarImg}
+                                            alt="Señal borrar"
+                                            className="w-10 h-10 object-contain mb-1"
+                                            onError={handleDeleteImageError}
+                                        />
+                                        <span className="sign-letter text-xs">BORRAR</span>
+                                        {score > 0 && (
+                                            <div className={`text-xs font-bold mt-1 ${
+                                                score > 70 ? 'text-green-600' :
+                                                    score > 40 ? 'text-yellow-600' : 'text-red-500'
+                                            }`}>
+                                                {score.toFixed(0)}%
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
                 </div>
-              </div>
             </div>
-          </div>
         </section>
     );
 };
