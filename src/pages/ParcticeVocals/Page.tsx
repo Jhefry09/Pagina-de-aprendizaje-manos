@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useVocalContext } from "../../hooks/useVocalContext";
 import {
   type VocalModel,
@@ -7,6 +7,7 @@ import {
   type Results,
   type MediaPipeHandsInstance,
 } from "../../types";
+import "./VocalPractice.css";
 
 // ====================================================================
 // I. HELPERS (Funciones auxiliares)
@@ -272,7 +273,7 @@ const VocalPracticePage = () => {
             }
           },
           width: 640,
-          height: 640,
+          height: 480,
         });
         cameraRef.current.start();
       }
@@ -431,8 +432,6 @@ const VocalPracticePage = () => {
   };
 
   const selectedVocalImg = vocalImages[selectedLetter] || vocalImages.a;
-  const barColor =
-    detectedLetter === selectedLetter ? "bg-green-500" : "bg-amber-500";
 
   // Función para cerrar el popup
   const closePopup = () => {
@@ -440,7 +439,7 @@ const VocalPracticePage = () => {
   };
 
   return (
-    <section className="w-full flex flex-col items-center justify-center pt-8 pb-6 gap-6 relative">
+    <section className="p-5 w-full">
       {/* Popup de desbloqueo */}
       {justUnlockedVowel && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -456,13 +455,15 @@ const VocalPracticePage = () => {
                 </span>
               </p>
               <div className="flex flex-col gap-3">
-                <Link
-                  to={`/vocales-practica/${justUnlockedVowel}`}
+                <button
+                  onClick={() => {
+                    window.location.href = `/vocales-practica/${justUnlockedVowel}`;
+                    closePopup();
+                  }}
                   className="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300 text-center"
-                  onClick={closePopup}
                 >
                   Practicar '{justUnlockedVowel.toUpperCase()}'
-                </Link>
+                </button>
                 <button
                   onClick={closePopup}
                   className="text-gray-600 hover:text-gray-800 font-medium py-2"
@@ -475,28 +476,28 @@ const VocalPracticePage = () => {
         </div>
       )}
 
-      {/* 1. Caja Superior: Header y Guía */}
-      <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6 w-[800px]">
-        <div className="flex items-center justify-between mb-4">
-          <Link
-            to="/vocales"
-            className="px-4 py-2 text-sm font-semibold text-[#f2994a] hover:text-white hover:bg-[#f2994a] rounded-lg transition-all duration-300 border border-[#f2994a]"
-          >
-            VOLVER
-          </Link>
-          <h1 className="text-2xl font-bold text-gray-700 font-montserrat">
-            Práctica de Vocal{" "}
-            <span className="text-[#f2994a]">
-              {selectedLetter.toUpperCase()}
-            </span>
-          </h1>
-          <div className="w-[80px]"></div>
-        </div>
-        <p className="text-gray-600 text-center">
-          Concentra tu mano **derecha** (lado derecho) en formar la seña de la
-          vocal objetivo.
-        </p>
-      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* Left: Camera and Detection Display */}
+        <div className="vocal-practice-container">
+          <h2 className="text-xl font-semibold mb-3 text-gray-800">
+            Práctica de Vocal {selectedLetter.toUpperCase()}
+          </h2>
+
+          {/* Hand Detection Status */}
+          <div className="mb-3 flex gap-2">
+            <div className={`p-3 rounded-lg flex items-center flex-1 ${
+              detectedLetter ? 'bg-green-50 border-2 border-green-300' : 'bg-red-50 border-2 border-red-300'
+            }`}>
+              <div className={`w-3 h-3 rounded-full mr-2 ${
+                detectedLetter ? 'bg-green-500 animate-pulse' : 'bg-red-500'
+              }`}></div>
+              <span className={`font-semibold text-sm ${
+                detectedLetter ? 'text-green-700' : 'text-red-700'
+              }`}>
+                {detectedLetter ? `✋ Detectado: ${getDisplayName(detectedLetter)}` : '⚠️ Mano derecha NO detectada'}
+              </span>
+            </div>
+          </div>
 
       {/* 2. Contenedor Principal: Cámara y Referencia */}
       <div className="flex justify-center gap-6 w-[800px]">
@@ -507,63 +508,50 @@ const VocalPracticePage = () => {
             className="relative w-full bg-gray-900 rounded-2xl overflow-hidden shadow-2xl"
             style={{ aspectRatio: "4/3" }}
           >
+          {/* Camera Feed */}
+          <div className="vocal-practice-camera">
             <video
               ref={videoRef}
-              className="w-full h-full object-cover transform scale-x-[-1]"
+              className="vocal-practice-video"
               autoPlay
               playsInline
               muted
             />
             <canvas
               ref={canvasRef}
-              className="absolute top-0 left-0 w-full h-full transform scale-x-[-1]"
+              className="vocal-practice-canvas"
+              width="640"
+              height="480"
             />
-            <div className="absolute top-2 left-2 text-white text-xs font-mono bg-black/50 px-2 py-1 rounded">
+            <div className="vocal-practice-status">
               {isReady ? "Reconocimiento Activo" : "Cargando MediaPipe..."}
             </div>
           </div>
 
-          {/* Indicador de Detección (Solo Mano Derecha) */}
-          <div className="flex w-full">
-            <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-md border border-white/20 p-8 text-center w-full">
-              <h3 className="font-medium text-gray-700 mb-3 text-base">
-                Mano Detectada (Detección)
-              </h3>
-              <div
-                className={`text-4xl font-bold mb-2 ${
-                  detectedLetter ? "text-amber-600" : "text-gray-400"
-                }`}
-              >
-                {detectedLetter ? getDisplayName(detectedLetter) : "Ninguna"}
-              </div>
-              <span className="text-base font-normal text-gray-500">
-                ({highestScore.toFixed(1)}%)
-              </span>
-            </div>
-          </div>
         </div>
 
-        {/* Columna Derecha: Target, Precisión y Malla de Scores */}
-        <div className="flex flex-col gap-6 w-1/2">
-          {/* Tarjeta de Referencia (Estilo Vocal Card) */}
-          <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-6 flex flex-col items-center">
-            <h2 className="text-lg font-bold text-gray-700 mb-4">
-              VOCAL OBJETIVO
-            </h2>
-            <div className="bg-gradient-to-b from-[#DA8739] to-[#7A491B] rounded-xl p-6 w-40 h-52 flex flex-col items-center justify-between shadow-lg">
+        {/* Right: Target Vocal and Progress */}
+        <div className="vocal-practice-container">
+          <h2 className="text-lg font-semibold mb-2 text-gray-800">
+            Vocal Objetivo
+          </h2>
+
+          {/* Target Vocal Card */}
+          <div className="vocal-target-card mb-4">
+            <div className="vocal-practice-sign-card">
               <img
                 src={selectedVocalImg}
                 alt={`${selectedLetter.toUpperCase()} en señas`}
-                className="w-24 h-24 object-contain"
+                className="w-20 h-20 object-contain mb-2"
               />
-              <span className="text-white font-bold text-5xl mt-3">
+              <span className="vocal-practice-sign-letter">
                 {selectedLetter.toUpperCase()}
               </span>
             </div>
 
-            {/* Barra de Precisión del Objetivo */}
+            {/* Precision Bar */}
             <div className="w-full mt-4">
-              <div className="flex justify-between items-center mb-1">
+              <div className="flex justify-between items-center mb-2">
                 <span className="font-medium text-gray-700 text-sm">
                   Precisión:
                 </span>
@@ -571,96 +559,118 @@ const VocalPracticePage = () => {
                   {scores[selectedLetter] || "0.0"}%
                 </span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+              <div className="vocal-practice-precision-bar">
                 <div
-                  className={`h-full transition-all duration-300 ${barColor}`}
+                  className={`vocal-practice-precision-fill ${
+                    detectedLetter === selectedLetter ? "precision-high" : "precision-low"
+                  }`}
                   style={{ width: `${scores[selectedLetter] || "0.0"}%` }}
                 ></div>
               </div>
             </div>
+          </div>
 
-            {/* Sección de Desbloqueo de Vocales */}
-            <div className="w-full mt-4 pt-4 border-t border-gray-200 text-center">
-              {secondsRemainingForUnlock !== null &&
-              secondsRemainingForUnlock > 0 ? (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                  <p className="text-sm font-medium text-blue-800 mb-1">
-                    ¡Mantén la posición para desbloquear la siguiente vocal!
-                  </p>
-                  <div className="flex items-center justify-center space-x-2">
-                    <div className="relative w-full max-w-xs h-4 bg-gray-200 rounded-full overflow-hidden">
-                      <div
-                        className="absolute top-0 left-0 h-full bg-blue-500 transition-all duration-1000 ease-linear"
-                        style={{
-                          width: `${(secondsRemainingForUnlock / 10) * 100}%`,
-                        }}
-                      ></div>
-                    </div>
-                    <span className="text-sm font-bold text-blue-700 w-8 text-center">
-                      {secondsRemainingForUnlock}s
-                    </span>
+          {/* Detection Display - Nueva Posición */}
+          <div className="vocal-target-card mb-4">
+            <h3 className="text-base font-semibold text-gray-700 mb-3">
+              Mano Detectada
+            </h3>
+            <div
+              className={`text-4xl font-bold mb-2 ${
+                detectedLetter ? "text-amber-600" : "text-gray-400"
+              }`}
+            >
+              {detectedLetter ? getDisplayName(detectedLetter) : "Ninguna"}
+            </div>
+            <span className="text-base font-normal text-gray-500">
+              Precisión: {highestScore.toFixed(1)}%
+            </span>
+          </div>
+
+          {/* Progress Section - Nueva Posición */}
+          <div className="vocal-target-card mb-4">
+            <h3 className="text-base font-semibold text-gray-700 mb-3">
+              Progreso de Desbloqueo
+            </h3>
+            {secondsRemainingForUnlock !== null &&
+            secondsRemainingForUnlock > 0 ? (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 w-full">
+                <p className="text-sm font-medium text-blue-800 mb-2">
+                  ¡Mantén la posición para desbloquear la siguiente vocal!
+                </p>
+                <div className="flex items-center justify-center space-x-2">
+                  <div className="relative w-full max-w-xs h-4 bg-gray-200 rounded-full overflow-hidden">
+                    <div
+                      className="absolute top-0 left-0 h-full bg-blue-500 transition-all duration-1000 ease-linear"
+                      style={{
+                        width: `${(secondsRemainingForUnlock / 10) * 100}%`,
+                      }}
+                    ></div>
                   </div>
-                  <p className="text-xs text-blue-600 mt-1">
-                    Progreso:{" "}
-                    {Math.round(((10 - secondsRemainingForUnlock) / 10) * 100)}%
-                  </p>
+                  <span className="text-sm font-bold text-blue-700 w-8 text-center">
+                    {secondsRemainingForUnlock}s
+                  </span>
                 </div>
-              ) : secondsRemainingForUnlock === 0 ? (
-                <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
-                  <p className="font-medium">¡Listo para desbloquear!</p>
-                  <p className="text-sm">
-                    Mantén la posición un momento más...
-                  </p>
-                </div>
-              ) : (
-                (() => {
-                  const currentIndex = vocals.indexOf(selectedLetter);
-                  const nextVowelIndex = currentIndex + 1;
-                  if (nextVowelIndex < vocals.length) {
-                    const nextVowel = vocals[nextVowelIndex];
-                    if (unlockedVowels.includes(nextVowel)) {
-                      return (
-                        <p className="text-sm text-green-600 font-bold">
-                          ¡Vocal '{nextVowel.toUpperCase()}' desbloqueada!
-                        </p>
-                      );
-                    } else {
-                      return (
-                        <p className="text-sm text-gray-500">
-                          Practica '{selectedLetter.toUpperCase()}' para
-                          desbloquear '{nextVowel.toUpperCase()}'
-                        </p>
-                      );
-                    }
-                  } else {
+                <p className="text-xs text-blue-600 mt-1">
+                  Progreso:{" "}
+                  {Math.round(((10 - secondsRemainingForUnlock) / 10) * 100)}%
+                </p>
+              </div>
+            ) : secondsRemainingForUnlock === 0 ? (
+              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
+                <p className="font-medium">¡Listo para desbloquear!</p>
+                <p className="text-sm">
+                  Mantén la posición un momento más...
+                </p>
+              </div>
+            ) : (
+              (() => {
+                const currentIndex = vocals.indexOf(selectedLetter);
+                const nextVowelIndex = currentIndex + 1;
+                if (nextVowelIndex < vocals.length) {
+                  const nextVowel = vocals[nextVowelIndex];
+                  if (unlockedVowels.includes(nextVowel)) {
                     return (
                       <p className="text-sm text-green-600 font-bold">
-                        ¡Todas las vocales desbloqueadas!
+                        ¡Vocal '{nextVowel.toUpperCase()}' desbloqueada!
+                      </p>
+                    );
+                  } else {
+                    return (
+                      <p className="text-sm text-gray-500">
+                        Practica '{selectedLetter.toUpperCase()}' para
+                        desbloquear '{nextVowel.toUpperCase()}'
                       </p>
                     );
                   }
-                })()
-              )}
-            </div>
+                } else {
+                  return (
+                    <p className="text-sm text-green-600 font-bold">
+                      ¡Todas las vocales desbloqueadas!
+                    </p>
+                  );
+                }
+              })()
+            )}
           </div>
 
-          {/* Malla de Puntuación (Malla Reducida a Vocales y Funciones) */}
-          <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-4">
-            <h3 className="text-lg font-semibold mb-3 text-gray-700 text-center">
+          {/* Scores Grid */}
+          <div className="vocal-target-card">
+            <h3 className="text-base font-semibold text-gray-700 mb-3">
               Malla de Scores
             </h3>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="vocal-practice-scores-grid">
               {itemsToTrack.map((item) => (
                 <div
                   key={item}
-                  className={`text-center p-2 rounded-lg border-2 ${
-                    item === selectedLetter
-                      ? "border-amber-500 bg-amber-50"
-                      : "border-gray-200 hover:border-gray-300"
-                  } transition-all`}
+                  className={`vocal-practice-score-item ${
+                    item === selectedLetter ? "selected" : ""
+                  } ${
+                    item === detectedLetter ? "detected" : ""
+                  }`}
                 >
                   <div
-                    className={`text-sm font-medium ${getItemColor(
+                    className={`text-xs font-medium ${getItemColor(
                       item,
                       item === detectedLetter,
                       item === selectedLetter
@@ -683,8 +693,6 @@ const VocalPracticePage = () => {
           </div>
         </div>
       </div>
-
-      {/* 3. Se eliminó la Caja Inferior: Área de Escritura */}
     </section>
   );
 };
