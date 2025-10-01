@@ -42,7 +42,7 @@ export default function Abecedario() {
           </div>
 
           {/* Grid de letras */}
-          <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-4">
+          <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-5 gap-6">
             {letters.map((letter) => {
               const imageUrl = getImage(letter);
               return (
