@@ -80,8 +80,7 @@ const vocalImages: Record<string, string> = {
 };
 
 const vocals = ["a", "e", "i", "o", "u"];
-const specialFunctions = ["espacio", "borrar"];
-const itemsToTrack = [...vocals, ...specialFunctions];
+const itemsToTrack = [...vocals];
 
 const VocalPracticePage = () => {
   const { vocalModels } = useVocalContext();
@@ -131,7 +130,11 @@ const VocalPracticePage = () => {
       if (!canvasCtx || !canvasRef.current) return;
 
       // Ajustar canvas a las dimensiones reales del video
-      if (videoRef.current && (canvasRef.current.width !== videoRef.current.videoWidth || canvasRef.current.height !== videoRef.current.videoHeight)) {
+      if (
+        videoRef.current &&
+        (canvasRef.current.width !== videoRef.current.videoWidth ||
+          canvasRef.current.height !== videoRef.current.videoHeight)
+      ) {
         canvasRef.current.width = videoRef.current.videoWidth;
         canvasRef.current.height = videoRef.current.videoHeight;
       }
@@ -405,14 +408,6 @@ const VocalPracticePage = () => {
     isDetected: boolean = false,
     isSelected: boolean = false
   ) => {
-    if (specialFunctions.includes(item)) {
-      if (isDetected && isSelected) return "text-green-600";
-      if (isDetected) return "text-black";
-      if (item === "espacio") return "text-gray-600";
-      if (item === "borrar") return "text-red-600";
-      return "text-gray-400";
-    }
-
     // Paleta de colores para las vocales (A, E, I, O, U)
     const colors = [
       "text-red-600",
@@ -508,7 +503,10 @@ const VocalPracticePage = () => {
         {/* Columna Izquierda: Cámara y Stats */}
         <div className="flex flex-col gap-6 w-1/2">
           {/* Cámara y Malla (Solo dibuja la malla de la mano derecha) */}
-          <div className="relative w-full bg-gray-900 rounded-2xl overflow-hidden shadow-2xl" style={{ aspectRatio: '4/3' }}>
+          <div
+            className="relative w-full bg-gray-900 rounded-2xl overflow-hidden shadow-2xl"
+            style={{ aspectRatio: "4/3" }}
+          >
             <video
               ref={videoRef}
               className="w-full h-full object-cover transform scale-x-[-1]"
