@@ -143,21 +143,27 @@ const UserManagement = () => {
         }
     };
 
-    const UserRow = ({ usuario }: { usuario: Usuario }) => {
+    const UserRowModern = ({ usuario, index }: { usuario: Usuario; index: number }) => {
         const [nombre, setNombre] = useState(usuario.nombre);
         const [rol, setRol] = useState(usuario.rol);
         const [nombreOriginal] = useState(usuario.nombre);
+        const [isEditing, setIsEditing] = useState(false);
 
         const handleNombreBlur = async () => {
             const success = await actualizarNombre(usuario.id, nombre, nombreOriginal);
             if (!success) {
                 setNombre(nombreOriginal);
             }
+            setIsEditing(false);
         };
 
         const handleNombreKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
             if (e.key === 'Enter') {
                 (e.target as HTMLInputElement).blur();
+            }
+            if (e.key === 'Escape') {
+                setNombre(nombreOriginal);
+                setIsEditing(false);
             }
         };
 
@@ -170,37 +176,51 @@ const UserManagement = () => {
             }
         };
 
+        const isEvenRow = index % 2 === 0;
+
         return (
-            <div className="bg-gray-200 bg-opacity-70 backdrop-blur-sm rounded-2xl p-6 mb-4 transition-all duration-300 hover:bg-opacity-90">
+            <div className={`px-6 py-4 border-b border-gray-100 transition-all duration-200 hover:bg-gray-50 ${
+                isEvenRow ? 'bg-white' : 'bg-gray-50'
+            }`}>
                 <div className="grid grid-cols-4 items-center gap-4">
-                    <div className="text-white font-semibold text-lg">
-                        {usuario.id}
+                    <div className="text-gray-700 font-medium text-sm">
+                        #{usuario.id}
                     </div>
-                    <div>
-                        <input
-                            type="text"
-                            value={nombre}
-                            onChange={(e) => setNombre(e.target.value)}
-                            onBlur={handleNombreBlur}
-                            onKeyDown={handleNombreKeyPress}
-                            className="bg-transparent text-gray-800 font-semibold text-lg border-none outline-none w-full focus:bg-white focus:bg-opacity-20 focus:rounded-lg focus:px-2 focus:py-1 transition-all duration-300"
-                            title="Haz clic para editar el nombre"
-                        />
+                    <div className="flex items-center">
+                        {isEditing ? (
+                            <input
+                                type="text"
+                                value={nombre}
+                                onChange={(e) => setNombre(e.target.value)}
+                                onBlur={handleNombreBlur}
+                                onKeyDown={handleNombreKeyPress}
+                                className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-1 text-gray-800 font-medium text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                autoFocus
+                            />
+                        ) : (
+                            <span 
+                                onClick={() => setIsEditing(true)}
+                                className="text-gray-800 font-medium text-sm cursor-pointer hover:text-blue-600 transition-colors duration-200 px-2 py-1 rounded hover:bg-blue-50"
+                                title="Haz clic para editar"
+                            >
+                                {nombre}
+                            </span>
+                        )}
                     </div>
                     <div>
                         <select
                             value={rol}
                             onChange={(e) => handleRolChange(e.target.value)}
-                            className="bg-transparent text-gray-800 font-semibold text-lg border-none outline-none cursor-pointer focus:bg-white focus:bg-opacity-20 focus:rounded-lg focus:px-2 focus:py-1 transition-all duration-300"
+                            className="bg-white border border-gray-200 rounded-lg px-3 py-1 text-gray-700 font-medium text-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                         >
-                            <option value="USUARIO">USUARIO</option>
-                            <option value="ADMIN">ADMIN</option>
+                            <option value="USUARIO">Usuario</option>
+                            <option value="ADMIN">Administrador</option>
                         </select>
                     </div>
                     <div className="flex justify-end">
                         <button
                             onClick={() => eliminarUsuario(usuario.id, usuario.nombre)}
-                            className="bg-red-400 bg-opacity-70 text-white px-6 py-2 rounded-full font-medium transition-all duration-300 hover:bg-red-500 hover:bg-opacity-80 hover:scale-105"
+                            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 hover:scale-105 shadow-sm hover:shadow-md"
                         >
                             Eliminar
                         </button>
@@ -210,9 +230,21 @@ const UserManagement = () => {
         );
     };
 
+    // Calcular estadísticas de usuarios
+    const calcularEstadisticasUsuarios = () => {
+        const totalUsuarios = usuarios.length;
+        const totalAdmins = usuarios.filter(u => u.rol === 'ADMIN').length;
+        const totalUsuariosRegulares = usuarios.filter(u => u.rol === 'USUARIO').length;
+        const porcentajeAdmins = totalUsuarios > 0 ? Math.round((totalAdmins / totalUsuarios) * 100) : 0;
+
+        return { totalUsuarios, totalAdmins, totalUsuariosRegulares, porcentajeAdmins };
+    };
+
+    const stats = calcularEstadisticasUsuarios();
+
     if (loading) {
         return (
-            <div className="min-h-screen  p-8 flex items-center justify-center">
+            <div className="min-h-screen p-8 flex items-center justify-center">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-indigo-600 mx-auto mb-4"></div>
                     <p className="text-xl text-white font-medium">Cargando Datos...</p>
@@ -222,54 +254,118 @@ const UserManagement = () => {
     }
 
     return (
-        <div className="w-full pt-5">
+        <section className="p-5 w-full">
             <div className="max-w-6xl mx-auto">
-                {/* Header con usuario actual y botón agregar */}
-                <div className="flex justify-between items-center mb-12">
-                    <div className="flex items-center gap-4">
-                        <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center">
-                            <User size={32} className="text-blue-800" />
-                        </div>
-                        <div>
-                            <h2 className="text-white text-2xl font-bold">{user?.usuario || 'Usuario'}</h2>
-                            <p className="text-blue-200">{user?.rol || 'Invitado'}</p>
-                        </div>
-                    </div>
-
+                {/* Header Compacto */}
+                <div className="bg-gray-200 bg-opacity-70 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200 p-4 mb-5">
+                    <h1 className="text-2xl font-bold text-gray-800 text-center">
+                        Gestión de Usuarios
+                    </h1>
+                    <p className="text-base text-gray-600 text-center mt-1">
+                        Administración y control de usuarios del sistema
+                    </p>
                 </div>
 
                 {/* Error */}
                 {error && (
-                    <div className="bg-red-500 bg-opacity-20 border border-red-400 text-red-200 px-6 py-4 rounded-xl mb-6 backdrop-blur-sm">
+                    <div className="bg-red-500 border border-red-400 text-red-200 p-4 rounded-xl mb-5">
                         {error}
                     </div>
                 )}
 
-                {/* Header de la tabla */}
-                <div className="bg-gradient-to-r from-amber-600 to-amber-700 rounded-2xl p-6 mb-4 shadow-lg">
-                    <div className="grid grid-cols-4 gap-4">
-                        <div className="text-white font-bold text-xl">ID</div>
-                        <div className="text-white font-bold text-xl">Nombre</div>
-                        <div className="text-white font-bold text-xl">Rol</div>
-                        <div className="text-white font-bold text-xl text-right">Acciones</div>
+                {/* Stats Overview - Contenedores Estándar */}
+                <div className="grid grid-cols-4 gap-4 mb-5">
+                    <div className="bg-gray-200 bg-opacity-70 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200 p-4 text-center">
+                        <div className="text-2xl font-bold text-gray-800 mb-1">{stats.totalUsuarios}</div>
+                        <div className="text-sm text-gray-600 font-medium">Total Usuarios</div>
+                    </div>
+                    <div className="bg-gray-200 bg-opacity-70 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200 p-4 text-center">
+                        <div className="text-2xl font-bold text-gray-800 mb-1">{stats.totalAdmins}</div>
+                        <div className="text-sm text-gray-600 font-medium">Administradores</div>
+                    </div>
+                    <div className="bg-gray-200 bg-opacity-70 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200 p-4 text-center">
+                        <div className="text-2xl font-bold text-gray-800 mb-1">{stats.totalUsuariosRegulares}</div>
+                        <div className="text-sm text-gray-600 font-medium">Usuarios Regulares</div>
+                    </div>
+                    <div className="bg-gray-200 bg-opacity-70 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200 p-4 text-center">
+                        <div className="text-2xl font-bold text-gray-800 mb-1">{stats.porcentajeAdmins}%</div>
+                        <div className="text-sm text-gray-600 font-medium">% Administradores</div>
                     </div>
                 </div>
 
-                {/* Lista de usuarios */}
-                <div className="space-y-2">
+                {/* Management Grid - Layout Modular */}
+                <div className="grid grid-cols-2 gap-5 mb-5">
+                    {/* Módulo: Información del Usuario Actual */}
+                    <div className="bg-gray-200 bg-opacity-70 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200 p-4">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-3 text-center">
+                            Usuario Actual
+                        </h3>
+                        <div className="flex items-center justify-center gap-4 py-4">
+                            <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-lg">
+                                <User size={32} className="text-white" />
+                            </div>
+                            <div className="text-center">
+                                <h2 className="text-gray-800 text-xl font-bold">{user?.usuario || 'Usuario'}</h2>
+                                <p className="text-gray-600 font-medium">{user?.rol || 'Invitado'}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Módulo: Tarjeta de Resumen */}
+                    <div className="bg-gray-200 bg-opacity-70 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200 p-4">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-3 text-center">
+                            Resumen del Sistema
+                        </h3>
+                        <div className="space-y-4">
+                            <div className="text-center">
+                                <div className="text-3xl font-bold text-blue-600 mb-1">{stats.totalUsuarios}</div>
+                                <div className="text-sm text-gray-600 font-medium">Total de Usuarios</div>
+                            </div>
+                            <div className="border-t border-gray-300 pt-3">
+                                <div className="text-center">
+                                    <div className="text-xl font-semibold text-gray-700 mb-1">{stats.totalAdmins}</div>
+                                    <div className="text-xs text-gray-500">Administradores Activos Hoy</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Módulo: Tabla de Usuarios Registrados - Fila Completa */}
+                <div className="bg-gray-200 bg-opacity-70 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200 p-4">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
+                        Usuarios Registrados
+                    </h3>
+                    
                     {usuarios.length === 0 ? (
-                        <div className="bg-gray-200 bg-opacity-70 backdrop-blur-sm rounded-2xl p-12 text-center">
-                            <User size={48} className="mx-auto mb-4 text-gray-600 opacity-50" />
-                            <p className="text-gray-700 text-xl">No hay usuarios registrados</p>
+                        <div className="bg-white bg-opacity-50 rounded-xl p-8 text-center">
+                            <User size={48} className="mx-auto mb-4 text-gray-400" />
+                            <p className="text-gray-600 text-lg font-medium">No hay usuarios registrados</p>
+                            <p className="text-gray-500 text-sm mt-1">Los usuarios aparecerán aquí una vez registrados</p>
                         </div>
                     ) : (
-                        usuarios.map((usuario) => (
-                            <UserRow key={usuario.id} usuario={usuario} />
-                        ))
+                        <div className="bg-white rounded-xl overflow-hidden shadow-lg">
+                            {/* Header de la tabla */}
+                            <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
+                                <div className="grid grid-cols-4 gap-4">
+                                    <div className="text-white font-semibold text-sm uppercase tracking-wide">ID</div>
+                                    <div className="text-white font-semibold text-sm uppercase tracking-wide">Nombre</div>
+                                    <div className="text-white font-semibold text-sm uppercase tracking-wide">Rol</div>
+                                    <div className="text-white font-semibold text-sm uppercase tracking-wide text-right">Acciones</div>
+                                </div>
+                            </div>
+                            
+                            {/* Cuerpo de la tabla */}
+                            <div className="max-h-80 overflow-y-auto">
+                                {usuarios.map((usuario, index) => (
+                                    <UserRowModern key={usuario.id} usuario={usuario} index={index} />
+                                ))}
+                            </div>
+                        </div>
                     )}
                 </div>
             </div>
-        </div>
+        </section>
     );
 };
 
