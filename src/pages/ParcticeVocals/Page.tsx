@@ -511,7 +511,7 @@ const VocalPracticePage = () => {
                                         const success = await completarLetra(user.id, justUnlockedVowel, vocales);
 
                                         if (success) {
-                                            navigate(`/vocales-practica/${justUnlockedVowel.toLowerCase()}`);
+                                            navigate(`/practice/${justUnlockedVowel.toLowerCase()}`);
                                         } else {
                                             console.error("No se pudo completar la letra");
                                         }

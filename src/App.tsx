@@ -25,6 +25,7 @@ import UserSettingsPage from "./pages/configuracion-usuario/page";
 import { AnimatePresence } from "framer-motion";
 import VocalPracticePage from "./pages/ParcticeVocals/Page";
 import LetterPage from "./pages/practiceABC/page";
+import NumbersPage from "./pages/practiceNum/page";
 const AppContent = () => {
   const location = useLocation();
 
@@ -103,6 +104,7 @@ const AppContent = () => {
             <Route path="/gestion" element={<UserManagementPage />} />
             <Route path="/estadisticas" element={<VocalStatistics />} />
             <Route path="/configuracion" element={<UserSettingsPage />} />
+            <Route path="/practiceNum/:number" element={<NumbersPage />} />
           </Routes>
         </AnimatePresence>
       </main>
