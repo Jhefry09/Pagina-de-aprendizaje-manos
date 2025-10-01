@@ -4,9 +4,13 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CameraIcon, ArrowPathIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { FaceSmileIcon as FaceSmileSolid } from '@heroicons/react/24/solid';
+import { useVoice } from '../../hooks/useVoice';
 import hombreGif from '../../assets/Hombre.gif';
 
 const LoginPage: React.FC = () => {
+    // Inicializar el sistema de voz
+    const { speak } = useVoice({ lang: 'es-ES' });
+    
     // Usamos un tipo personalizado para el ref del video
     type WebcamWithVideo = {
         video: HTMLVideoElement | null;
@@ -51,6 +55,7 @@ const LoginPage: React.FC = () => {
 
         const startCamera = async () => {
             try {
+                speak('Iniciando cámara. Por favor, espera un momento.');
                 const mediaStream = await navigator.mediaDevices.getUserMedia({
                     video: {
                         width: { ideal: 1280 },
@@ -66,14 +71,17 @@ const LoginPage: React.FC = () => {
                         video.srcObject = mediaStream;
                         video.onloadedmetadata = () => {
                             setCameraReady(true);
+                            speak('Cámara lista. Por favor, colócate frente a la cámara y mantén una expresión neutral.');
                         };
                         stream = mediaStream;
                     }
                 }
             } catch (err) {
                 console.error('Error al acceder a la cámara:', err);
+                const errorMsg = 'No se pudo acceder a la cámara. Asegúrate de haber otorgado los permisos necesarios.';
+                speak(errorMsg);
                 if (isMounted) {
-                    setError('No se pudo acceder a la cámara. Asegúrate de haber otorgado los permisos necesarios.');
+                    setError(errorMsg);
                 }
             }
         };
@@ -87,32 +95,43 @@ const LoginPage: React.FC = () => {
                 stream.getTracks().forEach(track => track.stop());
             }
         };
-    }, []);
+    }, [speak]); // Añadido speak como dependencia
 
     // Capturar imagen con delay de 3 segundos
     const capture = useCallback(() => {
-        if (!webcamRef.current || isCapturing || !cameraReady) return;
+        if (!webcamRef.current || isCapturing || !cameraReady) {
+            if (!cameraReady) {
+                speak('La cámara aún no está lista. Por favor, espera un momento.');
+            }
+            return () => {}; // Retornar función de limpieza vacía
+        }
 
+        speak('Preparándose para capturar tu rostro en 3, 2, 1...');
         setIsCapturing(true);
         setCountdown(3);
 
         const countdownInterval = setInterval(() => {
             setCountdown((prev) => {
-                if (prev <= 1) {
-                    clearInterval(countdownInterval);
-                    // Tomar la foto
-                    const imageSrc = webcamRef.current?.getScreenshot();
-                    if (imageSrc) {
-                        setImgSrc(imageSrc);
-                    }
-                    setIsCapturing(false);
-                    setCountdown(0);
-                    return 0;
+                const newCount = prev - 1;
+                if (newCount > 0) {
+                    speak(newCount.toString());
+                } else if (newCount === 0) {
+                    speak('¡Sonríe!');
+                    setTimeout(() => {
+                        const imageSrc = webcamRef.current?.getScreenshot();
+                        if (imageSrc) {
+                            setImgSrc(imageSrc);
+                            speak('Imagen capturada. Procesando reconocimiento facial...');
+                        }
+                    }, 500);
                 }
-                return prev - 1;
+                return newCount;
             });
         }, 1000);
-    }, [webcamRef, isCapturing, cameraReady]);
+
+        // Limpiar el intervalo cuando el componente se desmonte o cuando se complete la cuenta regresiva
+        return () => clearInterval(countdownInterval);
+    }, [isCapturing, cameraReady, speak]); // Añadido speak como dependencia
 
 
 // Enviar imagen al servidor para autenticación
