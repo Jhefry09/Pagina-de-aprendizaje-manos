@@ -24,10 +24,10 @@ import VocalStatistics from "./pages/estadisticas-entrenamiento/page";
 import UserSettingsPage from "./pages/configuracion-usuario/page";
 import { AnimatePresence } from "framer-motion";
 import VocalPracticePage from "./pages/ParcticeVocals/Page";
+import LetterPage from "./pages/practiceABC/page";
 const AppContent = () => {
   const location = useLocation();
 
-  // Definir rutas y estados
   const isAuthPage =
     location.pathname === "/login" || location.pathname === "/registro";
   const isWelcomePage = location.pathname === "/welcome";
@@ -84,6 +84,9 @@ const AppContent = () => {
             <Route path="/" element={<Navigate to="/welcome" replace />} />
             <Route path="/home" element={<HomePage />} />
             <Route path="/training" element={<TrainingPage />} />
+            {/* 1. RUTA DINÁMICA DE ABECEDARIO: /practice/a, /practice/b, etc. */}
+            <Route path="/practice/:vocal" element={<LetterPage />} />
+            {/* 2. RUTA DE PRÁCTICA DE PALABRAS: /practice/palabras */}
             <Route path="/practice/:moduleType" element={<PracticePage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/numeros" element={<NumerosPage />} />

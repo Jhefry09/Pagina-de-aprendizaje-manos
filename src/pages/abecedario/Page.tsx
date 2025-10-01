@@ -24,6 +24,14 @@ export default function Abecedario() {
   const [selected, setSelected] = useState<string | null>(null);
   const navigate = useNavigate();
 
+  // 🔥 NUEVA FUNCIÓN: Maneja la selección y navegación
+  const handleSelectLetter = (letter: string) => {
+    setSelected(letter); // Opcional, pero mantiene el resaltado visual
+    // Navegar a la ruta dinámica: /practice/(la letra en minúsculas)
+    navigate(`/practice/${letter.toLowerCase()}`);
+  };
+
+
   return (
     <div className="w-full pt-20 pb-6 px-6">
       {/* Two Column Layout */}
@@ -51,7 +59,8 @@ export default function Abecedario() {
                   className={`sign-card cursor-pointer transition-all duration-300 hover:scale-110 ${
                     selected === letter ? 'ring-4 ring-emerald-500 ring-offset-2 scale-105' : ''
                   }`}
-                  onClick={() => setSelected(letter)}
+                  // 🔥 CAMBIO CLAVE: Llama a la nueva función de manejo
+                  onClick={() => handleSelectLetter(letter)} 
                 >
                   {imageUrl ? (
                     <img

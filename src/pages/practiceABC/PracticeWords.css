@@ -1,0 +1,43 @@
+/* CSS específico para PracticeWords - No afecta otras páginas */
+
+.sign-card {
+  background: linear-gradient(145deg, #e5e7eb, #d1d5db, #9ca3af);
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  min-width: 80px;
+  min-height: 100px;
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.sign-card:hover {
+  transform: scale(1.05) translateY(-2px);
+  box-shadow: 
+    0 8px 20px rgba(0, 0, 0, 0.2),
+    0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.sign-letter {
+  color: #1f2937;
+  font-weight: 700;
+  font-size: 1rem;
+  text-shadow: 
+    1px 1px 2px rgba(255, 255, 255, 0.8);
+  letter-spacing: 0.5px;
+}
+
+/* Overrides para elementos específicos */
+.sign-card.ring-2 {
+  box-shadow: 
+    0 8px 20px rgba(0, 0, 0, 0.2),
+    0 4px 8px rgba(0, 0, 0, 0.15),
+    0 0 0 2px #f59e0b;
+}
