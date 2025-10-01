@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import aImg from "../../assets/a-sena.png";
 import eImg from "../../assets/e-sena.png";
 import iImg from "../../assets/i-sena.png";
@@ -7,6 +8,7 @@ import ProgressTable from "../../components/ProgressTable";
 import { vowelsData } from "../../data/progressData";
 
 export default function Vocales() {
+  const navigate = useNavigate();
   const vocales = [
     { letra: "A", img: aImg },
     { letra: "E", img: eImg },
@@ -37,7 +39,8 @@ export default function Vocales() {
             {vocales.map((v) => (
               <div
                 key={v.letra}
-                className="sign-card hover:scale-110 transition-all duration-300"
+                className="sign-card hover:scale-110 transition-all duration-300 cursor-pointer"
+                onClick={() => navigate(`/vocales-practica/${v.letra.toLowerCase()}`)}
               >
                 <img
                   src={v.img}
