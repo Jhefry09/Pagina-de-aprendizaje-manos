@@ -100,6 +100,7 @@ const PracticePage = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const handsRef = useRef<MediaPipeHandsInstance | null>(null);
+  // eslint-disable-next-line
   const cameraRef = useRef<any>(null);
   const detectedLetterRef = useRef<string>('');
   const previousLeftHandClosedRef = useRef<boolean>(false);
@@ -108,6 +109,7 @@ const PracticePage = () => {
   // All alphabet letters and special functions (usando los nombres del backend)
   const alphabet = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'];
   const specialFunctions = ['espacio', 'borrar']; // Cambiado a minúsculas para coincidir con el backend
+  // eslint-disable-next-line
   const allItems = [...alphabet, ...specialFunctions];
   
   const initialScores = allItems.reduce((acc, item) => {
@@ -305,6 +307,7 @@ const PracticePage = () => {
       }
       setupComplete = false;
     };
+    // eslint-disable-next-line
   }, []); // Empty dependency array - setup only once
 
   // Update the results handler when vocalModels change
