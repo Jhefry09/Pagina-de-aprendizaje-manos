@@ -540,7 +540,7 @@ const AlphabetPracticePage = () => {
                                         const success = await completarLetra(user.id, selectedLetter, letters);
 
                                         if (success) {
-                                            navigate(`/abecedario-practica/${justUnlockedLetter.toLowerCase()}`);
+                                            navigate(`/practice/${justUnlockedLetter.toLowerCase()}`);
                                         } else {
                                             console.error("No se pudo completar la letra");
                                         }
