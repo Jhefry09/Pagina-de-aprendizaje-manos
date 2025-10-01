@@ -8,12 +8,56 @@ import {
     type MediaPipeHandsInstance,
 } from "../../types";
 import "./VocalPractice.css";
+import { useAuthLogic } from "../../hooks/useAuthLogic.ts";
+
+interface VocalData {
+    id: number;
+    vocal: string;
+    vectoresJson: string;
+    contadorModificaciones: number;
+}
+
+async function completarLetra(usuarioId: number, vocal: string, vocales: VocalData[]) {
+    const encontrada = vocales.find(
+        (v) => v.vocal.toLowerCase() === vocal.toLowerCase()
+    );
+
+    if (!encontrada) {
+        console.error("No se encontró la vocal:", vocal);
+        return false;
+    }
+
+    const vocalId = (encontrada.id - 1);
+
+    try {
+        const response = await fetch("/api/progreso/completar", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                usuarioId,
+                vocalId,
+            }),
+        });
+
+        if (response.ok) {
+            console.log("Letra completada exitosamente:", vocal);
+            return true;
+        } else {
+            console.error("Error al completar letra:", response.status);
+            return false;
+        }
+    } catch (error) {
+        console.error("Error en la petición:", error);
+        return false;
+    }
+}
 
 // ====================================================================
 // I. HELPERS (Funciones auxiliares)
 // ====================================================================
 
-// La función normalizeLandmarks es vital para hacer el reconocimiento independiente del tamaño y posición de la mano.
 const normalizeLandmarks = (landmarks: NormalizedLandmark[]) => {
     if (!landmarks || landmarks.length === 0) return [];
     const cx = landmarks.reduce((sum, p) => sum + p.x, 0) / landmarks.length;
@@ -36,7 +80,6 @@ const normalizeLandmarks = (landmarks: NormalizedLandmark[]) => {
     return normalized;
 };
 
-// La función compareHands calcula la similitud euclidiana y la convierte en un porcentaje de score.
 const compareHands = (
     landmarks1: NormalizedLandmark[],
     landmarks2: NormalizedLandmark[]
@@ -85,12 +128,17 @@ const itemsToTrack = [...vocals];
 
 const VocalPracticePage = () => {
     const { vocalModels } = useVocalContext();
+    const { user } = useAuthLogic();
     const videoRef = useRef<HTMLVideoElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const handsRef = useRef<MediaPipeHandsInstance | null>(null);
     // eslint-disable-next-line
     const cameraRef = useRef<any>(null);
-    const navigate = useNavigate(); // 👈 aquí declaras el hook
+    const navigate = useNavigate();
+
+    // Estado para almacenar las vocales del backend
+    const [vocales, setVocales] = useState<VocalData[]>([]);
+
     // Estado para la página (usando un valor por defecto seguro)
     const { vocal: selectedLetterParam } = useParams<{ vocal: string }>();
     const selectedLetter =
@@ -116,6 +164,28 @@ const VocalPracticePage = () => {
     const [justUnlockedVowel, setJustUnlockedVowel] = useState<string | null>(null);
 
     // ====================================================================
+    // Efecto para cargar las vocales desde el backend
+    // ====================================================================
+    useEffect(() => {
+        const fetchVocales = async () => {
+            try {
+                const response = await fetch("/api/vocales");
+                if (response.ok) {
+                    const data = await response.json();
+                    setVocales(data);
+                    console.log("Vocales cargadas:", data);
+                } else {
+                    console.error("Error al cargar vocales:", response.status);
+                }
+            } catch (error) {
+                console.error("Error en la petición de vocales:", error);
+            }
+        };
+
+        fetchVocales();
+    }, []);
+
+    // ====================================================================
     // III. HANDLER PRINCIPAL DE MEDIAPIPE (Solo Detección Mano Derecha)
     // ====================================================================
     const handleResults = useCallback(
@@ -127,7 +197,6 @@ const VocalPracticePage = () => {
             const ctx = canvas.getContext('2d');
             if (!ctx) return;
 
-            // Mantener dimensiones fijas para el canvas
             const canvasWidth = 640;
             const canvasHeight = 480;
 
@@ -137,33 +206,28 @@ const VocalPracticePage = () => {
             }
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
             let rightHandLandmarks = null;
 
-            // Definir conexiones de la mano
             const HAND_CONNECTIONS = [
-                [0, 1], [1, 2], [2, 3], [3, 4], // Pulgar
-                [0, 5], [5, 6], [6, 7], [7, 8], // Índice
-                [0, 9], [9, 10], [10, 11], [11, 12], // Medio
-                [0, 13], [13, 14], [14, 15], [15, 16], // Anular
-                [0, 17], [17, 18], [18, 19], [19, 20], // Meñique
-                [5, 9], [9, 13], [13, 17] // Conexiones entre dedos
+                [0, 1], [1, 2], [2, 3], [3, 4],
+                [0, 5], [5, 6], [6, 7], [7, 8],
+                [0, 9], [9, 10], [10, 11], [11, 12],
+                [0, 13], [13, 14], [14, 15], [15, 16],
+                [0, 17], [17, 18], [18, 19], [19, 20],
+                [5, 9], [9, 13], [13, 17]
             ];
 
-            // 1. Separar y dibujar la mano derecha (Detección)
             if (results.multiHandLandmarks && results.multiHandedness) {
                 for (let i = 0; i < results.multiHandLandmarks.length; i++) {
                     const handLandmarks = results.multiHandLandmarks[i];
                     const detectedHandedness =
                         results.multiHandedness[i]?.label || "Right";
 
-                    // Etiquetado MediaPipe en selfieMode=false: 'Left' es la mano derecha del usuario (detección).
                     const isUserRightHand = detectedHandedness === "Left";
 
                     if (isUserRightHand) {
-                        // Dibujar conexiones
                         ctx.strokeStyle = '#f2994a';
                         ctx.lineWidth = 2;
 
@@ -176,7 +240,6 @@ const VocalPracticePage = () => {
                             ctx.stroke();
                         }
 
-                        // Dibujar puntos de landmarks
                         ctx.fillStyle = '#215c5c';
                         for (const landmark of handLandmarks) {
                             ctx.beginPath();
@@ -193,7 +256,6 @@ const VocalPracticePage = () => {
                 }
             }
 
-            // 2. Procesar mano derecha para el reconocimiento (Score)
             if (rightHandLandmarks) {
                 const normalizedHand = normalizeLandmarks(rightHandLandmarks);
 
@@ -201,7 +263,6 @@ const VocalPracticePage = () => {
                 let maxScore = 0;
                 let detected = "";
 
-                // Calcular scores
                 for (const item of itemsToTrack) {
                     const itemBase = vocalModels.find(
                         (v: VocalModel) => v.vocal === item
@@ -305,7 +366,6 @@ const VocalPracticePage = () => {
         }
     }, [handleResults]);
 
-    // Efecto para controlar el inicio/detención del temporizador basado en la precisión
     useEffect(() => {
         if (!selectedLetter) return;
 
@@ -318,7 +378,6 @@ const VocalPracticePage = () => {
             ? unlockedVowels.includes(nextVowel)
             : true;
 
-        // Condición para que el temporizador esté activo
         const shouldBeActive =
             isTargetDetected &&
             currentScore >= 88 &&
@@ -326,7 +385,6 @@ const VocalPracticePage = () => {
             !isNextVowelAlreadyUnlocked &&
             !justUnlockedVowel;
 
-        // Iniciar el temporizador si debe estar activo y no está corriendo
         if (shouldBeActive && unlockTimerRef.current === null) {
             console.log("✅ Iniciando temporizador de desbloqueo");
             setSecondsRemainingForUnlock(5);
@@ -334,13 +392,11 @@ const VocalPracticePage = () => {
             unlockTimerRef.current = setInterval(() => {
                 setSecondsRemainingForUnlock((prev: number | null) => {
                     if (prev === null || prev <= 1) {
-                        // Detener el intervalo
                         if (unlockTimerRef.current) {
                             clearInterval(unlockTimerRef.current);
                             unlockTimerRef.current = null;
                         }
 
-                        // Desbloquear la vocal
                         if (prev === 1) {
                             const nextVowelIndex = currentIndex + 1;
                             if (nextVowelIndex < vocals.length) {
@@ -365,7 +421,6 @@ const VocalPracticePage = () => {
                 });
             }, 1000);
         }
-        // Detener el temporizador si no debe estar activo pero está corriendo
         else if (!shouldBeActive && unlockTimerRef.current !== null) {
             console.log("⏹️ Deteniendo temporizador (precisión < 90%)");
             clearInterval(unlockTimerRef.current);
@@ -380,7 +435,6 @@ const VocalPracticePage = () => {
         justUnlockedVowel,
     ]);
 
-    // Efecto de limpieza cuando el componente se desmonta o cambia la letra seleccionada
     useEffect(() => {
         return () => {
             if (unlockTimerRef.current) {
@@ -390,7 +444,6 @@ const VocalPracticePage = () => {
         };
     }, [selectedLetter]);
 
-    // Resetear justUnlockedVowel cuando la letra seleccionada cambia
     useEffect(() => {
         setJustUnlockedVowel(null);
     }, [selectedLetter]);
@@ -433,7 +486,6 @@ const VocalPracticePage = () => {
 
     return (
         <section className="p-5 w-full">
-            {/* Popup de desbloqueo */}
             {justUnlockedVowel && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-xl p-6 max-w-sm w-full mx-4 shadow-2xl">
@@ -449,14 +501,22 @@ const VocalPracticePage = () => {
                             </p>
                             <div className="flex flex-col gap-3">
                                 <button
-                                    onClick={() => {
-                                        // Usamos navigate para una navegación de cliente más suave.
-                                        // Esto cambiará la URL y el parámetro 'vocal'.
-                                        navigate(`/vocales-practica/${justUnlockedVowel.toLowerCase()}`);
+                                    onClick={async () => {
+                                        if (!user) {
+                                            console.error("Usuario no autenticado");
+                                            closePopup();
+                                            return;
+                                        }
+
+                                        const success = await completarLetra(user.id, justUnlockedVowel, vocales);
+
+                                        if (success) {
+                                            navigate(`/vocales-practica/${justUnlockedVowel.toLowerCase()}`);
+                                        } else {
+                                            console.error("No se pudo completar la letra");
+                                        }
+
                                         closePopup();
-                                        // La línea window.location.href ha sido eliminada
-                                        // porque causaba una recarga completa de la página,
-                                        // anulando la navegación de React Router.
                                     }}
                                     className="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300 text-center"
                                 >
@@ -475,13 +535,11 @@ const VocalPracticePage = () => {
             )}
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                {/* Left: Camera and Detection Display */}
                 <div className="vocal-practice-container">
                     <h2 className="text-xl font-semibold mb-3 text-gray-800">
                         Práctica de Vocal {selectedLetter.toUpperCase()}
                     </h2>
 
-                    {/* Hand Detection Status */}
                     <div className="mb-3 flex gap-2">
                         <div className={`p-3 rounded-lg flex items-center flex-1 ${
                             detectedLetter ? 'bg-green-50 border-2 border-green-300' : 'bg-red-50 border-2 border-red-300'
@@ -497,7 +555,6 @@ const VocalPracticePage = () => {
                         </div>
                     </div>
 
-                    {/* Camera Feed */}
                     <div className="vocal-practice-camera">
                         <video
                             ref={videoRef}
@@ -518,13 +575,11 @@ const VocalPracticePage = () => {
                     </div>
                 </div>
 
-                {/* Right: Target Vocal and Progress */}
                 <div className="vocal-practice-container">
                     <h2 className="text-lg font-semibold mb-2 text-gray-800">
                         Vocal Objetivo
                     </h2>
 
-                    {/* Target Vocal Card */}
                     <div className="vocal-target-card mb-4">
                         <div className="vocal-practice-sign-card">
                             <img
@@ -537,7 +592,6 @@ const VocalPracticePage = () => {
               </span>
                         </div>
 
-                        {/* Precision Bar */}
                         <div className="w-full mt-4">
                             <div className="flex justify-between items-center mb-2">
                 <span className="font-medium text-gray-700 text-sm">
@@ -558,7 +612,6 @@ const VocalPracticePage = () => {
                         </div>
                     </div>
 
-                    {/* Detection Display */}
                     <div className="vocal-target-card mb-4">
                         <h3 className="text-base font-semibold text-gray-700 mb-3">
                             Mano Detectada
@@ -575,7 +628,6 @@ const VocalPracticePage = () => {
             </span>
                     </div>
 
-                    {/* Progress Section */}
                     <div className="vocal-target-card mb-4">
                         <h3 className="text-base font-semibold text-gray-700 mb-3">
                             Progreso de Desbloqueo
@@ -642,7 +694,6 @@ const VocalPracticePage = () => {
                         )}
                     </div>
 
-                    {/* Scores Grid */}
                     <div className="vocal-target-card">
                         <h3 className="text-base font-semibold text-gray-700 mb-3">
                             Malla de Scores
