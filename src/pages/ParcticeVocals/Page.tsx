@@ -91,8 +91,6 @@ const VocalPracticePage = () => {
     // eslint-disable-next-line
     const cameraRef = useRef<any>(null);
 
-    // Se eliminaron: detectedLetterRef, previousLeftHandClosedRef, lastWriteTimeRef
-
     // Estado para la página (usando un valor por defecto seguro)
     const { vocal: selectedLetterParam } = useParams<{ vocal: string }>();
     const selectedLetter =
@@ -108,46 +106,53 @@ const VocalPracticePage = () => {
 
     const [scores, setScores] = useState<Record<string, string>>(initialScores);
     const [detectedLetter, setDetectedLetter] = useState("");
-    const [highestScore, setHighestScore] = useState(0); // Máximo score detectado
-    const [isReady, setIsReady] = useState(false); // Estado para indicar que MediaPipe está cargado
-    // Se eliminó: const [progress, setProgress] = useState(0); // Antiguo estado de progreso
+    const [highestScore, setHighestScore] = useState(0);
+    const [isReady, setIsReady] = useState(false);
 
     // Nuevos estados para la lógica de desbloqueo de vocales
-    const [unlockedVowels, setUnlockedVowels] = useState<string[]>(["a"]); // 'a' es la vocal inicial desbloqueada
-    const [secondsRemainingForUnlock, setSecondsRemainingForUnlock] = useState<
-        number | null
-    >(null); // Referencia para el temporizador de desbloqueo
-    const unlockTimerRef = useRef<NodeJS.Timeout | null>(null); // Referencia para el ID del intervalo del temporizador
-    const [justUnlockedVowel, setJustUnlockedVowel] = useState<string | null>(
-        null
-    ); // Nuevo estado para la vocal recién desbloqueada
+    const [unlockedVowels, setUnlockedVowels] = useState<string[]>(["a"]);
+    const [secondsRemainingForUnlock, setSecondsRemainingForUnlock] = useState<number | null>(null);
+    const unlockTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const [justUnlockedVowel, setJustUnlockedVowel] = useState<string | null>(null);
 
     // ====================================================================
     // III. HANDLER PRINCIPAL DE MEDIAPIPE (Solo Detección Mano Derecha)
     // ====================================================================
     const handleResults = useCallback(
         (results: Results) => {
-            const canvasCtx = canvasRef.current?.getContext("2d");
-            if (!canvasCtx || !canvasRef.current) return;
+            const canvas = canvasRef.current;
+            const video = videoRef.current;
+            if (!canvas || !video) return;
 
-            // Ajustar canvas a las dimensiones reales del video
-            if (
-                videoRef.current &&
-                (canvasRef.current.width !== videoRef.current.videoWidth ||
-                    canvasRef.current.height !== videoRef.current.videoHeight)
-            ) {
-                canvasRef.current.width = videoRef.current.videoWidth;
-                canvasRef.current.height = videoRef.current.videoHeight;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
+
+            // Mantener dimensiones fijas para el canvas
+            const canvasWidth = 640;
+            const canvasHeight = 480;
+
+            if (canvas.width !== canvasWidth || canvas.height !== canvasHeight) {
+                canvas.width = canvasWidth;
+                canvas.height = canvasHeight;
             }
 
-            canvasCtx.clearRect(
-                0,
-                0,
-                canvasRef.current.width,
-                canvasRef.current.height
-            );
+// Limpiar canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+// Dibujar video sin efecto espejo
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
             let rightHandLandmarks = null;
+
+            // Definir conexiones de la mano
+            const HAND_CONNECTIONS = [
+                [0, 1], [1, 2], [2, 3], [3, 4], // Pulgar
+                [0, 5], [5, 6], [6, 7], [7, 8], // Índice
+                [0, 9], [9, 10], [10, 11], [11, 12], // Medio
+                [0, 13], [13, 14], [14, 15], [15, 16], // Anular
+                [0, 17], [17, 18], [18, 19], [19, 20], // Meñique
+                [5, 9], [9, 13], [13, 17] // Conexiones entre dedos
+            ];
 
             // 1. Separar y dibujar la mano derecha (Detección)
             if (results.multiHandLandmarks && results.multiHandedness) {
@@ -160,30 +165,32 @@ const VocalPracticePage = () => {
                     const isUserRightHand = detectedHandedness === "Left";
 
                     if (isUserRightHand) {
-                        // Configuración para visualización de la mano
-                        const connectionColor = "#f2994a"; // Naranja para las conexiones
-                        const landmarkColor = "#215c5c"; // Azul oscuro para los puntos
+                        // Dibujar conexiones
+                        ctx.strokeStyle = '#f2994a';
+                        ctx.lineWidth = 2;
 
-                        // Dibujar las conexiones de la mano
-                        window.drawConnectors(
-                            canvasCtx,
-                            handLandmarks,
-                            window.HAND_CONNECTIONS,
-                            {
-                                color: connectionColor,
-                                lineWidth: 2,
-                            }
-                        );
+                        for (const [start, end] of HAND_CONNECTIONS) {
+                            const startPoint = handLandmarks[start];
+                            const endPoint = handLandmarks[end];
+                            ctx.beginPath();
+                            ctx.moveTo(startPoint.x * canvas.width, startPoint.y * canvas.height);
+                            ctx.lineTo(endPoint.x * canvas.width, endPoint.y * canvas.height);
+                            ctx.stroke();
+                        }
 
-                        // Dibujar los puntos de referencia
-                        window.drawLandmarks(canvasCtx, handLandmarks, {
-                            color: landmarkColor,
-                            lineWidth: 1,
-                        });
+                        // Dibujar puntos de landmarks
+                        ctx.fillStyle = '#215c5c';
+                        for (const landmark of handLandmarks) {
+                            ctx.beginPath();
+                            ctx.arc(
+                                landmark.x * canvas.width,
+                                landmark.y * canvas.height,
+                                3, 0, 2 * Math.PI
+                            );
+                            ctx.fill();
+                        }
 
                         rightHandLandmarks = handLandmarks;
-                        // Si encontramos la mano derecha, podemos detener el bucle o seguir si es necesario,
-                        // pero solo nos interesa el primer match de la mano correcta.
                     }
                 }
             }
@@ -196,7 +203,7 @@ const VocalPracticePage = () => {
                 let maxScore = 0;
                 let detected = "";
 
-                // Calcular scores, solo para los elementos que estamos rastreando (Vowels + Special)
+                // Calcular scores
                 for (const item of itemsToTrack) {
                     const itemBase = vocalModels.find(
                         (v: VocalModel) => v.vocal === item
@@ -224,9 +231,6 @@ const VocalPracticePage = () => {
                 setDetectedLetter("");
                 setHighestScore(0);
             }
-
-            // 3. Se eliminó el procesamiento de la mano izquierda (Trigger de escritura).
-            // Esto garantiza que el flujo de video no se interrumpe y la malla no se congela.
         },
         [vocalModels, initialScores]
     );
@@ -248,12 +252,8 @@ const VocalPracticePage = () => {
                     `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
             });
 
-            // Importante: maxNumHands se puede reducir a 1 si solo quieres detectar la derecha,
-            // pero se mantiene en 2 por si tienes modelos duales en el futuro, aunque la lógica
-            // de handleResults solo procesa la mano derecha. Para esta vista, lo dejaremos en 1
-            // para optimizar ligeramente, ya que el usuario solo quiere una malla.
             handsRef.current.setOptions({
-                maxNumHands: 1, // Se ajusta a 1, ya que solo procesamos la mano de detección/score
+                maxNumHands: 1,
                 modelComplexity: 1,
                 minDetectionConfidence: 0.7,
                 minTrackingConfidence: 0.7,
@@ -323,7 +323,7 @@ const VocalPracticePage = () => {
         // Condición para que el temporizador esté activo
         const shouldBeActive =
             isTargetDetected &&
-            currentScore >= 90 &&
+            currentScore >= 88 &&
             !isLastVowel &&
             !isNextVowelAlreadyUnlocked &&
             !justUnlockedVowel;
@@ -334,7 +334,7 @@ const VocalPracticePage = () => {
             setSecondsRemainingForUnlock(10);
 
             unlockTimerRef.current = setInterval(() => {
-                setSecondsRemainingForUnlock((prev) => {
+                setSecondsRemainingForUnlock((prev: number | null) => {
                     if (prev === null || prev <= 1) {
                         // Detener el intervalo
                         if (unlockTimerRef.current) {
@@ -392,16 +392,13 @@ const VocalPracticePage = () => {
         };
     }, [selectedLetter]);
 
-    // Nuevo useEffect para resetear justUnlockedVowel cuando la letra seleccionada cambia
-    // Esto asegura que el mensaje de desbloqueo no persista si el usuario cambia de vocal manualmente.
+    // Resetear justUnlockedVowel cuando la letra seleccionada cambia
     useEffect(() => {
         setJustUnlockedVowel(null);
     }, [selectedLetter]);
 
-    // Se eliminó la función clearText
-
     // ====================================================================
-    // V. FUNCIONES DE DISPLAY Y RENDERIZADO (Diseño limpio)
+    // V. FUNCIONES DE DISPLAY Y RENDERIZADO
     // ====================================================================
 
     const getItemColor = (
@@ -409,7 +406,6 @@ const VocalPracticePage = () => {
         isDetected: boolean = false,
         isSelected: boolean = false
     ) => {
-        // Paleta de colores para las vocales (A, E, I, O, U)
         const colors = [
             "text-red-600",
             "text-blue-600",
@@ -417,7 +413,7 @@ const VocalPracticePage = () => {
             "text-purple-600",
             "text-amber-600",
         ];
-        const index = vocals.indexOf(item); // 0 a 4
+        const index = vocals.indexOf(item);
 
         if (isDetected && isSelected) return "text-green-600";
         if (isDetected) return "text-black";
@@ -433,7 +429,6 @@ const VocalPracticePage = () => {
 
     const selectedVocalImg = vocalImages[selectedLetter] || vocalImages.a;
 
-    // Función para cerrar el popup
     const closePopup = () => {
         setJustUnlockedVowel(null);
     };
@@ -503,7 +498,7 @@ const VocalPracticePage = () => {
                     <div className="vocal-practice-camera">
                         <video
                             ref={videoRef}
-                            className="vocal-practice-video"
+                            className="hidden"
                             autoPlay
                             playsInline
                             muted
@@ -560,7 +555,7 @@ const VocalPracticePage = () => {
                         </div>
                     </div>
 
-                    {/* Detection Display - Nueva Posición */}
+                    {/* Detection Display */}
                     <div className="vocal-target-card mb-4">
                         <h3 className="text-base font-semibold text-gray-700 mb-3">
                             Mano Detectada
@@ -577,7 +572,7 @@ const VocalPracticePage = () => {
             </span>
                     </div>
 
-                    {/* Progress Section - Nueva Posición */}
+                    {/* Progress Section */}
                     <div className="vocal-target-card mb-4">
                         <h3 className="text-base font-semibold text-gray-700 mb-3">
                             Progreso de Desbloqueo
