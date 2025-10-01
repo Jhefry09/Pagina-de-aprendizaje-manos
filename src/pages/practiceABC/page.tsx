@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { useParams } from "react-router-dom"; // Se mantiene por si se usa en el futuro, pero no se usa en la lógica actual
+import { useParams, useNavigate } from "react-router-dom"; // Se agrega useNavigate
 import { useVocalContext } from "../../hooks/useVocalContext";
 import {
     type VocalModel,
@@ -7,8 +7,54 @@ import {
     type Results,
     type MediaPipeHandsInstance,
 } from "../../types";
-import "./VocalPractice.css"; // Se mantiene el CSS original
-import { useAuthLogic } from "../../hooks/useAuthLogic.ts"; // Se mantiene por si se usa en el futuro
+import "./VocalPractice.css";
+import { useAuthLogic } from "../../hooks/useAuthLogic.ts"; // Se descomenta para usar el usuario
+
+// Interfaz para los datos de las letras del backend (similar a VocalData)
+interface LetterData {
+    id: number;
+    vocal: string; // Se mantiene 'vocal' como nombre de campo en el backend, pero representa una letra
+    vectoresJson: string;
+    contadorModificaciones: number;
+}
+
+// Función para completar una letra (adaptada de completarLetra de VocalPractice.tsx)
+async function completarLetra(usuarioId: number, letter: string, letters: LetterData[]) {
+    const encontrada = letters.find(
+        (l) => l.vocal.toLowerCase() === letter.toLowerCase()
+    );
+
+    if (!encontrada) {
+        console.error("No se encontró la letra:", letter);
+        return false;
+    }
+
+    const letterId = encontrada.id;
+
+    try {
+        const response = await fetch("/api/progreso/completar", { // Asumiendo la misma API
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                usuarioId,
+                vocalId: letterId, // El backend espera 'vocalId' aunque sea una letra
+            }),
+        });
+
+        if (response.ok) {
+            console.log("Letra completada exitosamente:", letter);
+            return true;
+        } else {
+            console.error("Error al completar letra:", response.status);
+            return false;
+        }
+    } catch (error) {
+        console.error("Error en la petición:", error);
+        return false;
+    }
+}
 
 // ====================================================================
 // I. HELPERS (Funciones auxiliares - Copiadas de VocalPractice.tsx)
@@ -65,10 +111,6 @@ const compareHands = (
 // II. COMPONENTE PRINCIPAL
 // ====================================================================
 
-// === LÓGICA DE IMÁGENES (Basada en el código de referencia) ===
-// NOTA: Asume que las imágenes del abecedario están en la misma estructura que en el código de referencia:
-// "../../assets/abecedario/*-sena.png"
-
 // Cargar todas las imágenes de src/assets/abecedario
 const images = import.meta.glob("../../assets/abecedario/*-sena.png", { eager: true }) as Record<
     string,
@@ -84,20 +126,23 @@ function getImage(letter: string) {
 }
 
 // Generamos el array completo del abecedario (A-Z) para la detección
-const alphabet = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'];
-// Se elimina 'espacio' y 'borrar' para simplificar al foco de las letras.
+const alphabet = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'ñ', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']; // Se agrega 'ñ'
 const itemsToTrack = [...alphabet];
 
 const AlphabetPracticePage = () => {
     const { vocalModels } = useVocalContext();
-    // const { user } = useAuthLogic(); // Se mantiene por si se usa en el futuro
+    const { user } = useAuthLogic(); // Se usa el hook de autenticación
     const videoRef = useRef<HTMLVideoElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const handsRef = useRef<MediaPipeHandsInstance | null>(null);
     // eslint-disable-next-line
     const cameraRef = useRef<any>(null);
+    const navigate = useNavigate(); // Se inicializa useNavigate
 
-    // Estado para la letra actual de práctica (se usa el primer elemento por defecto)
+    // Estado para almacenar las letras del backend
+    const [letters, setLetters] = useState<LetterData[]>([]);
+
+    // Estado para la letra actual de práctica
     const { vocal: selectedLetterParam } = useParams<{ vocal: string }>();
     const defaultLetter = alphabet[0]; // 'a'
     const selectedLetter =
@@ -114,8 +159,37 @@ const AlphabetPracticePage = () => {
     const [detectedLetter, setDetectedLetter] = useState("");
     const [highestScore, setHighestScore] = useState(0);
     const [isReady, setIsReady] = useState(false);
-    
-    // Se elimina toda la lógica de 'vocales', 'desbloqueo', 'timers' y 'popups'
+
+    // Nuevos estados para la lógica de desbloqueo de letras (adaptados de vocales)
+    const [unlockedLetters, setUnlockedLetters] = useState<string[]>(["a"]); // 'a' siempre desbloqueada
+    const [secondsRemainingForUnlock, setSecondsRemainingForUnlock] = useState<number | null>(null);
+    const unlockTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const [justUnlockedLetter, setJustUnlockedLetter] = useState<string | null>(null);
+    // Nuevo estado para indicar que todas las letras han sido completadas
+    const [allLettersCompleted, setAllLettersCompleted] = useState<boolean>(false);
+
+
+    // ====================================================================
+    // Efecto para cargar las letras desde el backend (adaptado de vocales)
+    // ====================================================================
+    useEffect(() => {
+        const fetchLetters = async () => {
+            try {
+                const response = await fetch("/api/vocales"); // Asumiendo que la API de letras es la misma o similar
+                if (response.ok) {
+                    const data = await response.json();
+                    setLetters(data);
+                    console.log("Letras cargadas:", data);
+                } else {
+                    console.error("Error al cargar letras:", response.status);
+                }
+            } catch (error) {
+                console.error("Error en la petición de letras:", error);
+            }
+        };
+
+        fetchLetters();
+    }, []);
 
     // ====================================================================
     // III. HANDLER PRINCIPAL DE MEDIAPIPE (Solo Detección Mano Derecha)
@@ -308,7 +382,97 @@ const AlphabetPracticePage = () => {
         }
     }, [handleResults]);
 
-    // Se elimina todo el useEffect de la lógica de desbloqueo de vocales
+    // ====================================================================
+    // Lógica de desbloqueo y progreso (adaptada de VocalPractice.tsx)
+    // ====================================================================
+    useEffect(() => {
+        if (!selectedLetter) return;
+
+        const currentScore = parseFloat(scores[selectedLetter] || "0.0");
+        const isTargetDetected = detectedLetter === selectedLetter;
+        const currentIndex = alphabet.indexOf(selectedLetter);
+        const isLastLetter = currentIndex === alphabet.length - 1;
+        const nextLetter = !isLastLetter ? alphabet[currentIndex + 1] : null;
+        const isNextLetterAlreadyUnlocked = nextLetter
+            ? unlockedLetters.includes(nextLetter)
+            : true;
+
+        const shouldBeActive =
+            isTargetDetected &&
+            currentScore >= 88 &&
+            !justUnlockedLetter &&
+            (isLastLetter || !isNextLetterAlreadyUnlocked);
+
+        if (shouldBeActive && unlockTimerRef.current === null) {
+            console.log("✅ Iniciando temporizador de desbloqueo/completado");
+            setSecondsRemainingForUnlock(5); // 5 segundos para completar
+
+            unlockTimerRef.current = setInterval(() => {
+                setSecondsRemainingForUnlock((prev: number | null) => {
+                    if (prev === null || prev <= 1) {
+                        if (unlockTimerRef.current) {
+                            clearInterval(unlockTimerRef.current);
+                            unlockTimerRef.current = null;
+                        }
+
+                        if (prev === 1) {
+                            if (isLastLetter) {
+                                console.log("🎉 ¡Todas las letras completadas!");
+                                setAllLettersCompleted(true);
+                            } else {
+                                const nextLetterIndex = currentIndex + 1;
+                                if (nextLetterIndex < alphabet.length) {
+                                    const nextLetterToUnlock = alphabet[nextLetterIndex];
+                                    console.log("🎉 Desbloqueando letra:", nextLetterToUnlock);
+
+                                    setUnlockedLetters((prevUnlocked) => {
+                                        if (!prevUnlocked.includes(nextLetterToUnlock)) {
+                                            return [...prevUnlocked, nextLetterToUnlock];
+                                        }
+                                        return prevUnlocked;
+                                    });
+
+                                    setJustUnlockedLetter(nextLetterToUnlock);
+                                }
+                            }
+                        }
+                        return 0;
+                    }
+
+                    console.log("⏱️ Segundos restantes:", prev - 1);
+                    return prev - 1;
+                });
+            }, 1000);
+        }
+        else if (!shouldBeActive && unlockTimerRef.current !== null) {
+            console.log("⏹️ Deteniendo temporizador (precisión < 88% o no detectado)");
+            clearInterval(unlockTimerRef.current);
+            unlockTimerRef.current = null;
+            setSecondsRemainingForUnlock(null);
+        }
+    }, [
+        scores[selectedLetter],
+        selectedLetter,
+        detectedLetter,
+        unlockedLetters,
+        justUnlockedLetter,
+        allLettersCompleted,
+        alphabet, // Añadir al array de dependencias
+    ]);
+
+    useEffect(() => {
+        return () => {
+            if (unlockTimerRef.current) {
+                clearInterval(unlockTimerRef.current);
+                unlockTimerRef.current = null;
+            }
+        };
+    }, [selectedLetter]);
+
+    useEffect(() => {
+        setJustUnlockedLetter(null);
+        setAllLettersCompleted(false); // Resetear al cambiar de letra
+    }, [selectedLetter]);
 
     // ====================================================================
     // V. FUNCIONES DE DISPLAY Y RENDERIZADO
@@ -320,7 +484,6 @@ const AlphabetPracticePage = () => {
         isDetected: boolean = false,
         isSelected: boolean = false
     ) => {
-        // Colores de ejemplo para las letras objetivo (para que se vea diferente)
         const colors = [
             "text-red-600",
             "text-blue-600",
@@ -329,7 +492,7 @@ const AlphabetPracticePage = () => {
             "text-amber-600",
             "text-cyan-600",
         ];
-        const index = itemsToTrack.indexOf(item); // Usar itemsToTrack (el alfabeto)
+        const index = itemsToTrack.indexOf(item);
 
         if (isDetected && isSelected) return "text-green-600";
         if (isDetected) return "text-black";
@@ -338,17 +501,122 @@ const AlphabetPracticePage = () => {
     };
 
     const getDisplayName = (item: string) => {
-        // En el alfabeto solo son letras, no hay acciones especiales
         return item.toUpperCase();
     };
 
     const selectedLetterImg = getImage(selectedLetter);
 
-    // Se elimina closePopup y el JSX del popup de desbloqueo
+    const closePopup = () => {
+        setJustUnlockedLetter(null);
+        setAllLettersCompleted(false);
+    };
 
     return (
         <section className="p-5 w-full">
-            {/* Se elimina el popup de justUnlockedVowel */}
+            {/* Popup para letra desbloqueada */}
+            {justUnlockedLetter && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-xl p-6 max-w-sm w-full mx-4 shadow-2xl">
+                        <div className="text-center">
+                            <h3 className="text-2xl font-bold text-green-600 mb-2">
+                                ¡Nueva letra desbloqueada!
+                            </h3>
+                            <p className="text-gray-700 mb-6">
+                                Has desbloqueado la letra{" "}
+                                <span className="font-bold text-3xl text-amber-600">
+                                    {justUnlockedLetter.toUpperCase()}
+                                </span>
+                            </p>
+                            <div className="flex flex-col gap-3">
+                                <button
+                                    onClick={async () => {
+                                        if (!user) {
+                                            console.error("Usuario no autenticado");
+                                            closePopup();
+                                            return;
+                                        }
+
+                                        // Completar la letra ACTUAL (la que se estuvo practicando)
+                                        const success = await completarLetra(user.id, selectedLetter, letters);
+
+                                        if (success) {
+                                            navigate(`/abecedario-practica/${justUnlockedLetter.toLowerCase()}`);
+                                        } else {
+                                            console.error("No se pudo completar la letra");
+                                        }
+
+                                        closePopup();
+                                    }}
+                                    className="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300 text-center"
+                                >
+                                    Practicar '{justUnlockedLetter.toUpperCase()}'
+                                </button>
+                                <button
+                                    onClick={async () => {
+                                        if (!user) {
+                                            console.error("Usuario no autenticado");
+                                            closePopup();
+                                            return;
+                                        }
+
+                                        // Completar la letra ACTUAL (la que se estuvo practicando)
+                                        const success = await completarLetra(user.id, selectedLetter, letters);
+                                        if (success) {
+                                            console.log("Letra completada exitosamente:", selectedLetter);
+                                        } else {
+                                            console.error("No se pudo completar la letra");
+                                        }
+
+                                        closePopup();
+                                    }}
+                                    className="text-gray-600 hover:text-gray-800 font-medium py-2"
+                                >
+                                    Seguir practicando
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Nuevo Popup de felicitación por completar todas las letras */}
+            {allLettersCompleted && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-xl p-6 max-w-sm w-full mx-4 shadow-2xl">
+                        <div className="text-center">
+                            <h3 className="text-2xl font-bold text-purple-600 mb-2">
+                                ¡Felicidades!
+                            </h3>
+                            <p className="text-gray-700 mb-6">
+                                Has completado la práctica de todas las letras del abecedario. ¡Excelente trabajo!
+                            </p>
+                            <button
+                                onClick={async () => {
+                                    if (!user) {
+                                        console.error("Usuario no autenticado");
+                                        closePopup();
+                                        return;
+                                    }
+
+                                    // Completar la última letra (ej. 'z')
+                                    const success = await completarLetra(user.id, selectedLetter, letters);
+                                    if (success) {
+                                        console.log(`Letra '${selectedLetter}' completada exitosamente.`);
+                                    } else {
+                                        console.error(`No se pudo completar la letra '${selectedLetter}'.`);
+                                    }
+
+                                    closePopup();
+                                    navigate("/abecedario"); // Navegar a la página principal del abecedario
+                                }}
+                                className="bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300 text-center"
+                            >
+                                Volver al Abecedario
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                 {/* Panel Izquierdo: Cámara y Detección */}
@@ -452,14 +720,82 @@ const AlphabetPracticePage = () => {
                         </span>
                     </div>
 
-                    {/* Se elimina el card de "Progreso de Desbloqueo" */}
+                    {/* Card de "Progreso de Desbloqueo" (adaptado de vocales) */}
+                    <div className="vocal-target-card mb-4">
+                        <h3 className="text-base font-semibold text-gray-700 mb-3">
+                            Progreso de Desbloqueo
+                        </h3>
+                        {secondsRemainingForUnlock !== null &&
+                        secondsRemainingForUnlock > 0 ? (
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 w-full">
+                                <p className="text-sm font-medium text-blue-800 mb-2">
+                                    {selectedLetter === alphabet[alphabet.length - 1]
+                                        ? '¡Mantén la posición para completar todo el abecedario!'
+                                        : '¡Mantén la posición para desbloquear la siguiente letra!'}
+                                </p>
+                                <div className="flex items-center justify-center space-x-2">
+                                    <div className="relative w-full max-w-xs h-4 bg-gray-200 rounded-full overflow-hidden">
+                                        <div
+                                            className="absolute top-0 left-0 h-full bg-blue-500 transition-all duration-1000 ease-linear"
+                                            style={{
+                                                width: `${(secondsRemainingForUnlock / 5) * 100}%`,
+                                            }}
+                                        ></div>
+                                    </div>
+                                    <span className="text-sm font-bold text-blue-700 w-8 text-center">
+                                        {secondsRemainingForUnlock}s
+                                    </span>
+                                </div>
+                                <p className="text-xs text-blue-600 mt-1">
+                                    Progreso:{" "}
+                                    {Math.round(((5 - secondsRemainingForUnlock) / 5) * 100)}%
+                                </p>
+                            </div>
+                        ) : secondsRemainingForUnlock === 0 ? (
+                            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
+                                <p className="font-medium">
+                                    {selectedLetter === alphabet[alphabet.length - 1] ? '¡Felicidades, has completado la última letra!' : '¡Listo para desbloquear!'}
+                                </p>
+                                <p className="text-sm">
+                                    {selectedLetter === alphabet[alphabet.length - 1] ? 'Un momento...' : 'Mantén la posición un momento más...'}
+                                </p>
+                            </div>
+                        ) : (
+                            (() => {
+                                const currentIndex = alphabet.indexOf(selectedLetter);
+                                const nextLetterIndex = currentIndex + 1;
+                                if (nextLetterIndex < alphabet.length) {
+                                    const nextLetter = alphabet[nextLetterIndex];
+                                    if (unlockedLetters.includes(nextLetter)) {
+                                        return (
+                                            <p className="text-sm text-green-600 font-bold">
+                                                ¡Letra '{nextLetter.toUpperCase()}' desbloqueada!
+                                            </p>
+                                        );
+                                    } else {
+                                        return (
+                                            <p className="text-sm text-gray-500">
+                                                Practica '{selectedLetter.toUpperCase()}' para
+                                                desbloquear '{nextLetter.toUpperCase()}'
+                                            </p>
+                                        );
+                                    }
+                                } else {
+                                    return (
+                                        <p className="text-sm text-green-600 font-bold">
+                                            ¡Todas las letras desbloqueadas!
+                                        </p>
+                                    );
+                                }
+                            })()
+                        )}
+                    </div>
 
                     <div className="vocal-target-card">
                         <h3 className="text-base font-semibold text-gray-700 mb-3">
                             Malla de Scores (Abecedario)
                         </h3>
-                        {/* Se ajusta a un grid más grande para el alfabeto */}
-                        <div className="grid grid-cols-6 gap-2"> 
+                        <div className="grid grid-cols-6 gap-2">
                             {itemsToTrack.map((item) => (
                                 <div
                                     key={item}

@@ -162,6 +162,9 @@ const VocalPracticePage = () => {
     const [secondsRemainingForUnlock, setSecondsRemainingForUnlock] = useState<number | null>(null);
     const unlockTimerRef = useRef<NodeJS.Timeout | null>(null);
     const [justUnlockedVowel, setJustUnlockedVowel] = useState<string | null>(null);
+    // Nuevo estado para indicar que todas las vocales han sido completadas
+    const [allVowelsCompleted, setAllVowelsCompleted] = useState<boolean>(false);
+
 
     // ====================================================================
     // Efecto para cargar las vocales desde el backend
@@ -372,22 +375,27 @@ const VocalPracticePage = () => {
         const currentScore = parseFloat(scores[selectedLetter] || "0.0");
         const isTargetDetected = detectedLetter === selectedLetter;
         const currentIndex = vocals.indexOf(selectedLetter);
-        const isLastVowel = currentIndex === vocals.length - 1;
+        const isLastVowel = currentIndex === vocals.length - 1; // true si es 'u'
         const nextVowel = !isLastVowel ? vocals[currentIndex + 1] : null;
         const isNextVowelAlreadyUnlocked = nextVowel
             ? unlockedVowels.includes(nextVowel)
-            : true;
+            : true; // Si es la última vocal, se considera "desbloqueada" para no activar el temporizador de desbloqueo de la siguiente
 
+        // El temporizador debe activarse si:
+        // 1. La vocal objetivo es detectada
+        // 2. La precisión es >= 88%
+        // 3. No se ha desbloqueado una vocal recientemente (para evitar múltiples popups)
+        // 4. Si no es la última vocal, la siguiente no debe estar ya desbloqueada.
+        // 5. Si es la última vocal ('u'), el temporizador debe activarse para "completar" la práctica.
         const shouldBeActive =
             isTargetDetected &&
             currentScore >= 88 &&
-            !isLastVowel &&
-            !isNextVowelAlreadyUnlocked &&
-            !justUnlockedVowel;
+            !justUnlockedVowel &&
+            (isLastVowel || !isNextVowelAlreadyUnlocked); // Modificación aquí para incluir la última vocal
 
         if (shouldBeActive && unlockTimerRef.current === null) {
-            console.log("✅ Iniciando temporizador de desbloqueo");
-            setSecondsRemainingForUnlock(5);
+            console.log("✅ Iniciando temporizador de desbloqueo/completado");
+            setSecondsRemainingForUnlock(5); // 5 segundos para completar
 
             unlockTimerRef.current = setInterval(() => {
                 setSecondsRemainingForUnlock((prev: number | null) => {
@@ -398,19 +406,26 @@ const VocalPracticePage = () => {
                         }
 
                         if (prev === 1) {
-                            const nextVowelIndex = currentIndex + 1;
-                            if (nextVowelIndex < vocals.length) {
-                                const nextVowelToUnlock = vocals[nextVowelIndex];
-                                console.log("🎉 Desbloqueando vocal:", nextVowelToUnlock);
+                            if (isLastVowel) {
+                                // Si es la última vocal ('u'), se ha completado todo
+                                console.log("🎉 ¡Todas las vocales completadas!");
+                                setAllVowelsCompleted(true);
+                            } else {
+                                // Si no es la última vocal, desbloquear la siguiente
+                                const nextVowelIndex = currentIndex + 1;
+                                if (nextVowelIndex < vocals.length) {
+                                    const nextVowelToUnlock = vocals[nextVowelIndex];
+                                    console.log("🎉 Desbloqueando vocal:", nextVowelToUnlock);
 
-                                setUnlockedVowels((prevUnlocked) => {
-                                    if (!prevUnlocked.includes(nextVowelToUnlock)) {
-                                        return [...prevUnlocked, nextVowelToUnlock];
-                                    }
-                                    return prevUnlocked;
-                                });
+                                    setUnlockedVowels((prevUnlocked) => {
+                                        if (!prevUnlocked.includes(nextVowelToUnlock)) {
+                                            return [...prevUnlocked, nextVowelToUnlock];
+                                        }
+                                        return prevUnlocked;
+                                    });
 
-                                setJustUnlockedVowel(nextVowelToUnlock);
+                                    setJustUnlockedVowel(nextVowelToUnlock);
+                                }
                             }
                         }
                         return 0;
@@ -422,7 +437,7 @@ const VocalPracticePage = () => {
             }, 1000);
         }
         else if (!shouldBeActive && unlockTimerRef.current !== null) {
-            console.log("⏹️ Deteniendo temporizador (precisión < 90%)");
+            console.log("⏹️ Deteniendo temporizador (precisión < 88% o no detectado)");
             clearInterval(unlockTimerRef.current);
             unlockTimerRef.current = null;
             setSecondsRemainingForUnlock(null);
@@ -433,6 +448,7 @@ const VocalPracticePage = () => {
         detectedLetter,
         unlockedVowels,
         justUnlockedVowel,
+        allVowelsCompleted, // Añadir al array de dependencias
     ]);
 
     useEffect(() => {
@@ -446,6 +462,7 @@ const VocalPracticePage = () => {
 
     useEffect(() => {
         setJustUnlockedVowel(null);
+        setAllVowelsCompleted(false); // Resetear al cambiar de vocal
     }, [selectedLetter]);
 
     // ====================================================================
@@ -482,10 +499,12 @@ const VocalPracticePage = () => {
 
     const closePopup = () => {
         setJustUnlockedVowel(null);
+        setAllVowelsCompleted(false); // También cerrar el popup de felicitación
     };
 
     return (
         <section className="p-5 w-full">
+            {/* Popup para vocal desbloqueada */}
             {justUnlockedVowel && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-xl p-6 max-w-sm w-full mx-4 shadow-2xl">
@@ -496,8 +515,8 @@ const VocalPracticePage = () => {
                             <p className="text-gray-700 mb-6">
                                 Has desbloqueado la vocal{" "}
                                 <span className="font-bold text-3xl text-amber-600">
-                  {justUnlockedVowel.toUpperCase()}
-                </span>
+                                    {justUnlockedVowel.toUpperCase()}
+                                </span>
                             </p>
                             <div className="flex flex-col gap-3">
                                 <button
@@ -551,6 +570,45 @@ const VocalPracticePage = () => {
                 </div>
             )}
 
+            {/* Nuevo Popup de felicitación por completar todas las vocales */}
+            {allVowelsCompleted && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-xl p-6 max-w-sm w-full mx-4 shadow-2xl">
+                        <div className="text-center">
+                            <h3 className="text-2xl font-bold text-purple-600 mb-2">
+                                ¡Felicidades!
+                            </h3>
+                            <p className="text-gray-700 mb-6">
+                                Has completado la práctica de todas las vocales. ¡Excelente trabajo!
+                            </p>
+                            <button
+                                onClick={async () => {
+                                    if (!user) {
+                                        console.error("Usuario no autenticado");
+                                        closePopup();
+                                        return;
+                                    }
+
+                                    // Completar la vocal 'u'
+                                    const success = await completarLetra(user.id, selectedLetter, vocales);
+                                    if (success) {
+                                        console.log("Letra 'u' completada exitosamente.");
+                                    } else {
+                                        console.error("No se pudo completar la letra 'u'.");
+                                    }
+
+                                    closePopup();
+                                    navigate("/vocales"); // Navegar al inicio
+                                }}
+                                className="bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300 text-center"
+                            >
+                                Volver a vocales
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                 <div className="vocal-practice-container">
                     <h2 className="text-xl font-semibold mb-3 text-gray-800">
@@ -567,8 +625,8 @@ const VocalPracticePage = () => {
                             <span className={`font-semibold text-sm ${
                                 detectedLetter ? 'text-green-700' : 'text-red-700'
                             }`}>
-                {detectedLetter ? `✋ Detectado: ${getDisplayName(detectedLetter)}` : '⚠️ Mano derecha NO detectada'}
-              </span>
+                                {detectedLetter ? `✋ Detectado: ${getDisplayName(detectedLetter)}` : '⚠️ Mano derecha NO detectada'}
+                            </span>
                         </div>
                     </div>
 
@@ -605,18 +663,18 @@ const VocalPracticePage = () => {
                                 className="w-20 h-20 object-contain mb-2"
                             />
                             <span className="vocal-practice-sign-letter">
-                {selectedLetter.toUpperCase()}
-              </span>
+                                {selectedLetter.toUpperCase()}
+                            </span>
                         </div>
 
                         <div className="w-full mt-4">
                             <div className="flex justify-between items-center mb-2">
-                <span className="font-medium text-gray-700 text-sm">
-                  Precisión:
-                </span>
+                                <span className="font-medium text-gray-700 text-sm">
+                                    Precisión:
+                                </span>
                                 <span className="font-bold text-sm">
-                  {scores[selectedLetter] || "0.0"}%
-                </span>
+                                    {scores[selectedLetter] || "0.0"}%
+                                </span>
                             </div>
                             <div className="vocal-practice-precision-bar">
                                 <div
@@ -641,8 +699,8 @@ const VocalPracticePage = () => {
                             {detectedLetter ? getDisplayName(detectedLetter) : "Ninguna"}
                         </div>
                         <span className="text-base font-normal text-gray-500">
-              Precisión: {highestScore.toFixed(1)}%
-            </span>
+                            Precisión: {highestScore.toFixed(1)}%
+                        </span>
                     </div>
 
                     <div className="vocal-target-card mb-4">
@@ -653,7 +711,9 @@ const VocalPracticePage = () => {
                         secondsRemainingForUnlock > 0 ? (
                             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 w-full">
                                 <p className="text-sm font-medium text-blue-800 mb-2">
-                                    ¡Mantén la posición para desbloquear la siguiente vocal!
+                                    {selectedLetter === 'u'
+                                        ? '¡Mantén la posición para completar todas las vocales!'
+                                        : '¡Mantén la posición para desbloquear la siguiente vocal!'}
                                 </p>
                                 <div className="flex items-center justify-center space-x-2">
                                     <div className="relative w-full max-w-xs h-4 bg-gray-200 rounded-full overflow-hidden">
@@ -665,19 +725,21 @@ const VocalPracticePage = () => {
                                         ></div>
                                     </div>
                                     <span className="text-sm font-bold text-blue-700 w-8 text-center">
-                    {secondsRemainingForUnlock}s
-                  </span>
+                                        {secondsRemainingForUnlock}s
+                                    </span>
                                 </div>
                                 <p className="text-xs text-blue-600 mt-1">
                                     Progreso:{" "}
-                                    {Math.round(((10 - secondsRemainingForUnlock) / 10) * 100)}%
+                                    {Math.round(((5 - secondsRemainingForUnlock) / 5) * 100)}%
                                 </p>
                             </div>
                         ) : secondsRemainingForUnlock === 0 ? (
                             <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
-                                <p className="font-medium">¡Listo para desbloquear!</p>
+                                <p className="font-medium">
+                                    {selectedLetter === 'u' ? '¡Felicidades, has completado la "u"!' : '¡Listo para desbloquear!'}
+                                </p>
                                 <p className="text-sm">
-                                    Mantén la posición un momento más...
+                                    {selectedLetter === 'u' ? 'Un momento...' : 'Mantén la posición un momento más...'}
                                 </p>
                             </div>
                         ) : (
