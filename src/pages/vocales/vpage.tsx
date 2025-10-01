@@ -38,7 +38,7 @@ export default function Vocales() {
   };
 
   return (
-    <section className="min-h-screen bg-gray-50 flex flex-col items-center justify-start py-12 lg:py-16">
+    <section className="min-h- flex flex-col items-center justify-start py-12 lg:py-16">
       <div className="container mx-auto px-4 grid lg:grid-cols-3 gap-8">
         {/* Left Column - Content */}
         <div className="lg:col-span-2">
