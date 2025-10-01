@@ -136,10 +136,8 @@ const VocalPracticePage = () => {
                 canvas.height = canvasHeight;
             }
 
-// Limpiar canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-// Dibujar video sin efecto espejo
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
             let rightHandLandmarks = null;
@@ -589,7 +587,7 @@ const VocalPracticePage = () => {
                                         <div
                                             className="absolute top-0 left-0 h-full bg-blue-500 transition-all duration-1000 ease-linear"
                                             style={{
-                                                width: `${(secondsRemainingForUnlock / 10) * 100}%`,
+                                                width: `${(secondsRemainingForUnlock / 5) * 100}%`,
                                             }}
                                         ></div>
                                     </div>

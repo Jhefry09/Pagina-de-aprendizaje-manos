@@ -103,7 +103,7 @@ const Page = () => {
       description:
         "Domina las vocales en lengua de señas con ejercicios interactivos y prácticos.",
       color: "from-blue-400 to-blue-500",
-      icon: "/images/vocales.png",
+      icon: "vocales.png",
     },
     {
       id: "abecedario",
@@ -111,7 +111,7 @@ const Page = () => {
       description:
         "Aprende el abecedario en lengua de señas de forma fácil y divertida.",
       color: "from-teal-400 to-teal-500",
-      icon: "/images/abecedario.png",
+      icon: "abecedario.png",
     },
     {
       id: "numeros",
@@ -119,14 +119,14 @@ const Page = () => {
       description:
         "Aprende los números en lengua de señas y mejora tu comunicación.",
       color: "from-amber-400 to-amber-500",
-      icon: "/images/numeros.png",
+      icon: "numeros.png",
     },
     {
       id: "formar-palabras",
       title: "FORMAR PALABRAS",
       description: "Aprende a formar palabras completas en lengua de señas.",
       color: "from-indigo-400 to-indigo-500",
-      icon: "/images/palabras.png",
+      icon: "palabras.png",
     },
     {
       id: "operaciones-matematicas",
@@ -134,7 +134,7 @@ const Page = () => {
       description:
         "Aprende a realizar operaciones matemáticas en lengua de señas.",
       color: "from-purple-400 to-purple-500",
-      icon: "/images/operaciones-matematicas.png",
+      icon: "operaciones-matematicas.png",
     },
   ];
 
