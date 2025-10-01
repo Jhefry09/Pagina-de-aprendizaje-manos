@@ -27,7 +27,7 @@ async function completarLetra(usuarioId: number, vocal: string, vocales: VocalDa
         return false;
     }
 
-    const vocalId = (encontrada.id - 1);
+    const vocalId = encontrada.id;
 
     try {
         const response = await fetch("/api/progreso/completar", {
@@ -508,7 +508,8 @@ const VocalPracticePage = () => {
                                             return;
                                         }
 
-                                        const success = await completarLetra(user.id, justUnlockedVowel, vocales);
+                                        // Completar la vocal ACTUAL (la que se estuvo practicando)
+                                        const success = await completarLetra(user.id, selectedLetter, vocales);
 
                                         if (success) {
                                             navigate(`/vocales-practica/${justUnlockedVowel.toLowerCase()}`);
@@ -523,7 +524,23 @@ const VocalPracticePage = () => {
                                     Practicar '{justUnlockedVowel.toUpperCase()}'
                                 </button>
                                 <button
-                                    onClick={closePopup}
+                                    onClick={async () => {
+                                        if (!user) {
+                                            console.error("Usuario no autenticado");
+                                            closePopup();
+                                            return;
+                                        }
+
+                                        // Completar la vocal ACTUAL (la que se estuvo practicando)
+                                        const success = await completarLetra(user.id, selectedLetter, vocales);
+                                        if (success) {
+                                            console.log("Letra completada exitosamente:", selectedLetter);
+                                        } else {
+                                            console.error("No se pudo completar la letra");
+                                        }
+
+                                        closePopup();
+                                    }}
                                     className="text-gray-600 hover:text-gray-800 font-medium py-2"
                                 >
                                     Seguir practicando

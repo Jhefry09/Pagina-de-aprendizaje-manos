@@ -83,7 +83,7 @@ export default function Abecedario() {
         </div>
 
         {/* Right Column - Progress Panel */}
-        <div className="lg:sticky lg:top-6 lg:self-start">
+        <div className="lg:sticky lg:top-8 lg:self-start">
           <ProgressTable 
             items={alphabetData}
             title="Progreso del Abecedario"
