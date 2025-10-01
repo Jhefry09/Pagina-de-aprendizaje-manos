@@ -15,7 +15,7 @@ import DashboardPage from "./pages/Dashboard/Page";
 import LoginPage from "./pages/Login/Page";
 import RegistroPage from "./pages/Registro/page";
 import NumerosPage from "./pages/numeros/page";
-import VocalesPage from "./pages/vocales/page";
+import VocalesPage from "./pages/vocales/vpage";
 import AbecedarioPage from "./pages/abecedario/Page";
 import NumerosAprendizajePage from "./pages/numeros-aprendizaje/Page";
 import WelcomePage from "./pages/Welcome/Page";
