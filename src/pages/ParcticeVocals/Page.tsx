@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useVocalContext } from "../../hooks/useVocalContext";
 import {
     type VocalModel,
@@ -90,7 +90,7 @@ const VocalPracticePage = () => {
     const handsRef = useRef<MediaPipeHandsInstance | null>(null);
     // eslint-disable-next-line
     const cameraRef = useRef<any>(null);
-
+    const navigate = useNavigate(); // 👈 aquí declaras el hook
     // Estado para la página (usando un valor por defecto seguro)
     const { vocal: selectedLetterParam } = useParams<{ vocal: string }>();
     const selectedLetter =
@@ -331,7 +331,7 @@ const VocalPracticePage = () => {
         // Iniciar el temporizador si debe estar activo y no está corriendo
         if (shouldBeActive && unlockTimerRef.current === null) {
             console.log("✅ Iniciando temporizador de desbloqueo");
-            setSecondsRemainingForUnlock(10);
+            setSecondsRemainingForUnlock(5);
 
             unlockTimerRef.current = setInterval(() => {
                 setSecondsRemainingForUnlock((prev: number | null) => {
@@ -452,6 +452,7 @@ const VocalPracticePage = () => {
                             <div className="flex flex-col gap-3">
                                 <button
                                     onClick={() => {
+                                        navigate(`/vocales-practica/${justUnlockedVowel.toLowerCase()}`)
                                         window.location.href = `/vocales-practica/${justUnlockedVowel}`;
                                         closePopup();
                                     }}
