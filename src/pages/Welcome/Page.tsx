@@ -1,17 +1,35 @@
-// Las rutas de importación son correctas si la estructura es:
-// src/pages/Welcome/Page.tsx y src/assets/img/*
+import { useEffect } from 'react';
+import { useNavigate } from "react-router-dom";
+import { useVoice } from "../../hooks/useVoice";
+
+// Assets
 import logo from "../../assets/img/logo_2.png"; 
 import abecedario from "../../assets/img/abedecedario.png"; 
 import numero from "../../assets/img/numero.png"; 
 import vocales from "../../assets/img/vocales.png"; 
-import { useNavigate } from "react-router-dom";
 
 export default function App() {
   const navigate = useNavigate();
+  const { speak } = useVoice({ lang: "es-ES" });
+
+  // Reproducir mensaje de bienvenida al cargar la página
+  useEffect(() => {
+    speak("Bienvenido a SeeTalk. Explora nuestras lecciones de lengua de señas.");
+  }, [speak]);
+
+  const handleStartClick = () => {
+    speak("Iniciando tu experiencia de aprendizaje. ¡Vamos!");
+    setTimeout(() => {
+      navigate('/login');
+    }, 1000);
+  };
   return (
     <main className="w-full text-white antialiased">
       {/* HERO */}
-      <section className="h-screen flex items-center justify-center text-center p-4">
+      <section 
+        className="h-screen flex items-center justify-center text-center p-4"
+        onMouseEnter={() => speak("Bienvenido a SeeTalk, tu guía para aprender lengua de señas")}
+      >
         <div className="max-w-3xl mx-auto">
           <img
             src={logo} 
@@ -33,7 +51,10 @@ export default function App() {
 
       {/* CONTENT */}
       <section className="py-20 px-6 space-y-24">
-        <article className="max-w-[1200px] mx-auto flex flex-wrap items-center justify-center gap-16">
+        <article 
+          className="max-w-[1200px] mx-auto flex flex-wrap items-center justify-center gap-16"
+          onMouseEnter={() => speak("Aprende las vocales en lengua de señas")}
+        >
           <div className="flex-1 min-w-[300px] md:flex-[0_0_40%] lg:flex-[0_0_30%] order-2 md:order-1">
             <img
               src={vocales} 
@@ -50,7 +71,10 @@ export default function App() {
           </div>
         </article>
 
-        <article className="max-w-[1200px] mx-auto flex flex-wrap items-center justify-center gap-16 flex-row-reverse">
+        <article 
+          className="max-w-[1200px] mx-auto flex flex-wrap items-center justify-center gap-16 flex-row-reverse"
+          onMouseEnter={() => speak("Explora el abecedario completo de la A a la Z")}
+        >
           <div className="flex-1 min-w-[300px] md:flex-[0_0_40%] lg:flex-[0_0_30%]">
             <img
               src={abecedario} 
@@ -67,7 +91,10 @@ export default function App() {
           </div>
         </article>
 
-        <article className="max-w-[1200px] mx-auto flex flex-wrap items-center justify-center gap-16 flex-row">
+        <article 
+          className="max-w-[1200px] mx-auto flex flex-wrap items-center justify-center gap-16 flex-row"
+          onMouseEnter={() => speak("Descubre los números en lengua de señas")}
+        >
           <div className="flex-1 min-w-[300px] md:flex-[0_0_40%] lg:flex-[0_0_30%]">
             <img
               src={numero} 
@@ -86,7 +113,11 @@ export default function App() {
 
       {/* FOOTER - Botón con estilo modificado */}
       <footer className="py-16 text-center">
-        <button onClick={() => navigate('/login')} className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white px-12 py-5 rounded-3xl global-large-text font-semibold transition-transform transform hover:-translate-y-1 shadow-lg">
+        <button 
+          onClick={handleStartClick} 
+          onMouseEnter={() => speak("Haz clic para comenzar tu aprendizaje")}
+          className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white px-12 py-5 rounded-3xl global-large-text font-semibold transition-transform transform hover:-translate-y-1 shadow-lg"
+        >
           Iniciar
         </button>
       </footer>
