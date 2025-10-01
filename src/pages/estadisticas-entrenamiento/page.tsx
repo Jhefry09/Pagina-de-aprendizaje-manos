@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { RefreshCw } from 'lucide-react';
 
 interface VocalData {
     vocal: string;
@@ -11,6 +10,19 @@ interface ChartData {
     vocal: string;
     entrenamientos: number;
 }
+
+
+const CustomTooltip = ({ active, payload }: any) => {
+    if (active && payload?.length) {
+        return (
+            <div className="bg-white border border-gray-300 rounded-lg p-3 shadow-lg">
+                <p className="text-blue-800 font-semibold">{payload[0]?.payload?.vocal}</p>
+                <p className="text-gray-700">{payload[0]?.value} entrenamientos</p>
+            </div>
+        );
+    }
+    return null;
+};
 
 const VocalStatistics = () => {
     const [vocalesData, setVocalesData] = useState<VocalData[]>([]);
@@ -54,7 +66,7 @@ const VocalStatistics = () => {
         const vocalMasEntrenada = vocalesData.length > 0
             ? vocalesData.reduce((max, vocal) =>
                 (vocal.contadorModificaciones || 0) > (max.contadorModificaciones || 0) ? vocal : max
-            )
+            , vocalesData[0])
             : { vocal: '', contadorModificaciones: 0 };
 
         return { totalVocales, totalEntrenamientos, promedioEntrenamientos, vocalMasEntrenada };
@@ -71,24 +83,37 @@ const VocalStatistics = () => {
         (b.contadorModificaciones || 0) - (a.contadorModificaciones || 0)
     );
 
+    // Datos de fallback para cuando no hay datos reales
+    const datosFallback = [
+        { vocal: 'A', entrenamientos: 24 },
+        { vocal: 'E', entrenamientos: 18 },
+        { vocal: 'I', entrenamientos: 15 },
+        { vocal: 'O', entrenamientos: 12 },
+        { vocal: 'U', entrenamientos: 8 },
+        { vocal: 'B', entrenamientos: 6 },
+        { vocal: 'C', entrenamientos: 4 },
+        { vocal: 'D', entrenamientos: 3 },
+        { vocal: 'F', entrenamientos: 2 },
+        { vocal: 'G', entrenamientos: 1 }
+    ];
+
     const stats = calcularEstadisticas();
     const datosGrafico = prepararDatosGrafico();
+    
+    // Usar los mismos datos que los otros gráficos, pero ordenados para el ranking
+    const datosRanking = datosGrafico.length > 0 
+        ? [...datosGrafico].sort((a, b) => b.entrenamientos - a.entrenamientos).slice(0, 10)
+        : datosFallback;
 
-    const CustomTooltip = ({ active, payload }: any) => {
-        if (active && payload && payload.length) {
-            return (
-                <div className="bg-white border border-gray-300 rounded-lg p-3 shadow-lg">
-                    <p className="text-blue-800 font-semibold">{payload[0].payload.vocal}</p>
-                    <p className="text-gray-700">{payload[0].value} entrenamientos</p>
-                </div>
-            );
-        }
-        return null;
-    };
+    // Debug: Log para ver qué datos se están usando
+    console.log('Datos para ranking:', datosRanking);
+    console.log('Vocales ordenadas:', vocalesOrdenadas);
+    console.log('Usando fallback:', datosRanking === datosFallback);
+
 
     if (loading && vocalesData.length === 0) {
         return (
-            <div className="min-h-screen  p-8 flex items-center justify-center">
+            <div className="min-h-screen p-8 flex items-center justify-center">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-indigo-600 mx-auto mb-4"></div>
                     <p className="text-xl text-white font-medium">Cargando datos...</p>
@@ -98,179 +123,149 @@ const VocalStatistics = () => {
     }
 
     return (
-        <div className="min-h-screen">
-            <div className="max-w-7xl mx-auto p-6">
-                <div className="bg-gray-200 bg-opacity-70 backdrop-blur-sm rounded-3xl shadow-lg overflow-hidden">
-                    {/* Header */}
-                    <div className="bg-gradient-to-r from-amber-600 to-amber-700 p-10">
-                        <div className="text-center">
-                            <h1 className="text-5xl font-bold text-white mb-3 tracking-tight">
-                                Estadísticas de Entrenamientos
-                            </h1>
-                            <p className="text-xl text-white">Visualización del progreso de entrenamiento</p>
-                        </div>
+        <section className="p-5 w-full">
+            <div className="max-w-6xl mx-auto">
+                {/* Header Compacto */}
+                <div className="bg-gray-200 bg-opacity-70 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200 p-4 mb-5">
+                    <h1 className="text-2xl font-bold text-gray-800 text-center">
+                        Estadísticas de Entrenamientos
+                    </h1>
+                    <p className="text-base text-gray-600 text-center mt-1">
+                        Visualización del progreso de entrenamiento
+                    </p>
+                </div>
+
+                {error && (
+                    <div className="bg-red-500 border border-red-400 text-red-200 p-4 rounded-xl mb-5">
+                        {error}
+                    </div>
+                )}
+
+                {/* Stats Overview - Contenedores Fijos */}
+                <div className="grid grid-cols-4 gap-4 mb-5">
+                    <div className="bg-gray-200 bg-opacity-70 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200 p-4 text-center">
+                        <div className="text-2xl font-bold text-gray-800 mb-1">{stats.totalVocales}</div>
+                        <div className="text-sm text-gray-600 font-medium">Letras Registradas</div>
+                    </div>
+                    <div className="bg-gray-200 bg-opacity-70 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200 p-4 text-center">
+                        <div className="text-2xl font-bold text-gray-800 mb-1">{stats.totalEntrenamientos}</div>
+                        <div className="text-sm text-gray-600 font-medium">Total Entrenamientos</div>
+                    </div>
+                    <div className="bg-gray-200 bg-opacity-70 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200 p-4 text-center">
+                        <div className="text-2xl font-bold text-gray-800 mb-1">{stats.promedioEntrenamientos}</div>
+                        <div className="text-sm text-gray-600 font-medium">Promedio por Letra</div>
+                    </div>
+                    <div className="bg-gray-200 bg-opacity-70 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200 p-4 text-center">
+                        <div className="text-2xl font-bold text-gray-800 mb-1">{stats.vocalMasEntrenada.vocal || '-'}</div>
+                        <div className="text-sm text-gray-600 font-medium">Más Entrenada</div>
+                    </div>
+                </div>
+
+                {/* Charts Grid - Layout Fijo con 3 Gráficos */}
+                <div className="grid grid-cols-2 gap-5 mb-5">
+                    {/* Gráfico 1: Ranking de Entrenamientos (antes Tendencia) */}
+                    <div className="bg-gray-200 bg-opacity-70 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200 p-4">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-3 text-center">
+                            Ranking de Entrenamientos
+                            {datosGrafico.length === 0 && (
+                                <span className="text-xs text-gray-500 block mt-1">(Datos de ejemplo)</span>
+                            )}
+                        </h3>
+                        <ResponsiveContainer width="100%" height={300}>
+                            <BarChart data={datosRanking}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="vocal" />
+                                <YAxis />
+                                <Tooltip />
+                                <Bar dataKey="entrenamientos" fill="#DC2626" />
+                            </BarChart>
+                        </ResponsiveContainer>
                     </div>
 
-                    {/* Content */}
-                    <div className="p-10">
-                        {/* Controls */}
-                        <div className="flex justify-center items-center mb-8">
-                            <button
-                                onClick={cargarDatos}
-                                disabled={loading}
-                                className="bg-blue-800 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg transition-all duration-300 flex items-center gap-2 disabled:opacity-50"
+                    {/* Gráfico 2: Progreso de Aprendizaje (Tercer gráfico que ocupa el segundo espacio) */}
+                    <div className="bg-gray-200 bg-opacity-70 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200 p-4">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-3 text-center">
+                            Progreso de Aprendizaje
+                        </h3>
+                        <ResponsiveContainer width="100%" height={300}>
+                            <LineChart data={datosGrafico} margin={{ top: 20, right: 20, left: 20, bottom: 40 }}>
+                                <defs>
+                                    <linearGradient id="colorLine" x1="0" y1="0" x2="1" y2="0">
+                                        <stop offset="0%" stopColor="#1E40AF" />
+                                        <stop offset="100%" stopColor="#F87171" />
+                                    </linearGradient>
+                                </defs>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                                <XAxis
+                                    dataKey="vocal"
+                                    stroke="#374151"
+                                    style={{ fontSize: '12px', fontWeight: 600 }}
+                                    angle={-45}
+                                    textAnchor="end"
+                                    height={60}
+                                />
+                                <YAxis stroke="#374151" style={{ fontSize: '12px' }} />
+                                <Tooltip content={<CustomTooltip />} />
+                                <Line
+                                    type="monotone"
+                                    dataKey="entrenamientos"
+                                    stroke="url(#colorLine)"
+                                    strokeWidth={3}
+                                    dot={{ fill: '#1E40AF', strokeWidth: 2, r: 4 }}
+                                    activeDot={{ r: 6 }}
+                                />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+
+                {/* Gráfico 3: Distribución de Entrenamientos (Tercer gráfico en fila completa) */}
+                <div className="bg-gray-200 bg-opacity-70 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200 p-4 mb-5">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-3 text-center">
+                        Distribución de Entrenamientos
+                    </h3>
+                    <ResponsiveContainer width="100%" height={300}>
+                        <BarChart data={datosGrafico} margin={{ top: 20, right: 20, left: 20, bottom: 40 }}>
+                            <defs>
+                                <linearGradient id="colorDistribution" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stopColor="#10B981" stopOpacity={1}/>
+                                    <stop offset="100%" stopColor="#059669" stopOpacity={1}/>
+                                </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                            <XAxis
+                                dataKey="vocal"
+                                stroke="#374151"
+                                style={{ fontSize: '12px', fontWeight: 600 }}
+                                angle={-45}
+                                textAnchor="end"
+                                height={60}
+                            />
+                            <YAxis stroke="#374151" style={{ fontSize: '12px' }} />
+                            <Tooltip content={<CustomTooltip />} />
+                            <Bar dataKey="entrenamientos" fill="url(#colorDistribution)" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+
+                {/* Vocal Details Grid - Compacto */}
+                <div className="bg-gray-200 bg-opacity-70 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200 p-4">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-3 text-center">Detalle por Letra</h3>
+                    <div className="grid grid-cols-10 gap-3">
+                        {vocalesOrdenadas.map((vocal) => (
+                            <div
+                                key={vocal.vocal}
+                                className="sign-card !w-auto !h-auto min-w-[60px] min-h-[80px] transition-all duration-300"
                             >
-                                <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-                                Actualizar Datos
-                            </button>
-                        </div>
-
-                        {error && (
-                            <div className="bg-red-500 border border-red-400 text-red-200 p-5 rounded-xl mb-8">
-                                {error}
+                                <div className="sign-letter text-base font-bold mb-1">{vocal.vocal}</div>
+                                <div className="text-sm text-gray-700 font-medium">{vocal.contadorModificaciones || 0}</div>
+                                <div className="text-xs text-gray-500">entrenamientos</div>
                             </div>
-                        )}
-
-                        {/* Stats Overview */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-                            <div className="bg-blue-800 rounded-2xl p-6 shadow-lg transition-all duration-300 hover:-translate-y-1">
-                                <div className="text-4xl font-bold text-white mb-2">{stats.totalVocales}</div>
-                                <div className="text-blue-200 font-medium">Letras Registradas</div>
-                            </div>
-                            <div className="bg-gradient-to-br from-amber-600 to-amber-700 rounded-2xl p-6 shadow-lg transition-all duration-300 hover:-translate-y-1">
-                                <div className="text-4xl font-bold text-white mb-2">{stats.totalEntrenamientos}</div>
-                                <div className="text-white font-medium">Total Entrenamientos</div>
-                            </div>
-                            <div className="bg-red-400 rounded-2xl p-6 shadow-lg transition-all duration-300 hover:-translate-y-1">
-                                <div className="text-4xl font-bold text-white mb-2">{stats.promedioEntrenamientos}</div>
-                                <div className="text-red-200 font-medium">Promedio por Letra</div>
-                            </div>
-                            <div className="bg-gray-800 rounded-2xl p-6 shadow-lg transition-all duration-300 hover:-translate-y-1">
-                                <div className="text-4xl font-bold text-white mb-2">{stats.vocalMasEntrenada.vocal || '-'}</div>
-                                <div className="text-gray-200 font-medium">Más Entrenada</div>
-                            </div>
-                        </div>
-
-                        {/* Charts - Vertical Layout */}
-                        <div className="space-y-10">
-                            {/* Bar Chart */}
-                            <div className="bg-white rounded-2xl p-8 border border-gray-300 shadow-lg">
-                                <h3 className="text-3xl font-semibold text-gray-800 mb-8 text-center">
-                                    Entrenamientos por Letra
-                                </h3>
-                                <ResponsiveContainer width="100%" height={500}>
-                                    <BarChart data={datosGrafico} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
-                                        <defs>
-                                            <linearGradient id="colorBar" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="0%" stopColor="#1E40AF" stopOpacity={1}/>
-                                                <stop offset="100%" stopColor="#D97706" stopOpacity={1}/>
-                                            </linearGradient>
-                                        </defs>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                                        <XAxis
-                                            dataKey="vocal"
-                                            stroke="#374151"
-                                            style={{ fontSize: '16px', fontWeight: 600 }}
-                                            angle={-45}
-                                            textAnchor="end"
-                                            height={80}
-                                        />
-                                        <YAxis stroke="#374151" style={{ fontSize: '16px' }} />
-                                        <Tooltip content={<CustomTooltip />} />
-                                        <Bar dataKey="entrenamientos" fill="url(#colorBar)" radius={[8, 8, 0, 0]} />
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </div>
-
-                            {/* Line Chart */}
-                            <div className="bg-white rounded-2xl p-8 border border-gray-300 shadow-lg">
-                                <h3 className="text-3xl font-semibold text-gray-800 mb-8 text-center">
-                                    Entrenamientos por Letra
-                                </h3>
-                                <ResponsiveContainer width="100%" height={500}>
-                                    <LineChart data={datosGrafico} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
-                                        <defs>
-                                            <linearGradient id="colorLine" x1="0" y1="0" x2="1" y2="0">
-                                                <stop offset="0%" stopColor="#1E40AF" />
-                                                <stop offset="100%" stopColor="#F87171" />
-                                            </linearGradient>
-                                        </defs>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                                        <XAxis
-                                            dataKey="vocal"
-                                            stroke="#374151"
-                                            style={{ fontSize: '16px', fontWeight: 600 }}
-                                            angle={-45}
-                                            textAnchor="end"
-                                            height={80}
-                                        />
-                                        <YAxis stroke="#374151" style={{ fontSize: '16px' }} />
-                                        <Tooltip content={<CustomTooltip />} />
-                                        <Line
-                                            type="monotone"
-                                            dataKey="entrenamientos"
-                                            stroke="url(#colorLine)"
-                                            strokeWidth={4}
-                                            dot={{ fill: '#1E40AF', strokeWidth: 2, r: 6 }}
-                                            activeDot={{ r: 8 }}
-                                        />
-                                    </LineChart>
-                                </ResponsiveContainer>
-                            </div>
-
-                            {/* Ranking Chart - Horizontal Bars */}
-                            <div className="bg-white rounded-2xl p-8 border border-gray-300 shadow-lg">
-                                <h3 className="text-3xl font-semibold text-gray-800 mb-8 text-center">
-                                    Ranking de Entrenamientos
-                                </h3>
-                                <ResponsiveContainer width="100%" height={500}>
-                                    <BarChart
-                                        data={vocalesOrdenadas.map(v => ({ vocal: v.vocal, entrenamientos: v.contadorModificaciones || 0 }))}
-                                        layout="vertical"
-                                        margin={{ top: 20, right: 30, left: 80, bottom: 20 }}
-                                    >
-                                        <defs>
-                                            <linearGradient id="colorRanking" x1="0" y1="0" x2="1" y2="0">
-                                                <stop offset="0%" stopColor="#F87171" stopOpacity={1}/>
-                                                <stop offset="100%" stopColor="#D97706" stopOpacity={1}/>
-                                            </linearGradient>
-                                        </defs>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                                        <XAxis type="number" stroke="#374151" style={{ fontSize: '16px' }} />
-                                        <YAxis
-                                            type="category"
-                                            dataKey="vocal"
-                                            stroke="#374151"
-                                            style={{ fontSize: '16px', fontWeight: 600 }}
-                                            width={80}
-                                        />
-                                        <Tooltip content={<CustomTooltip />} />
-                                        <Bar dataKey="entrenamientos" fill="url(#colorRanking)" radius={[0, 8, 8, 0]} />
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </div>
-
-                        {/* Vocal Details Grid */}
-                        <div className="bg-white rounded-2xl p-8 border border-gray-300 shadow-lg mt-10">
-                            <h3 className="text-3xl font-semibold text-gray-800 mb-8 text-center">🔍 Detalle por Letra</h3>
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
-                                {vocalesOrdenadas.map((vocal) => (
-                                    <div
-                                        key={vocal.vocal}
-                                        className="bg-gray-200 rounded-xl p-5 text-center border border-gray-300 hover:border-blue-800 hover:bg-blue-50 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
-                                    >
-                                        <div className="text-xl font-bold text-gray-800 mb-2">{vocal.vocal}</div>
-                                        <div className="text-lg text-gray-700">{vocal.contadorModificaciones || 0}</div>
-                                        <div className="text-sm text-gray-600">entrenado</div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
+                        ))}
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
     );
 };
 
