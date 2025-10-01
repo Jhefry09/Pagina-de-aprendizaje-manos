@@ -106,14 +106,10 @@ const Navbar = ({ activeLink = 'inicio' }: NavbarProps) => {
                     <div className="hidden md:flex items-center space-x-2 ml-8">
                         <NavLink href="/home" isActive={activeLink === 'inicio'}>Inicio</NavLink>
 
-                        <div 
-                            className="relative"
-                            onMouseLeave={() => setShowClassesDropdown(false)}
-                        >
+                        <div className="relative">
                             <div className="relative">
                                 <button
                                     onClick={() => setShowClassesDropdown(!showClassesDropdown)}
-                                    onMouseEnter={() => setShowClassesDropdown(true)}
                                     className={`px-3 py-2.5 text-base font-medium flex items-center space-x-1 rounded-lg transition-all duration-200 ${
                                         showClassesDropdown || activeLink === 'clases'
                                             ? 'text-white bg-gray-800/50'
@@ -132,8 +128,6 @@ const Navbar = ({ activeLink = 'inicio' }: NavbarProps) => {
                                             ? 'opacity-100 scale-100 translate-y-0 pointer-events-auto'
                                             : 'opacity-0 scale-95 -translate-y-1 pointer-events-none'
                                     }`}
-                                    onMouseEnter={() => setShowClassesDropdown(true)}
-                                    onMouseLeave={() => setShowClassesDropdown(false)}
                                 >
                                     <div className="py-2">
                                         {modules.map((module) => (
